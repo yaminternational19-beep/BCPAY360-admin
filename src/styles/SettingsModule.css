@@ -1,0 +1,149 @@
+.settings-root {
+  padding: 22px;
+  font-family: Inter, sans-serif;
+}
+
+/* Card layout */
+.card {
+  background: #ffffff;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* Grid layouts */
+.company-grid,
+.settings-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group.full {
+  grid-column: span 2;
+}
+
+input,
+textarea,
+select {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+textarea {
+  resize: none;
+}
+
+/* Logo Preview */
+.logo-preview img {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  margin-top: 10px;
+}
+
+/* Buttons */
+.btn-primary {
+  padding: 10px 16px;
+  background: #2563eb;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.25s;
+  width: fit-content;
+}
+
+.btn-primary:hover {
+  background: #1e40af;
+  transform: scale(1.05);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+}
+
+.btn-sm.ghost {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+}
+
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.role-card {
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.perm-list {
+  font-size: 13px;
+  color: #475569;
+}
+
+/* New Role Permissions */
+.new-role {
+  margin-top: 16px;
+}
+
+.perm-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.perm-item {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+  background: #f8fafc;
+}
+
+.perm-item.active {
+  background: #dbeafe;
+  border-color: #60a5fa;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

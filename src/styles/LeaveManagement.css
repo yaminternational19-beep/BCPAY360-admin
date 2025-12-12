@@ -1,0 +1,144 @@
+.lm-root {
+  padding: 24px;
+  color: #e7e7e7;
+  font-family: "Inter", sans-serif;
+}
+
+.lm-header h1 {
+  margin-bottom: 8px;
+  font-size: 30px;
+}
+
+.lm-grid {
+  margin-top: 20px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.card {
+  background: #1b1c1f;
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid #2b2c30;
+}
+
+.card.full {
+  grid-column: span 2;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background: #2a2b2f;
+  border: 1px solid #3a3b40;
+  color: white;
+}
+
+.btn-primary {
+  padding: 10px 14px;
+  margin-top: 12px;
+  background: #3b82f6;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.clean-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+}
+
+.clean-table th,
+.clean-table td {
+  border-bottom: 1px solid #333;
+  padding: 10px;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  background: #444;
+  border: none;
+  margin-right: 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-sm.danger {
+  background: #c0392b;
+}
+
+.req-card {
+  background: #222327;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #2f2f32;
+}
+
+.req-top {
+  display: flex;
+  justify-content: space-between;
+}
+
+.meta {
+  color: #a5a5a5;
+  font-size: 13px;
+}
+
+.req-actions button {
+  margin-left: 8px;
+}
+
+.btn-success {
+  background: #2ecc71;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: black;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: black;
+}
+
+.comment-box {
+  margin-top: 12px;
+}
+
+.comment {
+  padding: 6px 10px;
+  background: #2b2c30;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.empty {
+  color: #888;
+}
+
+.green {
+  color: #2ecc71;
+  font-weight: bold;
+}
+
+.red {
+  color: #e74c3c;
+  font-weight: bold;
+}
