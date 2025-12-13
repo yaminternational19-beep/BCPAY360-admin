@@ -1,7 +1,10 @@
 /* =========================================
-   REALISTIC EMPLOYEE DUMMY DATA GENERATOR
+   FINAL ENTERPRISE EMPLOYEE DATA GENERATOR
    ========================================= */
 
+/* -----------------------------------------
+   NAMES
+----------------------------------------- */
 const firstNames = [
   "Aarav","Vivaan","Aditya","Arjun","Vihaan","Ishaan",
   "Saanvi","Ananya","Priya","Kavya","Rohan","Neha",
@@ -15,22 +18,72 @@ const lastNames = [
 ];
 
 /* -----------------------------------------
-   Department → Role Mapping (IMPORTANT)
+   DEPARTMENTS (EXACTLY 6)
 ----------------------------------------- */
-const departmentRoles = {
-  HR: ["HR Manager", "HR Executive"],
-  Finance: ["Accountant", "Finance Executive"],
-  IT: ["Developer", "Team Lead"],
-  Sales: ["Sales Executive", "Sales Manager"],
-  Operations: ["Operations Executive"],
-  Marketing: ["Marketing Executive"],
-  Support: ["Support Engineer"]
-};
-
-const departments = Object.keys(departmentRoles);
+const departments = [
+  "HR",
+  "IT",
+  "Finance",
+  "Sales",
+  "Marketing",
+  "Operations"
+];
 
 /* -----------------------------------------
-   Helpers
+   DESIGNATIONS (EXACTLY 5 EACH)
+----------------------------------------- */
+const departmentRoles = {
+  HR: [
+    "HR General",
+    "HR IT",
+    "HR Finance",
+    "HR Sales",
+    "HR Operations"
+  ],
+
+  IT: [
+    "Junior Developer",
+    "Developer",
+    "Senior Developer",
+    "Tech Lead",
+    "Engineering Manager"
+  ],
+
+  Finance: [
+    "Finance Executive",
+    "Accountant",
+    "Senior Accountant",
+    "Finance Manager",
+    "Finance Controller"
+  ],
+
+  Sales: [
+    "Sales Executive",
+    "Senior Sales Executive",
+    "Sales Manager",
+    "Regional Sales Manager",
+    "Sales Head"
+  ],
+
+  Marketing: [
+    "Marketing Executive",
+    "Content Strategist",
+    "Digital Marketing Specialist",
+    "Marketing Manager",
+    "Marketing Head"
+  ],
+
+  Operations: [
+    "Operations Executive",
+    "Senior Operations Executive",
+    "Operations Manager",
+    "Operations Lead",
+    "Operations Head"
+  ]
+};
+
+/* -----------------------------------------
+   HELPERS
 ----------------------------------------- */
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -71,31 +124,49 @@ function generatePAN(name) {
 }
 
 function randomJoiningDate() {
-  const year = randInt(2017, 2024);
+  const year = randInt(2016, 2024);
   const month = pad(randInt(1, 12), 2);
   const day = pad(randInt(1, 28), 2);
   return `${year}-${month}-${day}`;
 }
 
+/* -----------------------------------------
+   SALARY (DESIGNATION-BASED)
+----------------------------------------- */
 function generateSalary(department, role) {
-  const baseSalary = {
-    HR: 30000,
-    Finance: 35000,
-    IT: 50000,
-    Sales: 30000,
-    Operations: 28000,
-    Marketing: 32000,
-    Support: 25000,
+  const base = {
+    HR: 35000,
+    IT: 55000,
+    Finance: 45000,
+    Sales: 40000,
+    Marketing: 38000,
+    Operations: 36000
   };
 
   let multiplier = 1;
 
-  if (role.includes("Manager") || role.includes("Lead")) multiplier = 1.8;
-  if (role.includes("Developer")) multiplier = 2.2;
+  if (/Junior|Executive/.test(role)) multiplier = 1.0;
+  if (/Senior/.test(role)) multiplier = 1.4;
+  if (/Lead|Manager/.test(role)) multiplier = 1.8;
+  if (/Head|Controller/.test(role)) multiplier = 2.3;
 
   return Math.round(
-    baseSalary[department] * multiplier + randInt(0, 15000)
+    base[department] * multiplier + randInt(0, 15000)
   );
+}
+
+/* -----------------------------------------
+   ROLE DISTRIBUTION (GUARANTEED DIVERSITY)
+----------------------------------------- */
+function pickRole(department) {
+  const roles = departmentRoles[department];
+  const r = Math.random();
+
+  if (r < 0.30) return roles[0]; // Junior / Exec
+  if (r < 0.55) return roles[1];
+  if (r < 0.75) return roles[2];
+  if (r < 0.92) return roles[3];
+  return roles[4];               // Head (rare)
 }
 
 /* =========================================
@@ -110,19 +181,19 @@ export function makeEmployees(count = 1000) {
     const name = `${firstName} ${lastName}`;
 
     const department = pick(departments);
-    const role = pick(departmentRoles[department]);
+    const role = pickRole(department);
 
     employees.push({
-      id: `EMP${pad(i)}`,               // ✅ EMP001, EMP002
+      id: `EMP${pad(i)}`,
       name,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@company.com`,
       phone: randomPhone(),
       department,
       role,
       joiningDate: randomJoiningDate(),
-      salary: generateSalary(department, role), // number only
+      salary: generateSalary(department, role),
       pan: generatePAN(name),
-      active: Math.random() > 0.05,     // ~95% active
+      active: Math.random() > 0.05
     });
   }
 

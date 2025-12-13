@@ -27,21 +27,32 @@ const EmployeeList = ({
   const [showInactive, setShowInactive] = useState(false);
   const [sortBy, setSortBy] = useState("id");
   const [page, setPage] = useState(1);
+  const [openActionId, setOpenActionId] = useState(null);
 
   const pageSize = 20;
 
   /* =====================
-     FILTER OPTIONS
+     DEPARTMENTS (from data)
   ===================== */
   const depts = useMemo(
     () => ["All", ...new Set(employees.map(e => e.department))],
     [employees]
   );
 
-  const roles = useMemo(
-    () => ["All", ...new Set(employees.map(e => e.role))],
-    [employees]
-  );
+  /* =====================
+     ROLES (dependent)
+  ===================== */
+  const roles = useMemo(() => {
+    if (dept === "All") return ["All"];
+    return [
+      "All",
+      ...new Set(
+        employees
+          .filter(e => e.department === dept)
+          .map(e => e.role)
+      ),
+    ];
+  }, [employees, dept]);
 
   /* =====================
      FILTER + SORT
@@ -50,10 +61,21 @@ const EmployeeList = ({
     let list = employees.filter(e => showInactive || e.active);
 
     if (q) {
-      const qq = q.toLowerCase();
-      list = list.filter(e =>
-        `${e.name} ${e.email} ${e.phone}`.toLowerCase().includes(qq)
-      );
+      const qq = q.toLowerCase().trim();
+
+      list = list.filter(e => {
+        const normalizedId = e.id.replace("EMP", "").toLowerCase(); // 005
+        const numericId = String(parseInt(normalizedId, 10));       // 5
+
+        return (
+          e.id.toLowerCase().includes(qq) ||   // EMP005
+          normalizedId.includes(qq) ||         // 005
+          numericId === qq ||                  // 5
+          e.name.toLowerCase().includes(qq) ||
+          e.email.toLowerCase().includes(qq) ||
+          e.phone.includes(qq)
+        );
+      });
     }
 
     if (dept !== "All") list = list.filter(e => e.department === dept);
@@ -64,16 +86,12 @@ const EmployeeList = ({
       if (sortBy === "joiningDate") return a.joiningDate.localeCompare(b.joiningDate);
       if (sortBy === "salary") return b.salary - a.salary;
 
-      // EMP001 sort
       const aid = parseInt(a.id.replace("EMP", ""), 10);
       const bid = parseInt(b.id.replace("EMP", ""), 10);
       return aid - bid;
     });
   }, [employees, q, dept, role, showInactive, sortBy]);
 
-  /* =====================
-     PAGINATION SAFETY
-  ===================== */
   useEffect(() => {
     setPage(1);
   }, [q, dept, role, showInactive]);
@@ -81,55 +99,21 @@ const EmployeeList = ({
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const current = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  /* =====================
-     CSV EXPORT
-  ===================== */
-  const exportCSV = () => {
-    if (!filtered.length) return;
-
-    const rows = filtered.map(e => ({
-      id: e.id,
-      name: e.name,
-      email: e.email,
-      phone: e.phone,
-      department: e.department,
-      role: e.role,
-      joiningDate: e.joiningDate,
-      salary: e.salary,
-      active: e.active,
-    }));
-
-    const csv = [
-      Object.keys(rows[0]).join(","),
-      ...rows.map(r =>
-        Object.values(r).map(v => `"${v}"`).join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `employees_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <div className="employee-list-wrap">
-      {/* CONTROLS */}
+      {/* FILTER BAR */}
       <div className="list-controls">
         <input
-          placeholder="Search name / email / phone"
+          placeholder="Search EMP ID / Name / Email / Phone"
           value={q}
           onChange={e => setQ(e.target.value)}
         />
 
-        <select value={dept} onChange={e => setDept(e.target.value)}>
+        <select value={dept} onChange={e => { setDept(e.target.value); setRole("All"); }}>
           {depts.map(d => <option key={d}>{d}</option>)}
         </select>
 
-        <select value={role} onChange={e => setRole(e.target.value)}>
+        <select value={role} disabled={dept === "All"} onChange={e => setRole(e.target.value)}>
           {roles.map(r => <option key={r}>{r}</option>)}
         </select>
 
@@ -137,7 +121,7 @@ const EmployeeList = ({
           <option value="id">Sort: ID</option>
           <option value="name">Sort: Name</option>
           <option value="joiningDate">Sort: Joining Date</option>
-          <option value="salary">Sort: Salary (desc)</option>
+          <option value="salary">Sort: Salary</option>
         </select>
 
         <label className="toggle">
@@ -148,8 +132,6 @@ const EmployeeList = ({
           />
           <span>Show Inactive</span>
         </label>
-
-        <button className="btn" onClick={exportCSV}>Export CSV</button>
       </div>
 
       {/* TABLE */}
@@ -172,42 +154,66 @@ const EmployeeList = ({
               <td>{emp.role}</td>
               <td>{emp.joiningDate}</td>
               <td>₹{emp.salary.toLocaleString()}</td>
-              <td>{emp.active ? "Active" : "Inactive"}</td>
+              <td>
+                <span className={`status ${emp.active ? "active" : "inactive"}`}>
+                  {emp.active ? "Active" : "Inactive"}
+                </span>
+              </td>
+
+              {/* ACTION MENU */}
               <td className="actions">
-                <button onClick={() => onEdit(emp.id)}>Edit</button>
-                {emp.active ? (
-                  <button onClick={() => onDeactivate(emp.id)}>Deactivate</button>
-                ) : (
-                  <button onClick={() => onActivate(emp.id)}>Activate</button>
-                )}
-                <button className="danger" onClick={() => onDelete(emp.id)}>Delete</button>
+                <div className="action-menu">
+                  <button
+                    className="action-trigger"
+                    onClick={() =>
+                      setOpenActionId(openActionId === emp.id ? null : emp.id)
+                    }
+                  >
+                    ⋮
+                  </button>
+
+                  {openActionId === emp.id && (
+                    <div className="action-dropdown">
+                      <button onClick={() => { onEdit(emp.id); setOpenActionId(null); }}>
+                        ✏️ Edit
+                      </button>
+
+                      {emp.active ? (
+                        <button onClick={() => { onDeactivate(emp.id); setOpenActionId(null); }}>
+                          🚫 Deactivate
+                        </button>
+                      ) : (
+                        <button onClick={() => { onActivate(emp.id); setOpenActionId(null); }}>
+                          ✅ Activate
+                        </button>
+                      )}
+
+                      <button
+                        className="danger"
+                        onClick={() => { onDelete(emp.id); setOpenActionId(null); }}
+                      >
+                        🗑 Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
-          {!current.length && (
-            <tr>
-              <td colSpan={10} style={{ textAlign: "center" }}>
-                No employees found
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
 
       {/* FOOTER */}
       <div className="list-footer">
-        <div>
+        <span>
           Showing {(page - 1) * pageSize + 1} –
           {Math.min(page * pageSize, filtered.length)} of {filtered.length}
-        </div>
+        </span>
 
         <Pagination
           page={page}
           totalPages={totalPages}
-          onPage={p => {
-            setPage(p);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
+          onPage={p => setPage(p)}
         />
       </div>
     </div>

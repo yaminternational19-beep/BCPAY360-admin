@@ -1,6 +1,6 @@
 .employee-panel {
-  padding: 20px;
-  padding-top: 96px; /* aligned with navbar */
+  padding: 10px;
+  padding-top: 0px; /* aligned with navbar */
   min-height: 100vh;
   background: #f8fafc;
 }
