@@ -1,9 +1,121 @@
-.employee-panel { margin-left: 0px; padding: 20px; min-height:100vh; background: #f7f8fb; }
-.employee-header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.employee-header h2 { margin:0; font-size:20px; }
-.header-actions { display:flex; align-items:center; gap:12px; }
-.btn { padding:8px 12px; border-radius:8px; background:#fff; border:1px solid #ddd; cursor:pointer; }
-.btn.primary { background:#1f6feb; color:#fff; border: none; }
-.stat-mini { background:#fff; padding:8px 12px; border-radius:8px; box-shadow:0 1px 6px rgba(0,0,0,0.03); display:flex; flex-direction:column; align-items:flex-start; }
-.employee-body { margin-top:16px; }
-.filters-bar { margin-bottom:8px; padding:8px 0; display:flex; justify-content:space-between; color:#666; }
+.employee-panel {
+  padding: 20px;
+  padding-top: 96px; /* aligned with navbar */
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* ===============================
+   HEADER
+================================ */
+.employee-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+
+  animation: headerFade 0.35s ease;
+}
+
+@keyframes headerFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.employee-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* ===============================
+   HEADER ACTIONS
+================================ */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===============================
+   BUTTONS
+================================ */
+.btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  font-size: 13px;
+  color: #334155;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.btn.primary {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+}
+
+.btn.primary:hover {
+  background: #1d4ed8;
+}
+
+/* ===============================
+   MINI STATS (HEADER METRICS)
+================================ */
+.stat-mini {
+  background: #ffffff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  font-size: 12px;
+  color: #475569;
+
+  animation: miniFade 0.4s ease;
+}
+
+@keyframes miniFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===============================
+   BODY
+================================ */
+.employee-body {
+  margin-top: 18px;
+}

@@ -5,91 +5,150 @@ import EmployeeList from "../components/EmployeeList";
 import EmployeeForm from "../components/EmployeeForm";
 import EmployeeFilters from "../components/EmployeeFilters";
 
-// initial dummy data
+/* =========================
+   INITIAL DATA
+========================= */
 const initialEmployees = makeEmployees(1000);
+
+/* =========================
+   HELPERS
+========================= */
+const getNextEmpId = (employees) => {
+  if (!employees.length) return "EMP001";
+
+  const max = Math.max(
+    ...employees.map(e => parseInt(e.id.replace("EMP", ""), 10))
+  );
+
+  return `EMP${String(max + 1).padStart(3, "0")}`;
+};
 
 const EmployeePanel = () => {
   const [employees, setEmployees] = useState(initialEmployees);
-  const [selected, setSelected] = useState(null); // for edit / view
+  const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  // create or update employee
+  /* =========================
+     CREATE / UPDATE
+  ========================= */
   const handleSave = (emp) => {
     if (emp.id) {
-      setEmployees(prev => prev.map(p => p.id === emp.id ? {...p, ...emp} : p));
+      // Update existing employee
+      setEmployees(prev =>
+        prev.map(p => (p.id === emp.id ? { ...p, ...emp } : p))
+      );
     } else {
-      const newId = employees.length ? Math.max(...employees.map(e=>e.id)) + 1 : 1;
-      setEmployees(prev => [{...emp, id: newId, active: true}, ...prev]);
+      // Create new employee
+      const newEmployee = {
+        ...emp,
+        id: getNextEmpId(employees),
+        active: true,
+      };
+
+      setEmployees(prev => [newEmployee, ...prev]);
     }
+
     setShowForm(false);
     setSelected(null);
   };
 
+  /* =========================
+     ACTIONS
+  ========================= */
   const handleEdit = (id) => {
-    const e = employees.find(x=>x.id===id);
-    if (e) {
-      setSelected(e);
+    const employee = employees.find(e => e.id === id);
+    if (employee) {
+      setSelected(employee);
       setShowForm(true);
     }
   };
 
   const handleDeactivate = (id) => {
-    setEmployees(prev => prev.map(p => p.id === id ? {...p, active: false} : p));
+    setEmployees(prev =>
+      prev.map(p => (p.id === id ? { ...p, active: false } : p))
+    );
   };
 
   const handleActivate = (id) => {
-    setEmployees(prev => prev.map(p => p.id === id ? {...p, active: true} : p));
+    setEmployees(prev =>
+      prev.map(p => (p.id === id ? { ...p, active: true } : p))
+    );
   };
 
-  const handleBulkUploadDocs = (id, docs) => {
-    setEmployees(prev => prev.map(p => p.id === id ? {...p, docs: {...p.docs, ...docs}} : p));
+  const handleDelete = (id) => {
+    setEmployees(prev => prev.filter(p => p.id !== id));
   };
 
-  // derived counts
-  const stats = useMemo(()=>({
-    total: employees.length,
-    active: employees.filter(e=>e.active).length,
-    inactive: employees.filter(e=>!e.active).length
-  }), [employees]);
+  /* =========================
+     STATS
+  ========================= */
+  const stats = useMemo(
+    () => ({
+      total: employees.length,
+      active: employees.filter(e => e.active).length,
+      inactive: employees.filter(e => !e.active).length,
+    }),
+    [employees]
+  );
 
   return (
     <div className="employee-panel">
+      {/* HEADER */}
       <div className="employee-header">
         <h2>Employee Management</h2>
+
         <div className="header-actions">
-          <button className="btn" onClick={()=>{ setSelected(null); setShowForm(true); }}>Add Employee</button>
+          <button
+            className="btn"
+            onClick={() => {
+              setSelected(null);
+              setShowForm(true);
+            }}
+          >
+            Add Employee
+          </button>
+
           <div className="stat-mini">
-            <span>Total</span><strong>{stats.total}</strong>
+            <span>Total</span>
+            <strong>{stats.total}</strong>
           </div>
+
           <div className="stat-mini">
-            <span>Active</span><strong>{stats.active}</strong>
+            <span>Active</span>
+            <strong>{stats.active}</strong>
           </div>
+
           <div className="stat-mini">
-            <span>Inactive</span><strong>{stats.inactive}</strong>
+            <span>Inactive</span>
+            <strong>{stats.inactive}</strong>
           </div>
         </div>
       </div>
 
+      {/* BODY */}
       <div className="employee-body">
         <EmployeeFilters />
+
         <EmployeeList
           employees={employees}
           onEdit={handleEdit}
           onDeactivate={handleDeactivate}
           onActivate={handleActivate}
-          onSaveDocs={handleBulkUploadDocs}
-          onDelete={(id)=> setEmployees(prev => prev.filter(p => p.id !== id))}
-          onSave={handleSave}
+          onDelete={handleDelete}
         />
       </div>
 
-      { showForm && (
+      {/* FORM MODAL */}
+      {showForm && (
         <EmployeeForm
           initial={selected}
-          onClose={() => { setShowForm(false); setSelected(null); }}
+          onClose={() => {
+            setShowForm(false);
+            setSelected(null);
+          }}
           onSave={handleSave}
         />
-      ) }
+      )}
     </div>
   );
 };

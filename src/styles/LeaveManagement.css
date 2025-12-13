@@ -1,144 +1,201 @@
+/* ==============================
+   ROOT + THEME
+================================ */
+
+
 .lm-root {
   padding: 24px;
-  color: #e7e7e7;
-  font-family: "Inter", sans-serif;
+  padding-top: 96px; /* navbar height + breathing space */
+  background: #f4f6fa;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #1f2937;
+}
+
+
+.lm-header {
+  margin-bottom: 20px;
 }
 
 .lm-header h1 {
-  margin-bottom: 8px;
-  font-size: 30px;
+  font-size: 26px;
+  font-weight: 600;
 }
 
+.lm-header p {
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* ==============================
+   GRID & CARDS
+================================ */
 .lm-grid {
-  margin-top: 20px;
   display: grid;
-  gap: 24px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
 .card {
-  background: #1b1c1f;
-  border-radius: 14px;
-  padding: 20px;
-  border: 1px solid #2b2c30;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
 .card.full {
   grid-column: span 2;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+.card h2 {
+  font-size: 18px;
+  margin-bottom: 14px;
+  color: #111827;
 }
 
-input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  background: #2a2b2f;
-  border: 1px solid #3a3b40;
-  color: white;
-}
-
-.btn-primary {
-  padding: 10px 14px;
-  margin-top: 12px;
-  background: #3b82f6;
-  border: none;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
+/* ==============================
+   TABLES
+================================ */
 .clean-table {
   width: 100%;
-  margin-top: 16px;
   border-collapse: collapse;
+  font-size: 14px;
 }
 
-.clean-table th,
-.clean-table td {
-  border-bottom: 1px solid #333;
+.clean-table thead {
+  background: #eef2ff;
+}
+
+.clean-table th {
+  text-align: left;
   padding: 10px;
+  font-weight: 600;
+  color: #1e3a8a;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.btn-sm {
-  padding: 4px 10px;
-  background: #444;
-  border: none;
-  margin-right: 5px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: white;
+.clean-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #1f2937;
 }
 
-.btn-sm.danger {
-  background: #c0392b;
+.clean-table tr:hover td {
+  background: #f9fafb;
 }
 
+/* ==============================
+   REQUEST CARDS
+================================ */
 .req-card {
-  background: #222327;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  border: 1px solid #2f2f32;
-}
-
-.req-top {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.req-card b {
+  font-size: 15px;
+  color: #111827;
 }
 
 .meta {
-  color: #a5a5a5;
   font-size: 13px;
+  color: #4b5563;
+  margin-top: 4px;
 }
 
-.req-actions button {
-  margin-left: 8px;
+/* ==============================
+   BUTTONS
+================================ */
+.req-actions {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-success {
-  background: #2ecc71;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: black;
+  background: #16a34a;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #15803d;
 }
 
 .btn-danger {
-  background: #e74c3c;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: black;
+  background: #dc2626;
+  color: white;
 }
 
-.comment-box {
-  margin-top: 12px;
+.btn-danger:hover {
+  background: #b91c1c;
 }
 
-.comment {
-  padding: 6px 10px;
-  background: #2b2c30;
-  border-radius: 6px;
-  margin-bottom: 6px;
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.empty {
-  color: #888;
+/* ==============================
+   PAGINATION
+================================ */
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
 }
 
+.pager span {
+  font-size: 14px;
+  color: #374151;
+}
+
+.pager button {
+  background: #2563eb;
+  color: #fff;
+}
+
+.pager button:hover {
+  background: #1d4ed8;
+}
+
+/* ==============================
+   STATUS COLORS (if reused)
+================================ */
 .green {
-  color: #2ecc71;
-  font-weight: bold;
+  color: #16a34a;
+  font-weight: 600;
 }
 
 .red {
-  color: #e74c3c;
-  font-weight: bold;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ==============================
+   RESPONSIVE
+================================ */
+@media (max-width: 900px) {
+  .lm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card.full {
+    grid-column: span 1;
+  }
 }

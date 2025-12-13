@@ -1,295 +1,252 @@
 import React, { useState, useMemo } from "react";
 import "../styles/LeaveManagement.css";
+import { makeEmployees } from "../utils/employeeGenerator";
+
+const PAGE_SIZE = 5;
+
+const leaveTypes = {
+  SL: "Sick Leave",
+  CL: "Casual Leave",
+  EL: "Earned Leave",
+};
+
+function randomDate() {
+  return `2025-${String(Math.floor(Math.random() * 12) + 1).padStart(
+    2,
+    "0"
+  )}-${String(Math.floor(Math.random() * 25) + 1).padStart(2, "0")}`;
+}
+
+function generateRequests(employees, count = 12) {
+  return Array.from({ length: count }).map((_, i) => {
+    const emp = employees[Math.floor(Math.random() * employees.length)];
+    const days = Math.floor(Math.random() * 3) + 1;
+    const type = Object.keys(leaveTypes)[
+      Math.floor(Math.random() * 3)
+    ];
+
+    return {
+      id: Date.now() + i,
+      empId: emp.id,
+      empName: emp.name,
+      department: emp.department,
+      type,
+      from: randomDate(),
+      to: randomDate(),
+      days,
+      status: "Pending",
+    };
+  });
+}
 
 export default function LeaveManagement() {
-  const [policies, setPolicies] = useState([
-    { id: 1, type: "SL", display: "Sick Leave", limit: 10 },
-    { id: 2, type: "CL", display: "Casual Leave", limit: 12 },
-    { id: 3, type: "EL", display: "Earned Leave", limit: 18 },
+  const employees = useMemo(() => makeEmployees(200), []);
+
+  const [policies] = useState([
+    { type: "SL", limit: 10 },
+    { type: "CL", limit: 12 },
+    { type: "EL", limit: 18 },
   ]);
 
-  const [requests, setRequests] = useState([
-    {
-      id: 101,
-      empName: "Asha Patel",
-      empId: "E-112",
-      type: "SL",
-      from: "2025-12-18",
-      to: "2025-12-19",
-      days: 2,
-      reason: "High fever",
-      status: "Pending",
-      comments: [],
-    },
-    {
-      id: 102,
-      empName: "Rohit Sharma",
-      empId: "E-207",
-      type: "CL",
-      from: "2025-12-22",
-      to: "2025-12-22",
-      days: 1,
-      reason: "Personal work",
-      status: "Pending",
-      comments: [],
-    },
-  ]);
-
+  const [requests, setRequests] = useState(
+    generateRequests(employees)
+  );
   const [history, setHistory] = useState([]);
 
-  const [form, setForm] = useState({ type: "", display: "", limit: "" });
-  const [editingId, setEditingId] = useState(null);
+  const [reqPage, setReqPage] = useState(1);
 
-  function savePolicy(e) {
-    e.preventDefault();
-    const { type, display, limit } = form;
-    if (!type.trim() || !display.trim() || !limit) return;
+  /* ---------------------------------
+     EMPLOYEE LEAVE USAGE CALCULATION
+  ---------------------------------- */
+  const usageByEmployee = useMemo(() => {
+    const map = {};
 
-    if (editingId) {
-      setPolicies((p) =>
-        p.map((x) =>
-          x.id === editingId
-            ? { ...x, type, display, limit: Number(limit) }
-            : x
-        )
+    history.forEach((h) => {
+      if (!map[h.empId]) map[h.empId] = {};
+      map[h.empId][h.type] =
+        (map[h.empId][h.type] || 0) + h.days;
+    });
+
+    return map;
+  }, [history]);
+
+  function getPolicyLimit(type) {
+    return policies.find((p) => p.type === type)?.limit || 0;
+  }
+
+  function approveRequest(req) {
+    const used =
+      usageByEmployee[req.empId]?.[req.type] || 0;
+    const limit = getPolicyLimit(req.type);
+
+    if (used + req.days > limit) {
+      alert(
+        `Cannot approve.\n${leaveTypes[req.type]} left: ${
+          limit - used
+        } days`
       );
-      setEditingId(null);
-    } else {
-      setPolicies((p) => [
-        ...p,
-        {
-          id: Date.now(),
-          type: type.toUpperCase(),
-          display,
-          limit: Number(limit),
-        },
-      ]);
+      return;
     }
 
-    setForm({ type: "", display: "", limit: "" });
+    setRequests((prev) => prev.filter((r) => r.id !== req.id));
+    setHistory((h) => [
+      {
+        ...req,
+        status: "Approved",
+        actionedAt: new Date().toISOString(),
+      },
+      ...h,
+    ]);
   }
 
-  function removePolicy(id) {
-    setPolicies((p) => p.filter((x) => x.id !== id));
+  function rejectRequest(req) {
+    setRequests((prev) => prev.filter((r) => r.id !== req.id));
+    setHistory((h) => [
+      {
+        ...req,
+        status: "Rejected",
+        actionedAt: new Date().toISOString(),
+      },
+      ...h,
+    ]);
   }
 
-  function editPolicy(p) {
-    setEditingId(p.id);
-    setForm({ type: p.type, display: p.display, limit: p.limit });
-  }
+  const pagedRequests = useMemo(() => {
+    const start = (reqPage - 1) * PAGE_SIZE;
+    return requests.slice(start, start + PAGE_SIZE);
+  }, [requests, reqPage]);
 
-  function handleRequestAction(id, action, comment = "") {
-    setRequests((rs) => {
-      const req = rs.find((r) => r.id === id);
-      if (!req) return rs;
+  /* ---------------------------------
+     HISTORY SUMMARY PER EMPLOYEE
+  ---------------------------------- */
+  const historySummary = useMemo(() => {
+    const summary = {};
 
-      const updated = { ...req, status: action };
-      if (comment)
-        updated.comments.push({
-          by: "HR",
-          text: comment,
-          at: new Date().toISOString(),
-        });
-
-      setHistory((h) => [{ ...updated, actionedAt: new Date() }, ...h]);
-
-      return rs.filter((r) => r.id !== id);
+    history.forEach((h) => {
+      if (!summary[h.empId]) {
+        summary[h.empId] = {
+          name: h.empName,
+          SL: 0,
+          CL: 0,
+          EL: 0,
+        };
+      }
+      if (h.status === "Approved") {
+        summary[h.empId][h.type] += h.days;
+      }
     });
-  }
 
-  function addCommentToRequest(id, comment) {
-    if (!comment.trim()) return;
-
-    setRequests((rs) =>
-      rs.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              comments: [
-                ...r.comments,
-                { by: "HR", text: comment, at: new Date().toISOString() },
-              ],
-            }
-          : r
-      )
-    );
-  }
-
-  const leaveSummary = useMemo(() => {
-    const used = history.reduce((acc, h) => {
-      acc[h.type] = (acc[h.type] || 0) + h.days;
-      return acc;
-    }, {});
-
-    return policies.map((p) => ({
-      ...p,
-      used: used[p.type] || 0,
-      remaining: p.limit - (used[p.type] || 0),
-    }));
-  }, [policies, history]);
+    return Object.values(summary);
+  }, [history]);
 
   return (
     <div className="lm-root">
       <header className="lm-header">
         <h1>Leave Management</h1>
+        <p>{employees.length} Employees</p>
       </header>
 
       <div className="lm-grid">
-        {/* POLICY SETUP */}
+        {/* LEAVE POLICY */}
         <section className="card">
-          <h2>Leave Policy Setup</h2>
-
-          <form className="policy-form" onSubmit={savePolicy}>
-            <div className="row">
-              <input
-                placeholder="Code (SL)"
-                value={form.type}
-                onChange={(e) =>
-                  setForm({ ...form, type: e.target.value.toUpperCase() })
-                }
-              />
-              
-              <input
-                placeholder="Display Name (Sick Leave)"
-                value={form.display}
-                onChange={(e) =>
-                  setForm({ ...form, display: e.target.value })
-                }
-              />
-              <input
-                type="number"
-                placeholder="Yearly Limit"
-                value={form.limit}
-                onChange={(e) => setForm({ ...form, limit: e.target.value })}
-              />
-            </div>
-
-            <button className="btn-primary">
-              {editingId ? "Update Policy" : "Add Policy"}
-            </button>
-          </form>
-
+          <h2>Leave Policy</h2>
           <table className="clean-table">
             <thead>
               <tr>
                 <th>Code</th>
-                <th>Name</th>
-                <th>Limit</th>
-                <th>Used</th>
-                <th>Remaining</th>
-                <th></th>
+                <th>Leave Type</th>
+                <th>Yearly Limit</th>
               </tr>
             </thead>
             <tbody>
-              {leaveSummary.map((p) => (
-                <tr key={p.id}>
+              {policies.map((p) => (
+                <tr key={p.type}>
                   <td>{p.type}</td>
-                  <td>{p.display}</td>
+                  <td>{leaveTypes[p.type]}</td>
                   <td>{p.limit}</td>
-                  <td>{p.used}</td>
-                  <td>{p.remaining}</td>
-                  <td>
-                    <button className="btn-sm" onClick={() => editPolicy(p)}>
-                      Edit
-                    </button>
-                    <button
-                      className="btn-sm danger"
-                      onClick={() => removePolicy(p.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </section>
 
-        {/* REQUESTS */}
+        {/* PENDING REQUESTS */}
         <section className="card">
           <h2>Pending Requests</h2>
 
-          {requests.length === 0 && <p className="empty">No pending requests</p>}
+          {pagedRequests.map((r) => {
+            const used =
+              usageByEmployee[r.empId]?.[r.type] || 0;
+            const limit = getPolicyLimit(r.type);
 
-          {requests.map((r) => (
-            <div className="req-card" key={r.id}>
-              <div className="req-top">
+            return (
+              <div className="req-card" key={r.id}>
                 <div>
-                  <b>{r.empName}</b> ({r.empId})
+                  <b>{r.empName}</b>
                   <div className="meta">
-                    {r.type} · {r.from} → {r.to} · {r.days} days
+                    {leaveTypes[r.type]} · {r.days} days
+                  </div>
+                  <div className="meta">
+                    Allowed: {limit} | Used: {used} | Balance:{" "}
+                    {limit - used}
                   </div>
                 </div>
 
                 <div className="req-actions">
                   <button
                     className="btn-success"
-                    onClick={() =>
-                      handleRequestAction(r.id, "Approved", "Approved by HR")
-                    }
+                    onClick={() => approveRequest(r)}
                   >
                     Approve
                   </button>
                   <button
                     className="btn-danger"
-                    onClick={() =>
-                      handleRequestAction(r.id, "Rejected", "Rejected by HR")
-                    }
+                    onClick={() => rejectRequest(r)}
                   >
                     Reject
                   </button>
                 </div>
               </div>
+            );
+          })}
 
-              <p className="reason">Reason: {r.reason}</p>
-
-              <div className="comment-box">
-                {r.comments.map((c, i) => (
-                  <div className="comment" key={i}>
-                    {c.text}
-                  </div>
-                ))}
-
-                <input
-                  placeholder="Add comment & press Enter"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      addCommentToRequest(r.id, e.target.value);
-                      e.target.value = "";
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          ))}
+          <div className="pager">
+            <button
+              disabled={reqPage === 1}
+              onClick={() => setReqPage((p) => p - 1)}
+            >
+              Prev
+            </button>
+            <span>Page {reqPage}</span>
+            <button
+              disabled={reqPage * PAGE_SIZE >= requests.length}
+              onClick={() => setReqPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
         </section>
 
         {/* HISTORY */}
         <section className="card full">
-          <h2>Leave History</h2>
+          <h2>Leave History Summary</h2>
 
           <table className="clean-table">
             <thead>
               <tr>
-                <th>Date</th>
                 <th>Employee</th>
-                <th>Type</th>
-                <th>Days</th>
-                <th>Status</th>
+                <th>SL</th>
+                <th>CL</th>
+                <th>EL</th>
               </tr>
             </thead>
             <tbody>
-              {history.map((h) => (
-                <tr key={h.id}>
-                  <td>{new Date(h.actionedAt).toLocaleString()}</td>
-                  <td>
-                    {h.empName} ({h.empId})
-                  </td>
-                  <td>{h.type}</td>
-                  <td>{h.days}</td>
-                  <td className={h.status === "Approved" ? "green" : "red"}>
-                    {h.status}
-                  </td>
+              {historySummary.map((h, i) => (
+                <tr key={i}>
+                  <td>{h.name}</td>
+                  <td>{h.SL}</td>
+                  <td>{h.CL}</td>
+                  <td>{h.EL}</td>
                 </tr>
               ))}
             </tbody>

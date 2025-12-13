@@ -1,8 +1,108 @@
-.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; z-index:60; }
-.modal { background:#fff; width:900px; max-width:95%; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,0.25); overflow:hidden; }
-.modal-header { display:flex; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #eee; }
-.emp-form { padding:16px; display:flex; flex-direction:column; gap:12px; }
-.row { display:flex; gap:12px; }
-.row label { flex:1; display:flex; flex-direction:column; gap:6px; font-size:13px; color:#333; }
-.row input, .row select { padding:8px; border-radius:8px; border:1px solid #ddd; }
-.form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+/* ===============================
+   MODAL
+================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.modal {
+  background: #ffffff;
+  width: 900px;
+  max-width: 96%;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  overflow: hidden;
+  animation: modalPop 0.3s ease;
+}
+
+/* ===============================
+   HEADER
+================================ */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.modal-header button {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #475569;
+}
+
+/* ===============================
+   FORM
+================================ */
+.emp-form {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .row {
+    flex-direction: column;
+  }
+}
+
+.row label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.row input,
+.row select {
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+}
+
+.row input:focus,
+.row select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+
+/* ===============================
+   ACTIONS
+================================ */
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}

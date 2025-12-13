@@ -1,446 +1,247 @@
 import React, { useMemo, useState } from "react";
 import "../styles/Attendance.css";
 
-/* Chart.js + react-chartjs-2 */
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
   ArcElement,
-  Title,
   Tooltip,
   Legend,
-} from "chart.js";
-import { Bar, Line, Pie } from "react-chartjs-2";
-
-ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
   PointElement,
   LineElement,
+} from "chart.js";
+import { Pie, Line } from "react-chartjs-2";
+
+import { makeEmployees } from "../utils/mockData.js";
+
+ChartJS.register(
   ArcElement,
-  Title,
   Tooltip,
-  Legend
+  Legend,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement
 );
 
-/* -------------------------
-   Dummy employee list
-   ------------------------- */
-const employeesData = [
-  { id: 1, name: "Ravi Kumar", department: "IT", role: "Developer" },
-  { id: 2, name: "Sneha Reddy", department: "HR", role: "HR Executive" },
-  { id: 3, name: "Amit Verma", department: "Finance", role: "Accountant" },
-  { id: 4, name: "Divya Patel", department: "IT", role: "Tester" },
-  { id: 5, name: "Naveen Rao", department: "Sales", role: "Sales Executive" },
-];
+/* ===============================
+   DATA
+================================ */
+const employees = makeEmployees(1000);
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const PAGE_SIZE = 20;
 
-/* -------------------------
-   Helpers: generate sample month data
-   ------------------------- */
-const daysInMonth = (y, m) => new Date(y, m, 0).getDate();
-
-const generateRecordsForMonth = (year, month) => {
-  // month: 1-12
-  const days = daysInMonth(year, month);
-  const records = [];
-
-  employeesData.forEach((emp) => {
-    for (let d = 1; d <= days; d++) {
-      // random presence with slight bias for present
-      const present = Math.random() > 0.12;
-      // small chance of late
-      const late = present && Math.random() < 0.08;
-      const date = new Date(year, month - 1, d).toISOString().slice(0, 10);
-
-      records.push({
-        id: emp.id,
-        name: emp.name,
-        department: emp.department,
-        role: emp.role,
-        date,
-        status: present ? "Present" : "Absent",
-        checkIn: present ? (late ? "09:22" : "09:00") : "",
-        checkOut: present ? "18:00" : "",
-        late: late ? 1 : 0,
-      });
-    }
-  });
-
-  return records;
+const genDay = () => {
+  const r = Math.random();
+  if (r < 0.1) return { status: "Leave" };
+  if (r < 0.25) return { status: "Absent" };
+  return { status: "Present", in: "09:00", out: "18:00" };
 };
 
-/* -------------------------
-   Component
-   ------------------------- */
-const Attendance = () => {
-  const today = new Date();
-  const thisYear = today.getFullYear();
-  const thisMonth = today.getMonth() + 1; // 1..12
+const genWeek = () =>
+  DAYS.reduce((a, d) => {
+    a[d] = genDay();
+    return a;
+  }, {});
 
-  // COMPLETE SAMPLE monthly dataset (modifiable)
-  const [records, setRecords] = useState(() =>
-    generateRecordsForMonth(thisYear, thisMonth)
+/* ===============================
+   COMPONENT
+================================ */
+export default function Attendance() {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [modal, setModal] = useState(null);
+
+  const data = useMemo(
+    () => employees.map((e) => ({ ...e, week: genWeek() })),
+    []
   );
 
-  // Filters & UI state
-  const [filterDate, setFilterDate] = useState("");
-  const [dept, setDept] = useState("All");
-  const [role, setRole] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [modalData, setModalData] = useState(null);
-
-  // dropdown options
-  const departments = useMemo(
-    () => ["All", ...new Set(records.map((r) => r.department))],
-    [records]
-  );
-  const roles = useMemo(() => ["All", ...new Set(records.map((r) => r.role))], [
-    records,
-  ]);
-
-  // filtered view (daily table)
   const filtered = useMemo(() => {
-    let list = [...records];
-    if (filterDate) list = list.filter((r) => r.date === filterDate);
-    if (dept !== "All") list = list.filter((r) => r.department === dept);
-    if (role !== "All") list = list.filter((r) => r.role === role);
-    if (statusFilter !== "All") list = list.filter((r) => r.status === statusFilter);
-    return list;
-  }, [records, filterDate, dept, role, statusFilter]);
+    return data.filter((e) =>
+      `${e.id} ${e.name} ${e.department} ${e.role}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
+  }, [data, search]);
 
-  // Summary per employee for month
-  const summary = useMemo(() => {
-    return employeesData.map((emp) => {
-      const empRecs = records.filter((r) => r.id === emp.id);
-      const workingDays = empRecs.length;
-      const present = empRecs.filter((r) => r.status === "Present").length;
-      const absent = workingDays - present;
-      const lateMarks = empRecs.reduce((s, x) => s + (x.late || 0), 0);
-      const percent = workingDays ? ((present / workingDays) * 100).toFixed(1) : "0.0";
-      return { ...emp, workingDays, present, absent, lateMarks, percent };
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const rows = filtered.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
+
+  /* Charts */
+  const pieData = useMemo(() => {
+    let p = 0, a = 0, l = 0;
+    data.forEach((e) => {
+      const s = e.week.Mon.status;
+      if (s === "Present") p++;
+      else if (s === "Absent") a++;
+      else l++;
     });
-  }, [records]);
-
-  /* -------------------------
-     Charts Data
-     ------------------------- */
-
-  // Bar chart: present vs absent per employee
-  const barData = useMemo(() => {
-    const labels = summary.map((s) => s.name);
     return {
-      labels,
+      labels: ["Present", "Absent", "Leave"],
       datasets: [
         {
-          label: "Present",
-          data: summary.map((s) => s.present),
-          backgroundColor: "#2563eb",
-          borderRadius: 6,
-        },
-        {
-          label: "Absent",
-          data: summary.map((s) => s.absent),
-          backgroundColor: "#ef4444",
-          borderRadius: 6,
+          data: [p, a, l],
+          backgroundColor: ["#22c55e", "#ef4444", "#f59e0b"],
         },
       ],
     };
-  }, [summary]);
+  }, [data]);
 
-  const barOptions = {
-    responsive: true,
-    plugins: { legend: { position: "top", labels: { color: "#0f172a" } } },
-    scales: {
-      x: { ticks: { color: "#0f172a" } },
-      y: { ticks: { color: "#0f172a" }, beginAtZero: true },
-    },
+  const lineData = {
+    labels: Array.from({ length: 30 }, (_, i) => i + 1),
+    datasets: [
+      {
+        label: "Attendance %",
+        data: Array.from({ length: 30 }, () =>
+          (70 + Math.random() * 30).toFixed(1)
+        ),
+        borderColor: "#3b82f6",
+        tension: 0.3,
+      },
+    ],
   };
 
-  // Line chart: daily attendance % for the month
-  const lineData = useMemo(() => {
-    const days = daysInMonth(thisYear, thisMonth);
-    const labels = Array.from({ length: days }, (_, i) => (i + 1).toString());
-    const presentCounts = labels.map((lab, idx) => {
-      const d = new Date(thisYear, thisMonth - 1, idx + 1).toISOString().slice(0, 10);
-      const recs = records.filter((r) => r.date === d);
-      if (!recs.length) return 0;
-      const present = recs.filter((r) => r.status === "Present").length;
-      return ((present / recs.length) * 100).toFixed(1);
-    });
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: "Attendance % (daily)",
-          data: presentCounts,
-          borderColor: "#10b981",
-          backgroundColor: "rgba(16,185,129,0.08)",
-          fill: true,
-          tension: 0.3,
-          pointRadius: 3,
-        },
-      ],
-    };
-  }, [records, thisYear, thisMonth]);
-
-  const lineOptions = {
-    responsive: true,
-    plugins: { legend: { position: "top", labels: { color: "#0f172a" } } },
-    scales: {
-      x: { ticks: { color: "#0f172a" } },
-      y: { ticks: { color: "#0f172a" }, beginAtZero: true, max: 100 },
-    },
-  };
-  
-  /* -------------------------
-     Actions: Save record (modal)
-     ------------------------- */
-  const saveRecord = () => {
-    if (!modalData) return;
-    const exists = records.some((r) => r.id === modalData.id && r.date === modalData.date);
-    if (exists) {
-      setRecords((prev) =>
-        prev.map((r) => (r.id === modalData.id && r.date === modalData.date ? modalData : r))
-      );
-    } else {
-      setRecords((prev) => [...prev, modalData]);
-    }
-    setModalData(null);
-  };
-
-  /* -------------------------
-     CSV Export (filtered)
-     ------------------------- */
+  /* Export */
   const exportCSV = () => {
-    const rows = filtered.map((r) => ({
-      id: r.id,
-      name: r.name,
-      department: r.department,
-      role: r.role,
-      date: r.date,
-      status: r.status,
-      checkIn: r.checkIn,
-      checkOut: r.checkOut,
-    }));
-    if (!rows.length) {
-      alert("No records to export for the current filters.");
-      return;
-    }
-    const csv = [Object.keys(rows[0]).join(","), ...rows.map((r) => Object.values(r).map((v) => `"${v}"`).join(","))].join("\n");
+    const rows = filtered.map((e) => {
+      const r = { ID: e.id, Name: e.name };
+      DAYS.forEach((d) => {
+        const x = e.week[d];
+        r[d] =
+          x.status === "Present"
+            ? `${x.in}-${x.out}`
+            : x.status === "Absent"
+            ? "A"
+            : "L";
+      });
+      return r;
+    });
+
+    const csv = [
+      Object.keys(rows[0]).join(","),
+      ...rows.map((r) => Object.values(r).join(",")),
+    ].join("\n");
+
     const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `attendance_export_${Date.now()}.csv`;
+    a.href = URL.createObjectURL(blob);
+    a.download = "attendance.csv";
     a.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="attendance-container">
-      {/* TOP ROW: Filters + actions */}
-      <div className="att-controls">
+    <div className="attendance-page">
+      <h2>Attendance Dashboard</h2>
+
+      {/* Charts */}
+      <div className="charts">
+        <div className="card">
+          <h4>Today</h4>
+          <Pie data={pieData} />
+        </div>
+        <div className="card">
+          <h4>Monthly Trend</h4>
+          <Line data={lineData} />
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="controls">
         <input
-          type="date"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-          title="Filter by date"
+          placeholder="Search employee..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
-
-        <select value={dept} onChange={(e) => setDept(e.target.value)}>
-          {departments.map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select>
-
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          {roles.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option>All</option>
-          <option>Present</option>
-          <option>Absent</option>
-        </select>
-
-        <button
-          className="btn-add"
-          onClick={() =>
-            setModalData({
-              id: "",
-              name: "",
-              department: "",
-              role: "",
-              date: "",
-              status: "Present",
-              checkIn: "",
-              checkOut: "",
-              late: 0,
-            })
-          }
-        >
-          Add Attendance
-        </button>
-
-        <button className="btn-export" onClick={exportCSV}>
-          Export CSV
-        </button>
+        <button onClick={exportCSV}>Export Excel</button>
       </div>
 
-      {/* DASHBOARD GRID: charts + table */}
-      <div className="att-grid">
-        <div className="chart-card">
-          <h4>Present vs Absent (per employee)</h4>
-          <Bar data={barData} options={barOptions} />
-        </div>
-
-        <div className="chart-card">
-          <h4>Attendance % (trend)</h4>
-          <Line data={lineData} options={lineOptions} />
-        </div>
-
-        {/* Daily table */}
-        <div className="table-card fullwidth">
-          <table className="att-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Dept</th>
-                <th>Role</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>In</th>
-                <th>Out</th>
-                <th>Edit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length ? (
-                filtered.map((r) => (
-                  <tr key={`${r.id}-${r.date}`}>
-                    <td>{r.id}</td>
-                    <td>{r.name}</td>
-                    <td>{r.department}</td>
-                    <td>{r.role}</td>
-                    <td>{r.date}</td>
-                    <td className={r.status === "Absent" ? "absent" : "present"}>{r.status}</td>
-                    <td>{r.checkIn}</td>
-                    <td>{r.checkOut}</td>
-                    <td>
-                      <button
-                        onClick={() =>
-                          setModalData({
-                            ...r,
-                          })
-                        }
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={9} className="no-data">
-                    No records found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Summary */}
-        <div className="table-card fullwidth">
-          <h4 style={{ marginBottom: 12 }}>Monthly Attendance Summary</h4>
-          <table className="summary-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Working Days</th>
-                <th>Present</th>
-                <th>Absent</th>
-                <th>Late Marks</th>
-                <th>%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.name}</td>
-                  <td>{s.workingDays}</td>
-                  <td>{s.present}</td>
-                  <td>{s.absent}</td>
-                  <td>{s.lateMarks}</td>
-                  <td>{s.percent}%</td>
-                </tr>
+      {/* Table */}
+      <div className="table-box">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              {DAYS.map((d) => (
+                <th key={d}>{d}</th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((e) => (
+              <tr key={e.id}>
+                <td>{e.id}</td>
+                <td>{e.name}</td>
+                {DAYS.map((d) => {
+                  const x = e.week[d];
+                  return (
+                    <td
+                      key={d}
+                      className={`cell ${x.status.toLowerCase()}`}
+                      title={
+                        x.status === "Present"
+                          ? `In ${x.in} / Out ${x.out}`
+                          : x.status
+                      }
+                      onClick={() =>
+                        setModal({ emp: e, day: d, data: x })
+                      }
+                    >
+                      {x.status === "Present"
+                        ? `${x.in}-${x.out}`
+                        : x.status === "Absent"
+                        ? "A"
+                        : "L"}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal for Add / Edit */}
-      {modalData && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h3 style={{ marginBottom: 12 }}>{modalData.id ? "Edit Attendance" : "Add Attendance"}</h3>
+      {/* Pagination */}
+      <div className="pagination">
+        <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+          Prev
+        </button>
+        <span>
+          Page {page} / {totalPages}
+        </span>
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage(page + 1)}
+        >
+          Next
+        </button>
+      </div>
 
-            <label>Name</label>
-            <input
-              placeholder="Employee ID or name"
-              value={modalData.name}
-              onChange={(e) => setModalData({ ...modalData, name: e.target.value })}
-            />
-
-            <label>Employee ID</label>
-            <input
-              placeholder="numeric id"
-              value={modalData.id}
-              onChange={(e) => setModalData({ ...modalData, id: Number(e.target.value) || "" })}
-            />
-
-            <label>Date</label>
-            <input type="date" value={modalData.date} onChange={(e) => setModalData({ ...modalData, date: e.target.value })} />
-
-            <label>Status</label>
-            <select value={modalData.status} onChange={(e) => setModalData({ ...modalData, status: e.target.value })}>
-              <option>Present</option>
-              <option>Absent</option>
-            </select>
-
-            <label>Check In</label>
-            <input value={modalData.checkIn} onChange={(e) => setModalData({ ...modalData, checkIn: e.target.value })} />
-
-            <label>Check Out</label>
-            <input value={modalData.checkOut} onChange={(e) => setModalData({ ...modalData, checkOut: e.target.value })} />
-
-            <div className="modal-actions">
-              <button className="save-btn" onClick={saveRecord}>
-                Save
-              </button>
-              <button className="cancel-btn" onClick={() => setModalData(null)}>
-                Cancel
-              </button>
-            </div>
+      {/* Modal */}
+      {modal && (
+        <div className="modal" onClick={() => setModal(null)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <h3>{modal.emp.name}</h3>
+            <p>Day: {modal.day}</p>
+            <p>Status: {modal.data.status}</p>
+            {modal.data.in && (
+              <>
+                <p>In: {modal.data.in}</p>
+                <p>Out: {modal.data.out}</p>
+              </>
+            )}
+            <button onClick={() => setModal(null)}>Close</button>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Attendance;
+}
