@@ -9,6 +9,11 @@ import {
   FaBuilding,
   FaIdBadge,
   FaFileInvoiceDollar,
+  FaBoxOpen,
+  FaUserTie,
+  FaBullhorn,
+  FaCalendarAlt,
+  FaCog,
 } from "react-icons/fa";
 import "../styles/Sidebar.css";
 
@@ -51,6 +56,7 @@ const Sidebar = ({ collapsed = false }) => {
             <NavLink to="/admin/leavemanagement" className="submenu-item">
               Leaves
             </NavLink>
+            
 
             <div
               className="submenu-item expandable"
@@ -69,6 +75,33 @@ const Sidebar = ({ collapsed = false }) => {
                 <NavLink to="/admin/designations" className="submenu-item">
                   <FaIdBadge /> Designations
                 </NavLink>
+                <NavLink to="/admin/asset" className="submenu-item">
+                  <FaBoxOpen className="submenu-icon" />
+                  Assets
+                </NavLink>
+
+                <NavLink to="/admin/recruit" className="submenu-item">
+                  <FaUserTie className="submenu-icon" />
+                  Recruit
+                </NavLink>
+
+                <NavLink to="/admin/announce" className="submenu-item">
+                  <FaBullhorn className="submenu-icon" />
+                  Announcements
+                </NavLink>
+
+                <NavLink to="/admin/holidays" className="submenu-item">
+                  <FaCalendarAlt className="submenu-icon" />
+                  Holidays
+                </NavLink>
+
+                <NavLink to="/admin/settings" className="submenu-item">
+                  <FaCog className="submenu-icon" />
+                  Settings
+                </NavLink>
+
+                
+
               </div>
             )}
           </div>
@@ -84,3 +117,4 @@ const Sidebar = ({ collapsed = false }) => {
 };
 
 export default Sidebar;
+

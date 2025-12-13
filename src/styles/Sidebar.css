@@ -107,3 +107,14 @@
 .sub-submenu {
   margin-left: 12px;
 }
+
+.submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.submenu-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
