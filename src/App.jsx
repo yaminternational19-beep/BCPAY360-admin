@@ -21,6 +21,7 @@ import DepartmentDesignation from "./pages/DepartmentDesignation";
 import Companies from "./pages/Companies";
 import Accounts from "./pages/Accounts";
 import Softwarereports from "./pages/Softwarereports";
+import EmployeeView from "./pages/EmployeeView";
 
 /* LAYOUT */
 import Sidebar from "./pages/Sidebar";
@@ -68,6 +69,8 @@ const AdminLayout = ({ user, setUser }) => {
           <Route path="settings" element={<SettingsModule />} />
           <Route path="companies" element={<Companies user={user} />} />
           <Route path="departments" element={<DepartmentDesignation user={user} />} />
+          <Route path="/employee/:id" element={<EmployeeView />} />
+
 
           {/* ✅ NEW ROUTES YOU ASKED FOR */}
           <Route path="accounting" element={<Accounts />} />

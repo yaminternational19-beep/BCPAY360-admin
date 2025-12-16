@@ -9,7 +9,7 @@
 }
 
 /* ===============================
-   FILTER BAR (ONE LINE)
+   FILTER BAR
 ================================ */
 .list-controls {
   display: flex;
@@ -59,7 +59,7 @@
 }
 
 /* ===============================
-   TABLE
+   TABLE BASE
 ================================ */
 .employee-table {
   width: 100%;
@@ -69,42 +69,137 @@
   overflow: hidden;
 }
 
-/* HEADER */
-.employee-table thead th {
-  background: #0f172a;
-  color: #ffffff;
-  padding: 8px;
-  font-size: 12px;
-  text-align: left;
+.employee-table th,
+.employee-table td {
+  vertical-align: middle;
   white-space: nowrap;
 }
 
-/* BODY */
+/* ===============================
+   HEADER
+================================ */
+.employee-table thead th {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 10px 8px;
+  font-size: 12px;
+  text-align: left;
+}
+
+/* ===============================
+   BODY
+================================ */
 .employee-table td {
-  padding: 6px 8px;
+  padding: 8px;
   font-size: 12px;
   color: #0f172a;
   border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
+}
+
+.employee-table tbody tr {
+  height: 48px;
 }
 
 .employee-table tbody tr:hover {
   background: #f1f5f9;
 }
 
-/* INACTIVE ROW */
-.inactive-row {
-  opacity: 0.6;
+/* ===============================
+   COLUMN ALIGNMENT (IMPORTANT)
+================================ */
+
+/* Profile */
+.employee-table th:nth-child(1),
+.employee-table td:nth-child(1) {
+  width: 56px;
+  text-align: center;
+}
+
+/* ID */
+.employee-table th:nth-child(2),
+.employee-table td:nth-child(2) {
+  width: 80px;
+  font-weight: 600;
+}
+
+/* Name */
+.employee-table th:nth-child(3),
+.employee-table td:nth-child(3) {
+  min-width: 160px;
+}
+
+/* Phone */
+.employee-table th:nth-child(4),
+.employee-table td:nth-child(4) {
+  min-width: 120px;
+}
+
+/* Email */
+.employee-table th:nth-child(5),
+.employee-table td:nth-child(5) {
+  min-width: 220px;
+}
+
+/* Department */
+.employee-table th:nth-child(6),
+.employee-table td:nth-child(6) {
+  min-width: 140px;
+}
+
+/* Role */
+.employee-table th:nth-child(7),
+.employee-table td:nth-child(7) {
+  min-width: 180px;
+}
+
+/* Joining Date */
+.employee-table th:nth-child(8),
+.employee-table td:nth-child(8) {
+  text-align: center;
+  min-width: 110px;
+}
+
+/* Salary */
+.employee-table th:nth-child(9),
+.employee-table td:nth-child(9) {
+  text-align: right;
+  font-weight: 600;
+  min-width: 110px;
+}
+
+/* Status */
+.employee-table th:nth-child(10),
+.employee-table td:nth-child(10) {
+  text-align: center;
+  min-width: 100px;
+}
+
+/* Actions */
+.employee-table th:nth-child(11),
+.employee-table td:nth-child(11) {
+  text-align: center;
+  min-width: 220px;
+}
+
+/* ===============================
+   AVATAR
+================================ */
+.emp-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /* ===============================
    STATUS
 ================================ */
 .status {
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 500;
+  display: inline-block;
 }
 
 .status.active {
@@ -118,24 +213,31 @@
 }
 
 /* ===============================
-   ACTION BUTTONS (INLINE)
+   ACTION BUTTONS
 ================================ */
 .row-actions {
   display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 6px;
-  flex-wrap: nowrap;
 }
 
-.row-actions button {
+.row-actions button,
+.row-actions .view {
   border: none;
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 5px 10px;
   font-size: 11px;
   cursor: pointer;
   color: #ffffff;
+  text-decoration: none;
 }
 
 /* Action colors */
+.row-actions .view {
+  background: #3b82f6;
+}
+
 .row-actions .edit {
   background: #2563eb;
 }
@@ -150,6 +252,13 @@
 
 .row-actions .delete {
   background: #dc2626;
+}
+
+/* ===============================
+   INACTIVE ROW
+================================ */
+.inactive-row {
+  opacity: 0.6;
 }
 
 /* ===============================
@@ -186,10 +295,6 @@
    MOBILE
 ================================ */
 @media (max-width: 768px) {
-  .list-controls {
-    gap: 6px;
-  }
-
   .row-actions {
     flex-wrap: wrap;
   }

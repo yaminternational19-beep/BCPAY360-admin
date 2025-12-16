@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import "../styles/EmployeeList.css";
 
 /* =====================
@@ -63,9 +64,7 @@ const EmployeeList = ({
   const filtered = useMemo(() => {
     let list = employees;
 
-    if (inactiveOnly) {
-      list = list.filter(e => !e.active);
-    }
+    if (inactiveOnly) list = list.filter(e => !e.active);
 
     if (q) {
       const qq = q.toLowerCase().trim();
@@ -145,14 +144,30 @@ const EmployeeList = ({
       <table className="employee-table">
         <thead>
           <tr>
-            <th>ID</th><th>Name</th><th>Phone</th><th>Email</th>
-            <th>Department</th><th>Role</th><th>Joining</th>
-            <th>Salary</th><th>Status</th><th>Actions</th>
+            <th>Profile</th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Joining</th>
+            <th>Salary</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {current.map(emp => (
             <tr key={emp.id} className={!emp.active ? "inactive-row" : ""}>
+              <td>
+                <img
+                  src={emp.avatar}
+                  alt={emp.name}
+                  className="emp-avatar"
+                />
+              </td>
               <td>{emp.id}</td>
               <td>{emp.name}</td>
               <td>{emp.phone}</td>
@@ -168,13 +183,31 @@ const EmployeeList = ({
               </td>
               <td>
                 <div className="row-actions">
-                  <button onClick={() => onEdit(emp.id)} className="edit">Edit</button>
+                  <Link
+                      to={`/admin/employee/${emp.id}`}
+                      state={{ employee: emp }}
+                      className="view"
+                    >
+                      View
+                    </Link>
+
+                  <button onClick={() => onEdit(emp.id)} className="edit">
+                    Edit
+                  </button>
+
                   {emp.active ? (
-                    <button onClick={() => onDeactivate(emp.id)} className="deactivate">Deactivate</button>
+                    <button onClick={() => onDeactivate(emp.id)} className="deactivate">
+                      Deactivate
+                    </button>
                   ) : (
-                    <button onClick={() => onActivate(emp.id)} className="activate">Activate</button>
+                    <button onClick={() => onActivate(emp.id)} className="activate">
+                      Activate
+                    </button>
                   )}
-                  <button onClick={() => onDelete(emp.id)} className="delete">Delete</button>
+
+                  <button onClick={() => onDelete(emp.id)} className="delete">
+                    Delete
+                  </button>
                 </div>
               </td>
             </tr>
@@ -185,7 +218,8 @@ const EmployeeList = ({
       {/* FOOTER */}
       <div className="list-footer">
         <span>
-          Showing {(page - 1) * pageSize + 1} – {Math.min(page * pageSize, filtered.length)} of {filtered.length}
+          Showing {(page - 1) * pageSize + 1} –{" "}
+          {Math.min(page * pageSize, filtered.length)} of {filtered.length}
         </span>
         <Pagination page={page} totalPages={totalPages} onPage={setPage} />
       </div>

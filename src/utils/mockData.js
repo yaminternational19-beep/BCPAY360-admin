@@ -1,6 +1,7 @@
 /* =========================================
-   FINAL ENTERPRISE EMPLOYEE DATA GENERATOR
-   ========================================= */
+   ENTERPRISE EMPLOYEE MASTER GENERATOR
+   SINGLE SOURCE OF TRUTH
+========================================= */
 
 /* -----------------------------------------
    NAMES
@@ -18,184 +19,150 @@ const lastNames = [
 ];
 
 /* -----------------------------------------
-   DEPARTMENTS (EXACTLY 6)
+   DEPARTMENTS & ROLES
 ----------------------------------------- */
-const departments = [
-  "HR",
-  "IT",
-  "Finance",
-  "Sales",
-  "Marketing",
-  "Operations"
-];
+const departments = ["HR","IT","Finance","Sales","Marketing","Operations"];
 
-/* -----------------------------------------
-   DESIGNATIONS (EXACTLY 5 EACH)
------------------------------------------ */
 const departmentRoles = {
-  HR: [
-    "HR General",
-    "HR IT",
-    "HR Finance",
-    "HR Sales",
-    "HR Operations"
-  ],
-
-  IT: [
-    "Junior Developer",
-    "Developer",
-    "Senior Developer",
-    "Tech Lead",
-    "Engineering Manager"
-  ],
-
-  Finance: [
-    "Finance Executive",
-    "Accountant",
-    "Senior Accountant",
-    "Finance Manager",
-    "Finance Controller"
-  ],
-
-  Sales: [
-    "Sales Executive",
-    "Senior Sales Executive",
-    "Sales Manager",
-    "Regional Sales Manager",
-    "Sales Head"
-  ],
-
-  Marketing: [
-    "Marketing Executive",
-    "Content Strategist",
-    "Digital Marketing Specialist",
-    "Marketing Manager",
-    "Marketing Head"
-  ],
-
-  Operations: [
-    "Operations Executive",
-    "Senior Operations Executive",
-    "Operations Manager",
-    "Operations Lead",
-    "Operations Head"
-  ]
+  HR: ["HR General","HR IT","HR Finance","HR Sales","HR Operations"],
+  IT: ["Junior Developer","Developer","Senior Developer","Tech Lead","Engineering Manager"],
+  Finance: ["Finance Executive","Accountant","Senior Accountant","Finance Manager","Finance Controller"],
+  Sales: ["Sales Executive","Senior Sales Executive","Sales Manager","Regional Sales Manager","Sales Head"],
+  Marketing: ["Marketing Executive","Content Strategist","Digital Marketing Specialist","Marketing Manager","Marketing Head"],
+  Operations: ["Operations Executive","Senior Operations Executive","Operations Manager","Operations Lead","Operations Head"]
 };
 
 /* -----------------------------------------
    HELPERS
 ----------------------------------------- */
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const pad = n => String(n).padStart(3,"0");
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+/* Alphabet avatar (no static images) */
+const avatar = name =>
+  `https://api.dicebear.com/7.x/initials/png?seed=${encodeURIComponent(name)}&backgroundColor=2563eb&textColor=ffffff`;
 
-function pad(num, size = 3) {
-  return String(num).padStart(size, "0");
-}
+const phone = () =>
+  pick(["98","99","97","96","95"]) +
+  Array.from({length:8},()=>rand(0,9)).join("");
 
-function randomPhone() {
-  const prefixes = ["98", "99", "97", "96", "95"];
-  return (
-    pick(prefixes) +
-    Array.from({ length: 8 }, () => randInt(0, 9)).join("")
-  );
-}
+const pan = name =>
+  name.replace(/[^A-Za-z]/g,"")
+      .toUpperCase()
+      .slice(0,3)
+      .padEnd(3,"X") +
+  String.fromCharCode(65+rand(0,25)) +
+  String.fromCharCode(65+rand(0,25)) +
+  rand(1000,9999) +
+  String.fromCharCode(65+rand(0,25));
 
-function generatePAN(name) {
-  const letters = name
-    .replace(/[^A-Za-z]/g, "")
-    .toUpperCase()
-    .slice(0, 3)
-    .padEnd(3, "X");
+const aadhaar = () =>
+  `${rand(1000,9999)} ${rand(1000,9999)} ${rand(1000,9999)}`;
 
-  const randomLetters = Array.from(
-    { length: 2 },
-    () => String.fromCharCode(65 + randInt(0, 25))
-  ).join("");
+const date = (y1,y2)=>
+  `${rand(y1,y2)}-${String(rand(1,12)).padStart(2,"0")}-${String(rand(1,28)).padStart(2,"0")}`;
 
-  const digits = Array.from({ length: 4 }, () => randInt(0, 9)).join("");
-  const last = String.fromCharCode(65 + randInt(0, 25));
-
-  return `${letters}${randomLetters}${digits}${last}`;
-}
-
-function randomJoiningDate() {
-  const year = randInt(2016, 2024);
-  const month = pad(randInt(1, 12), 2);
-  const day = pad(randInt(1, 28), 2);
-  return `${year}-${month}-${day}`;
-}
-
-/* -----------------------------------------
-   SALARY (DESIGNATION-BASED)
------------------------------------------ */
-function generateSalary(department, role) {
-  const base = {
-    HR: 35000,
-    IT: 55000,
-    Finance: 45000,
-    Sales: 40000,
-    Marketing: 38000,
-    Operations: 36000
+const salary = (d,r)=>{
+  const base={
+    HR:35000, IT:55000, Finance:45000,
+    Sales:40000, Marketing:38000, Operations:36000
   };
+  let m=1;
+  if(/Senior/.test(r)) m=1.4;
+  if(/Lead|Manager/.test(r)) m=1.8;
+  if(/Head|Controller/.test(r)) m=2.3;
+  return Math.round(base[d]*m + rand(0,15000));
+};
 
-  let multiplier = 1;
-
-  if (/Junior|Executive/.test(role)) multiplier = 1.0;
-  if (/Senior/.test(role)) multiplier = 1.4;
-  if (/Lead|Manager/.test(role)) multiplier = 1.8;
-  if (/Head|Controller/.test(role)) multiplier = 2.3;
-
-  return Math.round(
-    base[department] * multiplier + randInt(0, 15000)
-  );
-}
-
-/* -----------------------------------------
-   ROLE DISTRIBUTION (GUARANTEED DIVERSITY)
------------------------------------------ */
-function pickRole(department) {
-  const roles = departmentRoles[department];
-  const r = Math.random();
-
-  if (r < 0.30) return roles[0]; // Junior / Exec
-  if (r < 0.55) return roles[1];
-  if (r < 0.75) return roles[2];
-  if (r < 0.92) return roles[3];
-  return roles[4];               // Head (rare)
-}
+const report = (title, freq="On Demand") => ({
+  title,
+  format: "PDF",
+  frequency: freq,
+  status: "Available"
+});
 
 /* =========================================
    MAIN EXPORT
 ========================================= */
-export function makeEmployees(count = 1000) {
-  const employees = [];
+export function makeEmployees(count=1000) {
+  const list = [];
 
-  for (let i = 1; i <= count; i++) {
-    const firstName = pick(firstNames);
-    const lastName = pick(lastNames);
-    const name = `${firstName} ${lastName}`;
+  for(let i=1;i<=count;i++){
+    const f = pick(firstNames);
+    const l = pick(lastNames);
+    const name = `${f} ${l}`;
+    const dept = pick(departments);
+    const role = pick(departmentRoles[dept]);
+    const gender = Math.random() > 0.5 ? "Male" : "Female";
 
-    const department = pick(departments);
-    const role = pickRole(department);
-
-    employees.push({
+    list.push({
       id: `EMP${pad(i)}`,
       name,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@company.com`,
-      phone: randomPhone(),
-      department,
+      avatar: avatar(name),        // ✅ Alphabet avatar
+      email: `${f.toLowerCase()}.${l.toLowerCase()}${i}@company.com`,
+      phone: phone(),
+      pan: pan(name),
+      aadhaar: aadhaar(),
+      department: dept,
       role,
-      joiningDate: randomJoiningDate(),
-      salary: generateSalary(department, role),
-      pan: generatePAN(name),
-      active: Math.random() > 0.05
+      joiningDate: date(2016,2024),
+      salary: salary(dept,role),
+      active: Math.random() > 0.05,
+
+      biodata: {
+        gender,
+        dob: date(1978,2001),
+        bloodGroup: pick(["A+","B+","O+","AB+"]),
+        maritalStatus: pick(["Single","Married"]),
+        address: "Hyderabad, Telangana",
+        qualification: pick(["B.Tech","MBA","MCA","B.Com"])
+      },
+
+      reports: {
+        personnel: [
+          report("Bio Data"),
+          report("Application Form"),
+          report("Appointment Letter (English)"),
+          report("Appointment Letter (Hindi)"),
+          report("Confirmation Letter"),
+          report("Form 16")
+        ],
+        attendance: [
+          report("Attendance Register","Monthly"),
+          report("Late Coming Report"),
+          report("Absent Report"),
+          report("Over Time Report"),
+          report("Muster Roll Form 12/26")
+        ],
+        leave: [
+          report("Leave Balance"),
+          report("Form 14"),
+          report("Form B")
+        ],
+        salary: [
+          report("Salary Register","Monthly"),
+          report("Salary Summary"),
+          report("OT Sheet"),
+          report("F & F Summary")
+        ],
+        pf: [
+          report("PF Statement"),
+          report("Form 3A"),
+          report("Form 6A"),
+          report("Form 19 & 10C")
+        ],
+        esi: [
+          report("ESI Monthly Statement"),
+          report("Form 5")
+        ],
+        factoryAct: [
+          report("Form 21"),
+          report("Form 22")
+        ]
+      }
     });
   }
 
-  return employees;
+  return list;
 }
