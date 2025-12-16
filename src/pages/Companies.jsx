@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { makeEmployees } from "../utils/mockData";
 import "../styles/Companies.css";
 
-/* SAME COMPANIES AS LOGIN */
 const COMPANY_NAMES = [
   "Black Cube Technologies",
   "Acme Corp",
@@ -12,12 +12,14 @@ const COMPANY_NAMES = [
 ];
 
 export default function Companies({ user }) {
+  const navigate = useNavigate();
   const employees = useMemo(() => makeEmployees(1000), []);
 
-  /* MAP EMPLOYEES → COMPANIES → DEPARTMENTS → DESIGNATIONS */
   const companies = useMemo(() => {
     return COMPANY_NAMES.map((name, i) => {
-      const companyEmployees = employees.filter((_, idx) => idx % COMPANY_NAMES.length === i);
+      const companyEmployees = employees.filter(
+        (_, idx) => idx % COMPANY_NAMES.length === i
+      );
 
       const deptMap = {};
       companyEmployees.forEach((e) => {
@@ -36,9 +38,13 @@ export default function Companies({ user }) {
     });
   }, [employees]);
 
-  if (!companies.length) {
-    return <p style={{ padding: 20 }}>No companies found</p>;
-  }
+  const handleCompanyClick = (companyName) => {
+    if (companyName === user.company) {
+      navigate("/admin/dashboard");
+    } else {
+      alert("This company page will be connected soon.");
+    }
+  };
 
   return (
     <div className="companies-page">
@@ -51,13 +57,14 @@ export default function Companies({ user }) {
           <div
             key={c.id}
             className={`company-card ${isOwnCompany ? "active" : ""}`}
+            onClick={() => handleCompanyClick(c.name)}
           >
             <div className="company-header">
               <h3>{c.name}</h3>
 
               <div className="company-actions">
                 {isOwnCompany ? (
-                  <span className="editable-badge">Editable</span>
+                  <span className="editable-badge">Your Company</span>
                 ) : (
                   <span className="readonly-badge">Read Only</span>
                 )}
