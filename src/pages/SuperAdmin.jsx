@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styles/SuperAdmin.css";
-
-const API_BASE = "VITE_API_BASE_URL";
+import { API_BASE } from "../utils/apiBase";
 
 export default function SuperAdmin() {
   const [step, setStep] = useState("LOGIN");
