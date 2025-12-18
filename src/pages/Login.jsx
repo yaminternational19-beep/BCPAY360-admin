@@ -22,10 +22,10 @@ export default function Login({ onLogin }) {
   });
 
   /* =============================
-     FETCH COMPANIES (ADMIN)
+     FETCH COMPANIES (COMPANY ADMIN)
   ============================= */
   useEffect(() => {
-    if (role === "ADMIN" && step === "LOGIN") {
+    if (role === "COMPANY_ADMIN" && step === "LOGIN") {
       fetch(`${API_BASE}/api/companies/public`)
         .then((r) => r.json())
         .then(setCompanies)
@@ -53,7 +53,7 @@ export default function Login({ onLogin }) {
   };
 
   /* =============================
-     ADMIN LOGIN
+     COMPANY ADMIN LOGIN
   ============================= */
   const submitAdminLogin = async (e) => {
     e.preventDefault();
@@ -167,14 +167,24 @@ export default function Login({ onLogin }) {
           : {
               role: "COMPANY_ADMIN",
               verified: true,
-              companyId: form.companyId,
+              companyId: data.companyId || form.companyId,
             };
+
+      // 🔐 STORE TOKEN (CRITICAL)
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
 
       localStorage.setItem("auth_user", JSON.stringify(user));
       onLogin(user);
-      navigate("/", { replace: true });
+
+      // 🔥 CORRECT REDIRECT
+      navigate(
+        role === "HR" ? "/" : "/admin/dashboard",
+        { replace: true }
+      );
     } catch (err) {
-      alert(err.message || "OTP failed");
+      alert(err.message || "OTP verification failed");
     } finally {
       setLoading(false);
     }
@@ -189,8 +199,12 @@ export default function Login({ onLogin }) {
       <div className="login-page">
         <div className="login-card">
           <h2>Select Role</h2>
-          <button onClick={() => selectRole("SUPER_ADMIN")}>Super Admin</button>
-          <button onClick={() => selectRole("ADMIN")}>Company Admin</button>
+          <button onClick={() => selectRole("SUPER_ADMIN")}>
+            Super Admin
+          </button>
+          <button onClick={() => selectRole("COMPANY_ADMIN")}>
+            Company Admin
+          </button>
           <button onClick={() => selectRole("HR")}>HR</button>
         </div>
       </div>
@@ -220,14 +234,18 @@ export default function Login({ onLogin }) {
           <input
             placeholder="Email"
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
           />
 
           <input
             type="password"
             placeholder="Password"
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
           />
 
           <button disabled={loading}>
@@ -247,14 +265,18 @@ export default function Login({ onLogin }) {
           <input
             placeholder="Emp ID"
             value={form.empId}
-            onChange={(e) => setForm({ ...form, empId: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, empId: e.target.value })
+            }
           />
 
           <input
             type="password"
             placeholder="Password"
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
           />
 
           <button disabled={loading}>
@@ -273,7 +295,9 @@ export default function Login({ onLogin }) {
         <input
           placeholder="Enter OTP"
           value={form.otp}
-          onChange={(e) => setForm({ ...form, otp: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, otp: e.target.value })
+          }
         />
 
         <button disabled={loading}>
