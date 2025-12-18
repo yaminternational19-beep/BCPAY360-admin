@@ -6,10 +6,8 @@ import { API_BASE } from "../utils/apiBase";
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
 
-  const [role, setRole] = useState(null); 
-  const [step, setStep] = useState("ROLE"); 
-  // ROLE | LOGIN | HR_LOGIN | OTP
-
+  const [role, setRole] = useState(null);
+  const [step, setStep] = useState("ROLE"); // ROLE | LOGIN | HR_LOGIN | OTP
   const [loading, setLoading] = useState(false);
 
   const [companies, setCompanies] = useState([]);
@@ -40,14 +38,6 @@ export default function Login({ onLogin }) {
   ============================= */
   const selectRole = (r) => {
     if (r === "SUPER_ADMIN") {
-      const user = {
-        role: "SUPER_ADMIN",
-        verified: true,
-        loggedAt: new Date().toISOString(),
-      };
-
-      localStorage.setItem("auth_user", JSON.stringify(user));
-      onLogin(user);
       navigate("/super-admin", { replace: true });
       return;
     }
@@ -76,19 +66,15 @@ export default function Login({ onLogin }) {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        `${API_BASE}/api/company-admins/pre-login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            companyId: form.companyId,
-            email: form.email,
-            password: form.password,
-          }),
-        }
-      );
+      const res = await fetch(`${API_BASE}/api/company-admins/pre-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyId: form.companyId,
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
@@ -119,7 +105,6 @@ export default function Login({ onLogin }) {
       const res = await fetch(`${API_BASE}/api/hr/pre-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           empId: form.empId,
           password: form.password,
@@ -139,7 +124,7 @@ export default function Login({ onLogin }) {
   };
 
   /* =============================
-     OTP SUBMIT (ADMIN + HR)
+     OTP SUBMIT
   ============================= */
   const submitOTP = async (e) => {
     e.preventDefault();
@@ -161,7 +146,6 @@ export default function Login({ onLogin }) {
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           tempLoginId,
           otp: form.otp,
@@ -171,38 +155,24 @@ export default function Login({ onLogin }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      if (role === "HR") {
-        const user = {
-          role: "HR",
-          verified: true,
-          empId: data.empId,
-          department: data.department,
-          companyId: data.companyId,
-          loggedAt: new Date().toISOString(),
-        };
-
-        localStorage.setItem("auth_user", JSON.stringify(user));
-        onLogin(user);
-        navigate("/", { replace: true });
-        return;
-      }
-
-      const companyObj = companies.find(
-        (c) => String(c.id) === String(form.companyId)
-      );
-
-      const user = {
-        role: "COMPANY_ADMIN",
-        verified: true,
-        companyId: form.companyId,
-        company: companyObj?.name || "",
-        loggedAt: new Date().toISOString(),
-      };
+      const user =
+        role === "HR"
+          ? {
+              role: "HR",
+              verified: true,
+              empId: data.empId,
+              department: data.department,
+              companyId: data.companyId,
+            }
+          : {
+              role: "COMPANY_ADMIN",
+              verified: true,
+              companyId: form.companyId,
+            };
 
       localStorage.setItem("auth_user", JSON.stringify(user));
       onLogin(user);
       navigate("/", { replace: true });
-
     } catch (err) {
       alert(err.message || "OTP failed");
     } finally {
@@ -219,18 +189,9 @@ export default function Login({ onLogin }) {
       <div className="login-page">
         <div className="login-card">
           <h2>Select Role</h2>
-
-          <button onClick={() => selectRole("SUPER_ADMIN")}>
-            Super Admin
-          </button>
-
-          <button onClick={() => selectRole("ADMIN")}>
-            Company Admin
-          </button>
-
-          <button onClick={() => selectRole("HR")}>
-            HR
-          </button>
+          <button onClick={() => selectRole("SUPER_ADMIN")}>Super Admin</button>
+          <button onClick={() => selectRole("ADMIN")}>Company Admin</button>
+          <button onClick={() => selectRole("HR")}>HR</button>
         </div>
       </div>
     );
@@ -259,18 +220,14 @@ export default function Login({ onLogin }) {
           <input
             placeholder="Email"
             value={form.email}
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
 
           <input
             type="password"
             placeholder="Password"
             value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
 
           <button disabled={loading}>
@@ -290,18 +247,14 @@ export default function Login({ onLogin }) {
           <input
             placeholder="Emp ID"
             value={form.empId}
-            onChange={(e) =>
-              setForm({ ...form, empId: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, empId: e.target.value })}
           />
 
           <input
             type="password"
             placeholder="Password"
             value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
 
           <button disabled={loading}>
@@ -320,9 +273,7 @@ export default function Login({ onLogin }) {
         <input
           placeholder="Enter OTP"
           value={form.otp}
-          onChange={(e) =>
-            setForm({ ...form, otp: e.target.value })
-          }
+          onChange={(e) => setForm({ ...form, otp: e.target.value })}
         />
 
         <button disabled={loading}>

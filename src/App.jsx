@@ -6,6 +6,9 @@ import Login from "./pages/Login";
 import RoleGate from "./pages/RoleGate";
 import CodeVerify from "./pages/CodeVerify";
 
+/* SUPER ADMIN */
+import SuperAdmin from "./pages/SuperAdmin";
+
 /* ADMIN PAGES */
 import Dashboard from "./pages/Dashboard";
 import EmployeePanel from "./pages/EmployeePanel";
@@ -22,7 +25,6 @@ import Companies from "./pages/Companies";
 import Accounts from "./pages/Accounts";
 import Softwarereports from "./pages/Softwarereports";
 import EmployeeView from "./pages/EmployeeView";
-import SuperAdmin from "./pages/SuperAdmin";
 import AddHR from "./pages/AddHR";
 
 /* LAYOUT */
@@ -31,12 +33,12 @@ import Navbar from "./pages/Navbar";
 import "./styles/Layout.css";
 
 /* ===============================
-   ADMIN LAYOUT
+   ADMIN LAYOUT (COMPANY / HR)
 ================================ */
 const AdminLayout = ({ user, setUser }) => {
   const [collapsed, setCollapsed] = useState(false);
 
-  // 🔐 Strict guard
+  // 🔐 Strict guard (NOT for Super Admin)
   if (!user || !user.verified || !user.role) {
     return <Navigate to="/login" replace />;
   }
@@ -75,8 +77,7 @@ const AdminLayout = ({ user, setUser }) => {
           <Route path="softwarereports" element={<Softwarereports />} />
           <Route path="hr-management" element={<AddHR />} />
 
-
-          {/* Admin fallback */}
+          {/* ADMIN FALLBACK */}
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </main>
@@ -99,33 +100,23 @@ export default function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* LOGIN */}
+        {/* LOGIN (COMMON ENTRY) */}
         <Route
           path="/login"
-          element={
-            user?.role === "SUPER_ADMIN"
-              ? <Navigate to="/super-admin" replace />
-              : user?.verified && user?.role
-              ? <Navigate to="/admin/dashboard" replace />
-              : <Login onLogin={setUser} />
-          }
+          element={<Login onLogin={setUser} />}
         />
 
-        {/* SUPER ADMIN */}
+        {/* SUPER ADMIN (PUBLIC LOGIN PAGE) */}
         <Route
           path="/super-admin"
-          element={
-            user?.role === "SUPER_ADMIN" && user?.verified
-              ? <SuperAdmin />
-              : <Navigate to="/login" replace />
-          }
+          element={<SuperAdmin />}
         />
 
-        {/* ROLE / OTP */}
+        {/* ROLE / OTP (UNCHANGED) */}
         <Route path="/role" element={<RoleGate />} />
         <Route path="/verify" element={<CodeVerify onVerify={setUser} />} />
 
-        {/* ADMIN */}
+        {/* COMPANY ADMIN / HR */}
         <Route
           path="/admin/*"
           element={<AdminLayout user={user} setUser={setUser} />}

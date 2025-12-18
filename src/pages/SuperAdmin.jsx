@@ -3,7 +3,7 @@ import "../styles/SuperAdmin.css";
 import { API_BASE } from "../utils/apiBase";
 
 /* =============================
-   AUTH HEADER HELPER
+   AUTH HEADER
 ============================= */
 const authHeader = () => ({
   "Content-Type": "application/json",
@@ -34,6 +34,15 @@ export default function SuperAdmin() {
   });
 
   /* =============================
+     SESSION RESTORE
+  ============================= */
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      setStep("DASHBOARD");
+    }
+  }, []);
+
+  /* =============================
      SUPER ADMIN LOGIN
   ============================= */
   const loginSubmit = async (e) => {
@@ -60,9 +69,7 @@ export default function SuperAdmin() {
         return;
       }
 
-      // 🔐 STORE TOKEN
       localStorage.setItem("token", data.token);
-
       setStep("DASHBOARD");
     } catch {
       alert("Backend not reachable");
@@ -80,13 +87,17 @@ export default function SuperAdmin() {
     });
 
     if (res.ok) {
-      const data = await res.json();
-      setCompanies(data);
+      setCompanies(await res.json());
     } else {
-      alert("Unauthorized – please login again");
       logout();
     }
   };
+
+  useEffect(() => {
+    if (step === "DASHBOARD") {
+      loadCompanies();
+    }
+  }, [step]);
 
   /* =============================
      CREATE COMPANY
@@ -101,13 +112,9 @@ export default function SuperAdmin() {
     });
 
     const data = await res.json();
+    if (!res.ok) return alert(data.message);
 
-    if (!res.ok) {
-      alert(data.message);
-      return;
-    }
-
-    setCompanies((prev) => [...prev, data.company]);
+    setCompanies((p) => [...p, data.company]);
     setNewCompany({ name: "", email: "" });
   };
 
@@ -124,11 +131,7 @@ export default function SuperAdmin() {
     });
 
     const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message);
-      return;
-    }
+    if (!res.ok) return alert(data.message);
 
     alert("Company admin created");
     setNewAdmin({ companyId: "", email: "", password: "" });
@@ -139,17 +142,8 @@ export default function SuperAdmin() {
   ============================= */
   const logout = () => {
     localStorage.removeItem("token");
-    setStep("LOGIN");
+    window.location.href = "/";
   };
-
-  /* =============================
-     LOAD DASHBOARD
-  ============================= */
-  useEffect(() => {
-    if (step === "DASHBOARD") {
-      loadCompanies();
-    }
-  }, [step]);
 
   /* =============================
      LOGIN UI
@@ -194,7 +188,7 @@ export default function SuperAdmin() {
   }
 
   /* =============================
-     DASHBOARD UI
+     DASHBOARD
   ============================= */
   return (
     <div className="super-dashboard">
