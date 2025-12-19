@@ -5,10 +5,14 @@ import { API_BASE } from "../utils/apiBase";
 /* =============================
    AUTH HEADER
 ============================= */
-const authHeader = () => ({
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-});
+const authHeader = () => {
+  const token = localStorage.getItem("token");
+  return {
+    Authorization: `Bearer ${token}`
+  };
+};
+
+
 
 export default function SuperAdmin() {
   const [step, setStep] = useState("LOGIN");
