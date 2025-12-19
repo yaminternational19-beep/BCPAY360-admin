@@ -122,20 +122,24 @@ export default function SuperAdmin() {
      CREATE COMPANY ADMIN
   ============================= */
   const createAdmin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const res = await fetch(`${API_BASE}/api/company-admins`, {
-      method: "POST",
-      headers: authHeader(),
-      body: JSON.stringify(newAdmin),
-    });
+  const res = await fetch(`${API_BASE}/api/company-admins`, {
+    method: "POST",
+    headers: {
+      ...authHeader(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(newAdmin),
+  });
 
-    const data = await res.json();
-    if (!res.ok) return alert(data.message);
+  const data = await res.json();
+  if (!res.ok) return alert(data.message);
 
-    alert("Company admin created");
-    setNewAdmin({ company_id: "", email: "", password: "" });
-  };
+  alert("Company admin created");
+  setNewAdmin({ company_id: "", email: "", password: "" });
+};
+
 
   /* =============================
      LOGOUT
