@@ -90,7 +90,7 @@ export default function HRLogin({ onLogin }) {
         body: JSON.stringify({
           companyId: form.companyId,
           department: form.department,
-          empId: normalizedEmpId,
+          emp_id: normalizedEmpId,
           password: form.password,
         }),
       });
@@ -137,7 +137,7 @@ export default function HRLogin({ onLogin }) {
       const user = {
         role: "HR",
         verified: true,
-        empId: data.empId,
+        emp_id: data.emp_id,
         department: data.department,
         companyId: data.companyId,
       };

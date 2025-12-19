@@ -17,7 +17,7 @@ export default function Login({ onLogin }) {
     companyId: "",
     email: "",
     password: "",
-    empId: "",
+    emp_id: "",
     otp: "",
   });
 
@@ -94,7 +94,7 @@ export default function Login({ onLogin }) {
   const submitHRLogin = async (e) => {
     e.preventDefault();
 
-    if (!form.empId || !form.password) {
+    if (!form.emp_id || !form.password) {
       alert("Emp ID and Password required");
       return;
     }
@@ -106,7 +106,7 @@ export default function Login({ onLogin }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          empId: form.empId,
+          emp_id: form.emp_id,
           password: form.password,
         }),
       });
@@ -160,7 +160,7 @@ export default function Login({ onLogin }) {
           ? {
               role: "HR",
               verified: true,
-              empId: data.empId,
+              emp_id: data.emp_id,
               department: data.department,
               companyId: data.companyId,
             }
@@ -264,9 +264,9 @@ export default function Login({ onLogin }) {
 
           <input
             placeholder="Emp ID"
-            value={form.empId}
+            value={form.emp_id}
             onChange={(e) =>
-              setForm({ ...form, empId: e.target.value })
+              setForm({ ...form, emp_id: e.target.value })
             }
           />
 

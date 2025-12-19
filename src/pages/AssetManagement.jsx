@@ -68,7 +68,7 @@ export default function AssetManagement() {
 
   const [assign, setAssign] = useState({
     assetId: "",
-    empId: "",
+    emp_id: "",
   });
 
   /* -----------------------------
@@ -93,9 +93,9 @@ export default function AssetManagement() {
      ASSIGN ASSET
   ----------------------------- */
   function assignAsset() {
-    if (!assign.assetId || !assign.empId) return;
+    if (!assign.assetId || !assign.emp_id) return;
 
-    const emp = employees.find((e) => e.id === assign.empId);
+    const emp = employees.find((e) => e.id === assign.emp_id);
     if (!emp) return;
 
     setAssets((prev) =>
@@ -120,7 +120,7 @@ export default function AssetManagement() {
       )
     );
 
-    setAssign({ assetId: "", empId: "" });
+    setAssign({ assetId: "", emp_id: "" });
   }
 
   /* -----------------------------
@@ -211,11 +211,11 @@ export default function AssetManagement() {
                 {a.status !== "Assigned" ? (
                   <>
                     <select
-                      value={assign.assetId === a.id ? assign.empId : ""}
+                      value={assign.assetId === a.id ? assign.emp_id : ""}
                       onChange={(e) =>
                         setAssign({
                           assetId: a.id,
-                          empId: e.target.value,
+                          emp_id: e.target.value,
                         })
                       }
                     >

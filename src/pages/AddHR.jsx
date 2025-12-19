@@ -95,7 +95,7 @@ export default function AddHR() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          empId: normalizedEmpId,
+          emp_id: normalizedEmpId,
           password: form.password,
           department: form.department,
           designation: "HR",

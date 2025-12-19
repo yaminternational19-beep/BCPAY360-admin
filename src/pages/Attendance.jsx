@@ -142,16 +142,16 @@ export default function Attendance() {
   }, [paginatedEmployees, attendance]);
 
   /* Approve / Reject */
-  const actOnRequest = (empId, day, decision) => {
+  const actOnRequest = (emp_is, day, decision) => {
     setAttendance(prev => ({
       ...prev,
-      [empId]: {
+      [emp_is]: {
         ...prev[empId],
         [day]:
           decision === "APPROVE"
             ? { status: "P", source: "MANUAL_BY_HR" }
             : {
-                ...prev[empId][day],
+                ...prev[emp][day],
                 request: {
                   ...prev[empId][day].request,
                   state: "REJECTED",
