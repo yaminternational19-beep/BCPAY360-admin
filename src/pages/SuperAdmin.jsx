@@ -7,11 +7,13 @@ import { API_BASE } from "../utils/apiBase";
 ============================= */
 const authHeader = () => {
   const token = localStorage.getItem("token");
+  if (!token) return null;
+
   return {
-    Authorization: `Bearer ${token}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
   };
 };
-
 
 
 export default function SuperAdmin() {
@@ -32,7 +34,7 @@ export default function SuperAdmin() {
   });
 
   const [newAdmin, setNewAdmin] = useState({
-    companyId: "",
+    company_id: "",
     email: "",
     password: "",
   });
@@ -50,37 +52,37 @@ export default function SuperAdmin() {
      SUPER ADMIN LOGIN
   ============================= */
   const loginSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!login.email || !login.password || !login.otp) {
-      alert("All fields required");
+  if (!login.email || !login.password || !login.otp) {
+    alert("All fields required");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await fetch(`${API_BASE}/api/super-admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(login),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Login failed");
       return;
     }
 
-    try {
-      setLoading(true);
-
-      const res = await fetch(`${API_BASE}/api/super-admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(login),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Login failed");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      setStep("DASHBOARD");
-    } catch {
-      alert("Backend not reachable");
-    } finally {
-      setLoading(false);
-    }
-  };
+    localStorage.setItem("token", data.token);
+    setStep("DASHBOARD");
+  } catch {
+    alert("Backend not reachable");
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* =============================
      LOAD COMPANIES
@@ -125,24 +127,45 @@ export default function SuperAdmin() {
   /* =============================
      CREATE COMPANY ADMIN
   ============================= */
-  const createAdmin = async (e) => {
+const createAdmin = async (e) => {
   e.preventDefault();
 
-  const res = await fetch(`${API_BASE}/api/company-admins`, {
-    method: "POST",
-    headers: {
-      ...authHeader(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(newAdmin),
-  });
+  if (!newAdmin.company_id || !newAdmin.email || !newAdmin.password) {
+    alert("All fields required");
+    return;
+  }
 
-  const data = await res.json();
-  if (!res.ok) return alert(data.message);
+  try {
+    const res = await fetch(`${API_BASE}/api/company-admins`, {
+      method: "POST",
+      headers: authHeader(), // ✅ ONLY THIS
+      body: JSON.stringify({
+        company_id: newAdmin.company_id,
+        email: newAdmin.email,
+        password: newAdmin.password,
+      }),
+    });
 
-  alert("Company admin created");
-  setNewAdmin({ company_id: "", email: "", password: "" });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Failed to create admin");
+      return;
+    }
+
+    alert("Company admin created successfully");
+
+    setNewAdmin({
+      company_id: "",
+      email: "",
+      password: "",
+    });
+  } catch (err) {
+    console.error("Create admin error:", err);
+    alert("Server error");
+  }
 };
+
 
 
   /* =============================
@@ -233,9 +256,9 @@ export default function SuperAdmin() {
           <h3>Create Company Admin</h3>
           <form onSubmit={createAdmin}>
             <select
-              value={newAdmin.companyId}
+              value={newAdmin.company_id}
               onChange={(e) =>
-                setNewAdmin({ ...newAdmin, companyId: e.target.value })
+                setNewAdmin({ ...newAdmin, company_id: e.target.value })
               }
             >
               <option value="">Select Company</option>
