@@ -45,7 +45,7 @@ export default function Login({ onLogin }) {
     setRole(r);
 
     if (r === "HR") {
-      setStep("HR_LOGIN");
+      navigate("/hr-login", { replace: true });
       return;
     }
 

@@ -26,6 +26,7 @@ import Accounts from "./pages/Accounts";
 import Softwarereports from "./pages/Softwarereports";
 import EmployeeView from "./pages/EmployeeView";
 import AddHR from "./pages/AddHR";
+import HRLogin from "./pages/HRLogin";
 
 /* LAYOUT */
 import Sidebar from "./pages/Sidebar";
@@ -124,6 +125,12 @@ export default function App() {
 
         {/* GLOBAL FALLBACK */}
         <Route path="*" element={<Navigate to="/login" replace />} />
+
+        <Route
+          path="/hr-login"
+          element={<HRLogin onLogin={setUser} />}
+        />
+
       </Routes>
     </BrowserRouter>
   );
