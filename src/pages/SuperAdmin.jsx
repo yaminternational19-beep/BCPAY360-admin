@@ -134,16 +134,18 @@ export default function SuperAdmin() {
     if (!res.ok) return alert(data.message);
 
     alert("Company admin created");
-    setNewAdmin({ companyId: "", email: "", password: "" });
+    setNewAdmin({ company_id: "", email: "", password: "" });
   };
 
   /* =============================
      LOGOUT
   ============================= */
   const logout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/";
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.replace("/login");
   };
+
 
   /* =============================
      LOGIN UI
