@@ -55,7 +55,7 @@ export default function HRLogin({ onLogin }) {
       return;
     }
 
-    fetch(`${API_BASE}/api/departments?companyId=${form.companyId}`, {
+    fetch(`${API_BASE}/api/departments/public?companyId=${form.companyId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
@@ -215,7 +215,7 @@ export default function HRLogin({ onLogin }) {
 
           {normalizedEmpId && (
             <div className="emp-preview">
-              Will be saved as <strong>{normalizedEmpId}</strong>
+              Will be converted as <strong>{normalizedEmpId}</strong>
             </div>
           )}
 
