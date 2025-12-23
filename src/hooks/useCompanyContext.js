@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-
 export function useCompanyContext(user) {
   const [activeCompany, setActiveCompany] = useState(null);
 
@@ -16,9 +14,5 @@ export function useCompanyContext(user) {
   const canEdit = (company) =>
     user?.role === "SUPER_ADMIN" || user?.company === company;
 
-  return {
-    activeCompany,
-    switchCompany,
-    canEdit,
-  };
+  return { activeCompany, switchCompany, canEdit };
 }

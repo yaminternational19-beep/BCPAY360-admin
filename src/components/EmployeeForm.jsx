@@ -1,169 +1,305 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/EmployeeForm.css";
+import { getDesignationsByDepartment } from "../api/master.api";
+import { getLastEmployeeCode } from "../api/employees.api";
 
-const empty = {
-  name: "",
+const EMPTY_FORM = {
+  employee_code: "",
+  full_name: "",
   email: "",
+  country_code: "+91",
   phone: "",
-  department: "HR",
-  role: "Employee",
-  joiningDate: "",
+  department_id: "",
+  designation_id: "",
+  joining_date: "",
   salary: "",
-  pan: "",
+  employment_type: "PERMANENT",
+  password: "",
 };
 
-const EmployeeForm = ({ initial, onClose, onSave }) => {
-  const user = JSON.parse(localStorage.getItem("auth_user"));
-  const isAdmin = user?.role === "ADMIN";
-  const hrDepartment = user?.department || "HR";
+const EmployeeForm = ({ initial, onClose, onSave, departments = [] }) => {
+  const isEdit = Boolean(initial);
 
-  const [form, setForm] = useState(initial || {
-    ...empty,
-    department: isAdmin ? empty.department : hrDepartment,
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [designations, setDesignations] = useState([]);
+  const [loadingDesignations, setLoadingDesignations] = useState(false);
+  const [lastEmpCode, setLastEmpCode] = useState("Loading...");
 
+  /* PREFILL / RESET */
   useEffect(() => {
     if (initial) {
-      setForm(initial);
-    } else {
       setForm({
-        ...empty,
-        department: isAdmin ? empty.department : hrDepartment,
+        ...EMPTY_FORM,
+        ...initial,
+        password: "",
+        joining_date: initial.joining_date?.slice(0, 10) || "",
       });
+    } else {
+      setForm(EMPTY_FORM);
     }
-  }, [initial, isAdmin, hrDepartment]);
+  }, [initial]);
 
-  const handleChange = (k, v) =>
-    setForm(prev => ({ ...prev, [k]: v }));
+  /* FETCH LAST EMPLOYEE CODE (ADD ONLY) */
+  useEffect(() => {
+    if (!isEdit) {
+      setLastEmpCode("Loading...");
+      getLastEmployeeCode()
+        .then((res) =>
+          setLastEmpCode(res.last_employee_code || "—")
+        )
+        .catch(() => setLastEmpCode("Unable to fetch"));
+    }
+  }, [isEdit]);
 
-  const submit = (e) => {
-    e.preventDefault();
-
-    if (!form.name || !form.email) {
-      alert("Name and email required");
+  /* LOAD DESIGNATIONS BY DEPARTMENT */
+  useEffect(() => {
+    if (!form.department_id) {
+      setDesignations([]);
       return;
     }
 
-    onSave({
-      ...form,
-      department: isAdmin ? form.department : hrDepartment,
-      salary: Number(form.salary) || 0,
-      joiningDate:
-        form.joiningDate || new Date().toISOString().slice(0, 10),
-    });
+    setLoadingDesignations(true);
+    getDesignationsByDepartment(form.department_id)
+      .then(setDesignations)
+      .catch(() => setDesignations([]))
+      .finally(() => setLoadingDesignations(false));
+  }, [form.department_id]);
+
+  const change = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  /* SUBMIT */
+  const submit = (e) => {
+    e.preventDefault();
+
+    if (
+      !form.employee_code ||
+      !form.full_name ||
+      !form.department_id ||
+      !form.designation_id ||
+      !form.joining_date ||
+      Number(form.salary) <= 0
+    ) {
+      alert("Please fill all required fields correctly");
+      return;
+    }
+
+    if (!isEdit && !form.password) {
+      alert("Temporary password is required");
+      return;
+    }
+
+    const payload = {
+      employee_code: form.employee_code.trim(),
+      full_name: form.full_name.trim(),
+      email: form.email || null,
+      phone: form.phone
+        ? `${form.country_code}${form.phone}`
+        : null,
+      department_id: Number(form.department_id),
+      designation_id: Number(form.designation_id),
+      joining_date: form.joining_date,
+      salary: Number(form.salary),
+      employment_type: form.employment_type,
+    };
+
+    if (!isEdit) payload.password = form.password;
+
+    onSave(payload);
   };
+
+  useEffect(() => {
+  let mounted = true;
+
+  if (!isEdit) {
+    setLastEmpCode("Loading...");
+    getLastEmployeeCode()
+      .then((res) => {
+        if (mounted) {
+          console.log("LAST CODE:", res);
+          setLastEmpCode(res?.last_employee_code ?? "—");
+        }
+      })
+      .catch(() => {
+        if (mounted) setLastEmpCode("Unable to fetch");
+      });
+  }
+
+  return () => {
+    mounted = false;
+  };
+}, [isEdit]);
+
 
   return (
     <div className="modal-backdrop">
       <div className="modal">
         <div className="modal-header">
-          <h3>{form.id ? "Edit Employee" : "Add Employee"}</h3>
+          <h3>{isEdit ? "Edit Employee" : "Add Employee"}</h3>
           <button onClick={onClose}>✕</button>
         </div>
 
         <form className="emp-form" onSubmit={submit}>
+          {/* EMP CODE + NAME */}
           <div className="row">
-            <label>
-              Name
+            <div className="field">
               <input
-                value={form.name}
-                onChange={e => handleChange("name", e.target.value)}
+                placeholder="Employee Code"
+                value={form.employee_code}
+                disabled={isEdit}
+                onChange={(e) =>
+                  change(
+                    "employee_code",
+                    e.target.value.toUpperCase()
+                  )
+                }
               />
-            </label>
+              {!isEdit && (
+                <small className="hint">
+                  Last Employee ID for this company: <b>{lastEmpCode}</b>
+                </small>
+              )}
 
-            <label>
-              Email
-              <input
-                value={form.email}
-                onChange={e => handleChange("email", e.target.value)}
-              />
-            </label>
+            </div>
+
+            <input
+              placeholder="Enter full name as per Government ID"
+              value={form.full_name}
+              onChange={(e) =>
+                change("full_name", e.target.value)
+              }
+            />
           </div>
 
+          {/* EMAIL + PHONE */}
           <div className="row">
-            <label>
-              Phone
+            <input
+              type="email"
+              placeholder="example@gmail.com"
+              value={form.email}
+              onChange={(e) =>
+                change("email", e.target.value)
+              }
+            />
+
+            <div className="phone-group">
+              <select
+                value={form.country_code}
+                onChange={(e) =>
+                  change("country_code", e.target.value)
+                }
+              >
+                <option value="+91">🇮🇳 +91</option>
+                <option value="+1">🇺🇸 +1</option>
+                <option value="+44">🇬🇧 +44</option>
+              </select>
+
               <input
+                placeholder="Phone number"
                 value={form.phone}
-                onChange={e => handleChange("phone", e.target.value)}
+                onChange={(e) =>
+                  change(
+                    "phone",
+                    e.target.value.replace(/\D/g, "")
+                  )
+                }
               />
-            </label>
-
-            <label>
-              PAN
-              <input
-                value={form.pan}
-                onChange={e => handleChange("pan", e.target.value)}
-              />
-            </label>
+            </div>
           </div>
 
-          <div className="row">
-            <label>
-              Department
-              <select
-                value={form.department}
-                onChange={e =>
-                  handleChange("department", e.target.value)
+          {/* PASSWORD */}
+          {!isEdit && (
+            <div className="row">
+              <input
+                type="password"
+                placeholder="name@2025"
+                value={form.password}
+                onChange={(e) =>
+                  change("password", e.target.value)
                 }
-                disabled={!isAdmin}
-              >
-                <option>HR</option>
-                <option>Finance</option>
-                <option>IT</option>
-                <option>Sales</option>
-                <option>Operations</option>
-                <option>Marketing</option>
-                <option>Support</option>
-              </select>
-            </label>
+              />
+            </div>
+          )}
 
-            <label>
-              Role
-              <select
-                value={form.role}
-                onChange={e => handleChange("role", e.target.value)}
-              >
-                <option>Employee</option>
-                <option>HR Manager</option>
-                <option>Team Lead</option>
-                <option>Accountant</option>
-                <option>Developer</option>
-              </select>
-            </label>
+          {/* DEPARTMENT + DESIGNATION */}
+          <div className="row">
+            <select
+              value={form.department_id}
+              onChange={(e) =>
+                change("department_id", e.target.value)
+              }
+            >
+              <option value="">Select Department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.department_name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={form.designation_id}
+              disabled={
+                !form.department_id || loadingDesignations
+              }
+              onChange={(e) =>
+                change("designation_id", e.target.value)
+              }
+            >
+              <option value="">
+                {loadingDesignations
+                  ? "Loading..."
+                  : "Select Designation"}
+              </option>
+              {designations.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.designation_name}
+                </option>
+              ))}
+            </select>
           </div>
 
+          {/* DATE + SALARY */}
           <div className="row">
-            <label>
-              Joining Date
-              <input
-                type="date"
-                value={form.joiningDate}
-                onChange={e =>
-                  handleChange("joiningDate", e.target.value)
-                }
-              />
-            </label>
+            <input
+              type="date"
+              value={form.joining_date}
+              onChange={(e) =>
+                change("joining_date", e.target.value)
+              }
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="Salary (must be > 0)"
+              value={form.salary}
+              onChange={(e) =>
+                change("salary", e.target.value)
+              }
+            />
+          </div>
 
-            <label>
-              Salary (₹)
-              <input
-                type="number"
-                value={form.salary}
-                onChange={e =>
-                  handleChange("salary", e.target.value)
-                }
-              />
-            </label>
+          {/* EMP TYPE */}
+          <div className="row">
+            <select
+              value={form.employment_type}
+              onChange={(e) =>
+                change("employment_type", e.target.value)
+              }
+            >
+              <option value="PERMANENT">Permanent</option>
+              <option value="CONTRACT">Contract</option>
+              <option value="INTERN">Intern</option>
+            </select>
           </div>
 
           <div className="form-actions">
-            <button type="submit" className="btn primary">
+            <button className="btn primary" type="submit">
               Save
             </button>
             <button
-              type="button"
               className="btn"
+              type="button"
               onClick={onClose}
             >
               Cancel

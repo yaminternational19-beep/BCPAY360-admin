@@ -34,17 +34,14 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #0f172a;
 }
 
 /* Buttons */
 .clear-btn {
-  background: #e5e7eb;
-  color: #0f172a;
+  background: #929cb1;
   border: none;
   padding: 6px 10px;
   border-radius: 6px;
-  font-size: 12px;
   cursor: pointer;
 }
 
@@ -54,12 +51,11 @@
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
-  font-size: 12px;
   cursor: pointer;
 }
 
 /* ===============================
-   TABLE BASE
+   TABLE
 ================================ */
 .employee-table {
   width: 100%;
@@ -71,125 +67,61 @@
 
 .employee-table th,
 .employee-table td {
-  vertical-align: middle;
+  padding: 8px;
+  font-size: 12px;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
-/* ===============================
-   HEADER
-================================ */
 .employee-table thead th {
   background: #0f172a;
   color: #ffffff;
-  padding: 10px 8px;
-  font-size: 12px;
   text-align: left;
-}
-
-/* ===============================
-   BODY
-================================ */
-.employee-table td {
-  padding: 8px;
-  font-size: 12px;
-  color: #0f172a;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.employee-table tbody tr {
-  height: 48px;
 }
 
 .employee-table tbody tr:hover {
   background: #f1f5f9;
 }
 
-/* ===============================
-   COLUMN ALIGNMENT (IMPORTANT)
-================================ */
+.employee-table td {
+  border-bottom: 1px solid #e2e8f0;
+}
 
-/* Profile */
+/* ===============================
+   COLUMN WIDTHS
+================================ */
 .employee-table th:nth-child(1),
-.employee-table td:nth-child(1) {
-  width: 56px;
-  text-align: center;
-}
+.employee-table td:nth-child(1) { width: 56px; text-align: center; }
 
-/* ID */
 .employee-table th:nth-child(2),
-.employee-table td:nth-child(2) {
-  width: 80px;
-  font-weight: 600;
-}
+.employee-table td:nth-child(2) { width: 80px; font-weight: 600; }
 
-/* Name */
 .employee-table th:nth-child(3),
-.employee-table td:nth-child(3) {
-  min-width: 160px;
-}
+.employee-table td:nth-child(3) { min-width: 160px; }
 
-/* Phone */
 .employee-table th:nth-child(4),
-.employee-table td:nth-child(4) {
-  min-width: 120px;
-}
+.employee-table td:nth-child(4) { min-width: 120px; }
 
-/* Email */
 .employee-table th:nth-child(5),
-.employee-table td:nth-child(5) {
-  min-width: 220px;
-}
+.employee-table td:nth-child(5) { min-width: 220px; }
 
-/* Department */
 .employee-table th:nth-child(6),
-.employee-table td:nth-child(6) {
-  min-width: 140px;
-}
+.employee-table td:nth-child(6) { min-width: 140px; }
 
-/* Role */
 .employee-table th:nth-child(7),
-.employee-table td:nth-child(7) {
-  min-width: 180px;
-}
+.employee-table td:nth-child(7) { min-width: 160px; }
 
-/* Joining Date */
 .employee-table th:nth-child(8),
-.employee-table td:nth-child(8) {
-  text-align: center;
-  min-width: 110px;
-}
+.employee-table td:nth-child(8) { min-width: 110px; text-align: center; }
 
-/* Salary */
 .employee-table th:nth-child(9),
-.employee-table td:nth-child(9) {
-  text-align: right;
-  font-weight: 600;
-  min-width: 110px;
-}
+.employee-table td:nth-child(9) { min-width: 110px; text-align: right; font-weight: 600; }
 
-/* Status */
 .employee-table th:nth-child(10),
-.employee-table td:nth-child(10) {
-  text-align: center;
-  min-width: 100px;
-}
+.employee-table td:nth-child(10) { min-width: 100px; text-align: center; }
 
-/* Actions */
 .employee-table th:nth-child(11),
-.employee-table td:nth-child(11) {
-  text-align: center;
-  min-width: 220px;
-}
-
-/* ===============================
-   AVATAR
-================================ */
-.emp-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+.employee-table td:nth-child(11) { min-width: 220px; text-align: center; }
 
 /* ===============================
    STATUS
@@ -199,7 +131,6 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 500;
-  display: inline-block;
 }
 
 .status.active {
@@ -213,44 +144,68 @@
 }
 
 /* ===============================
-   ACTION BUTTONS
+   ACTION BUTTONS (FIXED)
 ================================ */
 .row-actions {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
 }
 
-.row-actions button,
-.row-actions .view {
+/* Base icon button */
+.emp-icon-btn {
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
   border: none;
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 11px;
   cursor: pointer;
-  color: #ffffff;
-  text-decoration: none;
+
+  background: #1e293b;
+  color: #803737;                 /* REQUIRED FOR LUCIDE */
+
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Force SVG visibility */
+.emp-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  stroke: currentColor;
+  display: block;
+}
+
+.emp-icon-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
 }
 
 /* Action colors */
-.row-actions .view {
-  background: #3b82f6;
-}
-
-.row-actions .edit {
+.emp-icon-btn.view {
   background: #2563eb;
 }
 
-.row-actions .activate {
+.emp-icon-btn.edit {
+  background: #7c3aed;
+}
+
+.emp-icon-btn.activate {
   background: #16a34a;
 }
 
-.row-actions .deactivate {
-  background: #d97706;
+.emp-icon-btn.deactivate {
+  background: #f59e0b;
+  color: #c03535;
 }
 
-.row-actions .delete {
+.emp-icon-btn.delete {
   background: #dc2626;
 }
 
@@ -270,7 +225,6 @@
   align-items: center;
   margin-top: 10px;
   font-size: 12px;
-  color: #0f172a;
 }
 
 /* ===============================
@@ -281,8 +235,7 @@
   margin: 0 2px;
   border-radius: 6px;
   border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #0f172a;
+  background: #ac8585;
   cursor: pointer;
 }
 
@@ -297,9 +250,5 @@
 @media (max-width: 768px) {
   .row-actions {
     flex-wrap: wrap;
-  }
-
-  .employee-table {
-    font-size: 11px;
   }
 }

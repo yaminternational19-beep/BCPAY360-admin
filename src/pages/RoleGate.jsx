@@ -20,7 +20,7 @@ export default function RoleGate() {
     const updatedUser = {
       ...existing,                 // ✅ PRESERVE email, company, etc
       role,
-      department: role === "ADMIN" ? null : department,
+      department: role === "COMPANY_ADMIN" ? null : department,
       verified: false,
     };
 

@@ -1,106 +1,139 @@
-import React, { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../styles/EmployeePanel.css";
-import { makeEmployees } from "../utils/mockData";
+
 import EmployeeList from "../components/EmployeeList";
 import EmployeeForm from "../components/EmployeeForm";
 import EmployeeFilters from "../components/EmployeeFilters";
 
-/* =========================
-   INITIAL DATA
-========================= */
-const initialEmployees = makeEmployees(1000);
+import {
+  getEmployees,
+  createEmployee,
+  updateEmployee,
+  // add these later when APIs are ready
+  // activateEmployee,
+  // deactivateEmployee,
+  // deleteEmployee,
+} from "../api/employees.api";
 
-/* =========================
-   HELPERS
-========================= */
-const getNextEmpId = (employees) => {
-  if (!employees.length) return "EMP001";
-
-  const max = Math.max(
-    ...employees.map(e => parseInt(e.id.replace("EMP", ""), 10))
-  );
-
-  return `EMP${String(max + 1).padStart(3, "0")}`;
-};
+import { getDepartments } from "../api/master.api";
 
 const EmployeePanel = () => {
   const user = JSON.parse(localStorage.getItem("auth_user"));
-  const isAdmin = user?.role === "ADMIN";
+
+  const isCompanyAdmin = user?.role === "COMPANY_ADMIN";
   const hrDepartment = user?.department || null;
 
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   /* =========================
-     ROLE-BASED VIEW
+     LOAD EMPLOYEES (DB DATA)
+  ========================= */
+  const loadEmployees = async () => {
+    try {
+      const res = await getEmployees("?page=1&limit=50");
+      setEmployees(res?.employees || []);
+    } catch (err) {
+      console.error("❌ Load employees failed:", err.message);
+    }
+  };
+
+  /* =========================
+     LOAD DEPARTMENTS
+  ========================= */
+  const loadDepartments = async () => {
+    try {
+      const res = await getDepartments();
+      setDepartments(res || []);
+    } catch (err) {
+      console.error("❌ Load departments failed:", err.message);
+    }
+  };
+
+  useEffect(() => {
+    loadEmployees();
+    loadDepartments();
+  }, []);
+
+  /* =========================
+     ROLE-BASED VISIBILITY
   ========================= */
   const visibleEmployees = useMemo(() => {
-    if (isAdmin) return employees;
-    return employees.filter(e => e.department === hrDepartment);
-  }, [employees, isAdmin, hrDepartment]);
+    if (isCompanyAdmin) return employees;
+
+    // HR → only their department
+    return employees.filter(
+      (e) => e.department === hrDepartment
+    );
+  }, [employees, isCompanyAdmin, hrDepartment]);
 
   /* =========================
      CREATE / UPDATE
   ========================= */
-  const handleSave = (emp) => {
-    if (emp.id) {
-      setEmployees(prev =>
-        prev.map(p => (p.id === emp.id ? { ...p, ...emp } : p))
-      );
-    } else {
-      const newEmployee = {
-        ...emp,
-        id: getNextEmpId(employees),
-        department: isAdmin ? emp.department : hrDepartment,
-        active: true,
-      };
-      setEmployees(prev => [newEmployee, ...prev]);
-    }
+  const handleSave = async (payload) => {
+    try {
+      if (selected) {
+        await updateEmployee(selected.id, payload); // DB ID
+      } else {
+        await createEmployee(payload);
+      }
 
-    setShowForm(false);
-    setSelected(null);
+      setShowForm(false);
+      setSelected(null);
+      loadEmployees();
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   /* =========================
-     ACTIONS
+     ACTION HANDLERS
   ========================= */
   const handleEdit = (id) => {
-    const emp = employees.find(e => e.id === id);
+    const emp = employees.find((e) => e.id === id);
     if (!emp) return;
-    if (!isAdmin && emp.department !== hrDepartment) return;
 
     setSelected(emp);
     setShowForm(true);
   };
 
-  const handleDeactivate = (id) => {
-    if (!isAdmin) return;
-    setEmployees(prev =>
-      prev.map(p => (p.id === id ? { ...p, active: false } : p))
-    );
+  const handleActivate = async (id) => {
+    console.log("Activate employee:", id);
+    // await activateEmployee(id);
+    loadEmployees();
   };
 
-  const handleActivate = (id) => {
-    if (!isAdmin) return;
-    setEmployees(prev =>
-      prev.map(p => (p.id === id ? { ...p, active: true } : p))
-    );
+  const handleDeactivate = async (id) => {
+    console.log("Deactivate employee:", id);
+    // await deactivateEmployee(id);
+    loadEmployees();
   };
 
-  const handleDelete = (id) => {
-    if (!isAdmin) return;
-    setEmployees(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+    console.log("Delete employee:", id);
+    // await deleteEmployee(id);
+    loadEmployees();
   };
 
   /* =========================
-     STATS
+     STATS (DB FIELDS)
   ========================= */
-  const stats = useMemo(() => ({
-    total: visibleEmployees.length,
-    active: visibleEmployees.filter(e => e.active).length,
-    inactive: visibleEmployees.filter(e => !e.active).length,
-  }), [visibleEmployees]);
+  const stats = useMemo(
+    () => ({
+      total: visibleEmployees.length,
+      active: visibleEmployees.filter(
+        (e) => Number(e.is_active) === 1
+      ).length,
+      inactive: visibleEmployees.filter(
+        (e) => Number(e.is_active) === 0
+      ).length,
+    }),
+    [visibleEmployees]
+  );
 
   return (
     <div className="employee-panel">
@@ -123,10 +156,12 @@ const EmployeePanel = () => {
             <span>Total</span>
             <strong>{stats.total}</strong>
           </div>
+
           <div className="stat-mini">
             <span>Active</span>
             <strong>{stats.active}</strong>
           </div>
+
           <div className="stat-mini">
             <span>Inactive</span>
             <strong>{stats.inactive}</strong>
@@ -141,10 +176,10 @@ const EmployeePanel = () => {
         <EmployeeList
           employees={visibleEmployees}
           onEdit={handleEdit}
-          onDeactivate={handleDeactivate}
           onActivate={handleActivate}
+          onDeactivate={handleDeactivate}
           onDelete={handleDelete}
-          isAdmin={isAdmin}
+          isAdmin={isCompanyAdmin}
         />
       </div>
 
@@ -152,11 +187,12 @@ const EmployeePanel = () => {
       {showForm && (
         <EmployeeForm
           initial={selected}
+          departments={departments}
+          onSave={handleSave}
           onClose={() => {
             setShowForm(false);
             setSelected(null);
           }}
-          onSave={handleSave}
         />
       )}
     </div>
