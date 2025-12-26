@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Dashboard.css";
+import { API_BASE } from "../utils/apiBase";
 
 import {
   Chart as ChartJS,
@@ -22,20 +23,36 @@ ChartJS.register(
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const dashboard = {
-    employees: { total: 0, inactive: 0 },
-    attendance: { present: 0, absent: 0, late: 0, ot: 0 },
-    approvals: { leave: 0, fnf: 0 },
-    salary: { status: "Running" },
-    cost: { payroll: 0, overtime: 0, esiPf: 0 },
-  };
+  useEffect(() => {
+    fetch(`${API_BASE}/api/dashboard`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setDashboard(data.kpis);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p style={{ padding: 20 }}>Loading dashboard...</p>;
+  if (!dashboard) return <p style={{ padding: 20 }}>No data available</p>;
 
   const chartData = {
     labels: ["Present", "Absent", "Late", "Leave"],
     datasets: [
       {
-        data: [0, 0, 0, 0],
+        data: [
+          dashboard.attendance.present,
+          dashboard.attendance.absent,
+          dashboard.attendance.late,
+          dashboard.approvals.leave,
+        ],
         backgroundColor: ["#2563eb", "#ef4444", "#f59e0b", "#22c55e"],
         borderRadius: 6,
       },
@@ -51,30 +68,47 @@ const Dashboard = () => {
         <div className="kpi-card">
           <h4>Total Employees</h4>
           <div className="kpi-main">{dashboard.employees.total}</div>
-          <span className="kpi-sub">{dashboard.employees.inactive} Inactive</span>
-          <button onClick={() => navigate("/admin/employees")}>View All</button>
+          <span className="kpi-sub">
+            {dashboard.employees.inactive} Inactive
+          </span>
+          <button onClick={() => navigate("/admin/employees")}>
+            View All
+          </button>
         </div>
 
         <div className="kpi-card">
           <h4>Today's Attendance</h4>
-          <div className="kpi-line">Present: {dashboard.attendance.present}</div>
-          <div className="kpi-sub">
-            Absent: {dashboard.attendance.absent} | Late: {dashboard.attendance.late} | OT: {dashboard.attendance.ot}
+          <div className="kpi-line">
+            Present: {dashboard.attendance.present}
           </div>
-          <button onClick={() => navigate("/admin/attendance")}>View Details</button>
+          <div className="kpi-sub">
+            Absent: {dashboard.attendance.absent} | Late:{" "}
+            {dashboard.attendance.late} | OT: {dashboard.attendance.ot}
+          </div>
+          <button onClick={() => navigate("/admin/attendance")}>
+            View Details
+          </button>
         </div>
 
         <div className="kpi-card warning">
           <h4>Pending Approvals</h4>
-          <div className="kpi-line">Leaves: {dashboard.approvals.leave}</div>
-          <div className="kpi-sub">F&F: {dashboard.approvals.fnf}</div>
+          <div className="kpi-line">
+            Leaves: {dashboard.approvals.leave}
+          </div>
+          <div className="kpi-sub">
+            F&F: {dashboard.approvals.fnf}
+          </div>
           <button className="orange">Review</button>
         </div>
 
         <div className="kpi-card success">
           <h4>Salary Process</h4>
-          <div className="kpi-main green">{dashboard.salary.status}</div>
-          <button onClick={() => navigate("/admin/payroll")}>View Status</button>
+          <div className="kpi-main green">
+            {dashboard.salary.status}
+          </div>
+          <button onClick={() => navigate("/admin/payroll")}>
+            View Status
+          </button>
         </div>
       </div>
 
@@ -115,10 +149,18 @@ const Dashboard = () => {
 
       {/* ACTIONS */}
       <div className="dash-actions">
-        <button onClick={() => navigate("/admin/payroll")}>Generate Payroll</button>
-        <button onClick={() => navigate("/admin/employees")}>Employee List</button>
-        <button onClick={() => navigate("/admin/attendance")}>Attendance Reports</button>
-        <button onClick={() => navigate("/admin/reports")}>Statutory Forms</button>
+        <button onClick={() => navigate("/admin/payroll")}>
+          Generate Payroll
+        </button>
+        <button onClick={() => navigate("/admin/employees")}>
+          Employee List
+        </button>
+        <button onClick={() => navigate("/admin/attendance")}>
+          Attendance Reports
+        </button>
+        <button onClick={() => navigate("/admin/reports")}>
+          Statutory Forms
+        </button>
       </div>
     </div>
   );

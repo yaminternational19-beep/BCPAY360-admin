@@ -56,37 +56,39 @@ export default function Login({ onLogin }) {
      COMPANY ADMIN LOGIN
   ============================= */
   const submitAdminLogin = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!form.companyId || !form.email || !form.password) {
-      alert("All fields required");
-      return;
-    }
+  if (!form.companyId || !form.email || !form.password) {
+    alert("All fields required");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const res = await fetch(`${API_BASE}/api/company-admins/pre-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          companyId: form.companyId,
-          email: form.email,
-          password: form.password,
-        }),
-      });
+    const res = await fetch(`${API_BASE}/api/company-admins/pre-login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        companyId: Number(form.companyId),
+        company_id: Number(form.companyId), // backend-safe
+        email: form.email.trim(),
+        password: form.password,
+      }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
 
-      setTempLoginId(data.tempLoginId);
-      setStep("OTP");
-    } catch (err) {
-      alert(err.message || "Login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setTempLoginId(data.tempLoginId);
+    setStep("OTP");
+  } catch (err) {
+    alert(err.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   /* =============================
      HR LOGIN
