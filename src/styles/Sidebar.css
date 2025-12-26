@@ -1,80 +1,54 @@
-/* =========================================================
-   SIDEBAR — FIXED & INDEPENDENT SCROLL
-========================================================= */
 .sidebar {
   position: fixed;
-  top: 64px; /* navbar height */
+  top: 64px;
   left: 0;
-
   width: 240px;
   height: calc(100vh - 64px);
-
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
-
-  overflow-y: auto;        /* ✅ ONLY SIDEBAR SCROLLS */
+  overflow-y: auto;
   overflow-x: hidden;
-
   transition: width 0.28s ease;
   z-index: 100;
+  pointer-events: auto;
 }
 
-/* Collapsed */
 .sidebar.collapsed {
   width: 72px;
 }
 
-/* =========================================================
-   SIDEBAR HEADER (STICKY)
-========================================================= */
-.sidebar-header {
-  position: sticky;
-  top: 0;
-
-  height: 56px;
-  background: #ffffff;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-weight: 600;
-  border-bottom: 1px solid #e5e7eb;
-  z-index: 2;
-}
-
-/* =========================================================
-   MENU CONTAINER
-========================================================= */
 .sidebar-menu {
   padding: 12px;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
-/* =========================================================
-   MAIN MENU ITEMS
-========================================================= */
 .menu-item {
   display: flex;
   align-items: center;
   gap: 12px;
-
+  width: 100%;
   padding: 10px 12px;
   margin-bottom: 6px;
-
+  border: none;
+  background: transparent;
   border-radius: 8px;
-  color: #334155;
+  color: #111827;
   text-decoration: none;
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.15s ease;
+  font-size: 14px;
+  font-family: "Inter", system-ui, sans-serif;
+  text-align: left;
+  transition: background 0.2s ease, color 0.2s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .menu-item:hover {
   background: #f1f5f9;
-  transform: translateX(4px);
+  color: #111827;
 }
 
 .menu-item.active {
@@ -82,13 +56,21 @@
   color: #ffffff;
 }
 
-/* =========================================================
-   SUB MENU
-========================================================= */
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  pointer-events: none;
+}
+
 .submenu {
   margin-left: 14px;
   margin-top: 6px;
   animation: expandSubmenu 0.2s ease;
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
 }
 
 @keyframes expandSubmenu {
@@ -106,51 +88,47 @@
   display: flex;
   align-items: center;
   gap: 10px;
-
+  width: 100%;
   padding: 8px 12px;
   margin-bottom: 4px;
-
+  border: none;
+  background: transparent;
   border-radius: 8px;
   font-size: 14px;
-  color: #475569;
+  color: #374151;
   text-decoration: none;
-
-  transition: background 0.2s ease, transform 0.15s ease;
+  cursor: pointer;
+  font-family: "Inter", system-ui, sans-serif;
+  text-align: left;
+  transition: background 0.2s ease, color 0.2s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10;
 }
 
 .submenu-item:hover {
   background: #f1f5f9;
-  transform: translateX(3px);
+  color: #111827;
 }
 
-.submenu-icon {
-  font-size: 14px;
-  opacity: 0.75;
-}
-
-/* =========================================================
-   MAIN CONTENT OFFSET
-========================================================= */
 .app-content {
   margin-left: 240px;
   padding-top: 64px;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .sidebar.collapsed ~ .app-content {
   margin-left: 72px;
 }
 
-/* =========================================================
-   MOBILE SIDEBAR
-========================================================= */
 @media (max-width: 768px) {
   .sidebar {
     top: 64px;
     left: -260px;
     width: 260px;
     height: calc(100vh - 64px);
-    background: #ffffff;
     transition: left 0.3s ease;
     z-index: 300;
   }
@@ -164,9 +142,6 @@
   }
 }
 
-/* =========================================================
-   MOBILE OVERLAY
-========================================================= */
 .sidebar-overlay {
   position: fixed;
   inset: 0;

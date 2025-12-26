@@ -6,7 +6,7 @@ export default function AnnouncementModule() {
      AUTH
   ----------------------------- */
   const user = JSON.parse(localStorage.getItem("auth_user")) || {};
-  const isAdmin = user.role === "ADMIN";
+  const isAdmin = user.role === "COMPANY_ADMIN";
   const isHR = user.role === "HR";
 
   /* -----------------------------

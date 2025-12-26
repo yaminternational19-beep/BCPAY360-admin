@@ -10,14 +10,14 @@ const money = (n) => `₹ ${Number(n || 0).toFixed(2)}`;
 
 export default function PayrollManagement() {
   const user = JSON.parse(localStorage.getItem("auth_user"));
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === "COMPANY_ADMIN";
   const isHR = user?.role === "HR";
 
   if (!user || (!isAdmin && !isHR)) {
     return (
       <div className="pay-container">
         <h2>Access Restricted</h2>
-        <p>You don’t have permission to access Payroll.</p>
+        <p>You don't have permission to access Payroll.</p>
       </div>
     );
   }

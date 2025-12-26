@@ -52,7 +52,7 @@ export default function Attendance() {
     return <h3 style={{ padding: 20 }}>Unauthorized</h3>;
   }
 
-  const isAdmin = user.role === "ADMIN";
+  const isAdmin = user.role === "COMPANY_ADMIN";
   const department = isAdmin ? null : user.department;
 
   /* Filters */

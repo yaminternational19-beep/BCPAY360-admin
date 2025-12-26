@@ -1,0 +1,245 @@
+.shifts-page {
+  padding: 24px;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #111827;
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+.shifts-page h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+.shifts-form {
+  margin-bottom: 24px;
+}
+
+.shifts-form h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+.shifts-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.shifts-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.shifts-form input,
+.shifts-form textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: #ffffff;
+  color: #111827;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.shifts-form input:focus,
+.shifts-form textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.shifts-form input::placeholder,
+.shifts-form textarea::placeholder {
+  color: #9ca3af;
+}
+
+.shifts-form textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.shifts-form button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  margin-top: 8px;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.shifts-form button:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.shifts-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  max-height: calc(100vh - 400px);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table th {
+  padding: 12px 16px;
+  color: #111827;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #111827;
+  vertical-align: middle;
+}
+
+.table td input,
+.table td textarea {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  width: 100%;
+  font-family: "Inter", system-ui, sans-serif;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table td input:focus,
+.table td textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.table td textarea {
+  resize: vertical;
+  min-height: 50px;
+}
+
+.description-text {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.table tbody tr:hover .row-actions {
+  opacity: 1;
+}
+
+.row-actions button {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #f3f4f6;
+  color: #111827;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 500;
+}
+
+.row-actions button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.row-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.row-actions button.danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.row-actions button.danger:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.empty-state {
+  text-align: center;
+  color: #6b7280;
+  padding: 48px 0;
+}
+
+@media (max-width: 768px) {
+  .shifts-page {
+    padding: 16px;
+  }
+
+  .shifts-form .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shifts-page h2 {
+    font-size: 20px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+}

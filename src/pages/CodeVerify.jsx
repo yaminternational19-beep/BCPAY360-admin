@@ -11,7 +11,7 @@ export default function CodeVerify({ onVerify }) {
     return <Navigate to="/login" replace />;
   }
 
-  const expected = user.role === "ADMIN" ? "999999" : "123456";
+  const expected = user.role === "COMPANY_ADMIN" ? "999999" : "123456";
 
   const verify = () => {
     if (code !== expected) {

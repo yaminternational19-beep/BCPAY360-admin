@@ -1,15 +1,10 @@
 import React, { useState, useMemo } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-/* AUTH */
 import Login from "./pages/Login";
 import RoleGate from "./pages/RoleGate";
 import CodeVerify from "./pages/CodeVerify";
-
-/* SUPER ADMIN */
 import SuperAdmin from "./pages/SuperAdmin";
-
-/* ADMIN PAGES */
 import Dashboard from "./pages/Dashboard";
 import EmployeePanel from "./pages/EmployeePanel";
 import Attendance from "./pages/Attendance";
@@ -27,22 +22,48 @@ import Softwarereports from "./pages/Softwarereports";
 import EmployeeView from "./pages/EmployeeView";
 import AddHR from "./pages/AddHR";
 import HRLogin from "./pages/HRLogin";
+import EmployeeTypes from "./pages/EmployeeTypes";
+import Shifts from "./pages/Shifts";
 import SuperAdminRoutes from "./pages/super-admin";
-
-/* LAYOUT */
 import Sidebar from "./pages/Sidebar";
 import Navbar from "./pages/Navbar";
 import "./styles/Layout.css";
 
-/* ===============================
-   ADMIN LAYOUT (COMPANY / HR)
-================================ */
+const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return children;
+};
+
 const AdminLayout = ({ user, setUser }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
-  // 🔐 Strict guard (NOT for Super Admin)
   if (!user || !user.verified || !user.role) {
     return <Navigate to="/login" replace />;
+  }
+
+  const isAdmin = user.role === "COMPANY_ADMIN";
+  const isHR = user.role === "HR";
+
+  const adminOnlyRoutes = [
+    "/admin/departments",
+    "/admin/employee-types",
+    "/admin/shifts",
+    "/admin/hr-management",
+    "/admin/accounting",
+    "/admin/softwarereports",
+    "/admin/companies",
+    "/admin/asset",
+    "/admin/announce",
+    "/admin/holidays",
+    "/admin/settings",
+  ];
+
+  const currentPath = location.pathname;
+  if (!isAdmin && adminOnlyRoutes.some((route) => currentPath.startsWith(route))) {
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   const logout = () => {
@@ -54,11 +75,11 @@ const AdminLayout = ({ user, setUser }) => {
     <>
       <Navbar
         user={user}
-        onToggleSidebar={() => setCollapsed(prev => !prev)}
+        onToggleSidebar={() => setCollapsed((prev) => !prev)}
         onLogout={logout}
       />
 
-      <Sidebar collapsed={collapsed} />
+      <Sidebar collapsed={collapsed} user={user} />
 
       <main className="app-content">
         <Routes>
@@ -67,19 +88,96 @@ const AdminLayout = ({ user, setUser }) => {
           <Route path="attendance" element={<Attendance />} />
           <Route path="leavemanagement" element={<LeaveManagement />} />
           <Route path="payroll" element={<PayrollManagement />} />
-          <Route path="asset" element={<AssetManagement />} />
-          <Route path="announce" element={<AnnouncementModule />} />
           <Route path="recruit" element={<RecruitmentModule />} />
-          <Route path="holidays" element={<HolidaysModule />} />
-          <Route path="settings" element={<SettingsModule />} />
-          <Route path="companies" element={<Companies user={user} />} />
-          <Route path="departments" element={<DepartmentDesignation user={user} />} />
+          <Route
+            path="departments"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <DepartmentDesignation user={user} />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="employee-types"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <EmployeeTypes user={user} />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="shifts"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <Shifts user={user} />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="companies"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <Companies user={user} />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="asset"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <AssetManagement />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="announce"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <AnnouncementModule />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="holidays"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <HolidaysModule />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <SettingsModule />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="accounting"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <Accounts />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="softwarereports"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <Softwarereports />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="hr-management"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <AddHR />
+              </RoleProtectedRoute>
+            }
+          />
           <Route path="employee/:id" element={<EmployeeView />} />
-          <Route path="accounting" element={<Accounts />} />
-          <Route path="softwarereports" element={<Softwarereports />} />
-          <Route path="hr-management" element={<AddHR />} />
-
-          {/* ADMIN FALLBACK */}
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </main>
@@ -87,9 +185,6 @@ const AdminLayout = ({ user, setUser }) => {
   );
 };
 
-/* ===============================
-   ROOT APP
-================================ */
 export default function App() {
   const initialUser = useMemo(() => {
     const saved = localStorage.getItem("auth_user");
@@ -101,37 +196,17 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* LOGIN (COMMON ENTRY) */}
-        <Route
-          path="/login"
-          element={<Login onLogin={setUser} />}
-        />
-
-        {/* SUPER ADMIN (PUBLIC LOGIN PAGE) */}
+        <Route path="/login" element={<Login onLogin={setUser} />} />
         <Route path="/super-admin/login" element={<SuperAdmin />} />
         <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
-
-
-        {/* ROLE / OTP (UNCHANGED) */}
         <Route path="/role" element={<RoleGate />} />
         <Route path="/verify" element={<CodeVerify onVerify={setUser} />} />
-
-        {/* COMPANY ADMIN / HR */}
         <Route
           path="/admin/*"
           element={<AdminLayout user={user} setUser={setUser} />}
         />
-
-        {/* GLOBAL FALLBACK */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-
-        <Route
-          path="/hr-login"
-          element={<HRLogin onLogin={setUser} />}
-        />
-        
-
+        <Route path="/hr-login" element={<HRLogin onLogin={setUser} />} />
       </Routes>
     </BrowserRouter>
   );

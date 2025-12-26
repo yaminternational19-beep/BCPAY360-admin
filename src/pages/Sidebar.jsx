@@ -1,25 +1,83 @@
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaHome,
   FaUsers,
   FaChevronDown,
   FaChevronRight,
-  FaDatabase,
-  FaFileInvoiceDollar,
   FaBuilding,
-  FaBoxOpen,
+  FaIdCard,
+  FaClock,
+  FaUmbrellaBeach,
+  FaMoneyBillWave,
   FaUserTie,
-  FaBullhorn,
-  FaCalendarAlt,
-  FaCog,
+  FaFileInvoiceDollar,
+  FaChartLine,
+  FaUserTag,
+  FaBusinessTime,
 } from "react-icons/fa";
 import "../styles/Sidebar.css";
 
-const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile }) => {
-  const [empOpen, setEmpOpen] = useState(true);
-  const [metaOpen, setMetaOpen] = useState(false);
+const VALID_ROUTES = [
+  "dashboard",
+  "employees",
+  "attendance",
+  "leavemanagement",
+  "payroll",
+  "asset",
+  "announce",
+  "recruit",
+  "holidays",
+  "settings",
+  "companies",
+  "departments",
+  "employee-types",
+  "shifts",
+  "employee",
+  "accounting",
+  "softwarereports",
+  "hr-management",
+];
+
+const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: userProp }) => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(userProp || null);
+
+  useEffect(() => {
+    if (userProp) {
+      setUser(userProp);
+    } else {
+      const authUser = localStorage.getItem("auth_user");
+      if (authUser) {
+        try {
+          setUser(JSON.parse(authUser));
+        } catch (e) {
+          setUser(null);
+        }
+      }
+    }
+  }, [userProp]);
+
+  const isAdmin = user?.role === "COMPANY_ADMIN";
+  const isHR = user?.role === "HR";
+
+  const [orgOpen, setOrgOpen] = useState(false);
+  const [hrOpen, setHrOpen] = useState(true);
   const [accountOpen, setAccountOpen] = useState(false);
+
+  const isValidRoute = (path) => {
+    const clean = path.replace(/^\/admin\//, "").split("/")[0];
+    return VALID_ROUTES.includes(clean);
+  };
+
+  const go = (path) => {
+    const cleanPath = path.replace(/^\/admin\//, "");
+    const targetRoute = isValidRoute(cleanPath)
+      ? `/admin/${cleanPath}`
+      : "/admin/dashboard";
+    navigate(targetRoute);
+    onCloseMobile?.();
+  };
 
   const safeToggle = (setter, value) => {
     if (collapsed) return;
@@ -33,104 +91,214 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile }) => {
       }`}
     >
       <nav className="sidebar-menu">
-        {/* DASHBOARD */}
-        <NavLink
-          to="/admin/dashboard"
+        <button
+          type="button"
           className="menu-item"
-          onClick={onCloseMobile}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            go("dashboard");
+          }}
         >
           <FaHome />
           {!collapsed && <span>Dashboard</span>}
-        </NavLink>
+        </button>
 
-        {/* EMPLOYEE MANAGEMENT */}
-        <div
-          className="menu-item expandable"
-          onClick={() => safeToggle(setEmpOpen, !empOpen)}
-        >
-          <div className="menu-left">
-            <FaUsers />
-            {!collapsed && <span>Employee Management</span>}
-          </div>
-          {!collapsed && (empOpen ? <FaChevronDown /> : <FaChevronRight />)}
-        </div>
+        {isAdmin && (
+          <>
+            <button
+              type="button"
+              className="menu-item expandable"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                safeToggle(setOrgOpen, !orgOpen);
+              }}
+            >
+              <div className="menu-left">
+                <FaBuilding />
+                {!collapsed && <span>Organization</span>}
+              </div>
+              {!collapsed && (orgOpen ? <FaChevronDown /> : <FaChevronRight />)}
+            </button>
 
-        {empOpen && !collapsed && (
-          <div className="submenu">
-            <NavLink to="/admin/employees" className="submenu-item">
-              Employees
-            </NavLink>
-            <NavLink to="/admin/attendance" className="submenu-item">
-              Attendance
-            </NavLink>
-            <NavLink to="/admin/payroll" className="submenu-item">
-              Payroll
-            </NavLink>
-            <NavLink to="/admin/leavemanagement" className="submenu-item">
-              Leaves
-            </NavLink>
-          </div>
+            {orgOpen && !collapsed && (
+              <div className="submenu">
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("departments");
+                  }}
+                >
+                  <FaBuilding /> Departments
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("employee-types");
+                  }}
+                >
+                  <FaUserTag /> Employee Types
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("shifts");
+                  }}
+                >
+                  <FaBusinessTime /> Shifts
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("hr-management");
+                  }}
+                >
+                  <FaIdCard /> Add HR
+                </button>
+              </div>
+            )}
+          </>
         )}
 
-        {/* METADATA */}
-        <div
-          className="menu-item expandable"
-          onClick={() => safeToggle(setMetaOpen, !metaOpen)}
-        >
-          <div className="menu-left">
-            <FaDatabase />
-            {!collapsed && <span>Metadata</span>}
-          </div>
-          {!collapsed && (metaOpen ? <FaChevronDown /> : <FaChevronRight />)}
-        </div>
+        {(isAdmin || isHR) && (
+          <>
+            <button
+              type="button"
+              className="menu-item expandable"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                safeToggle(setHrOpen, !hrOpen);
+              }}
+            >
+              <div className="menu-left">
+                <FaUsers />
+                {!collapsed && <span>HR Module</span>}
+              </div>
+              {!collapsed && (hrOpen ? <FaChevronDown /> : <FaChevronRight />)}
+            </button>
 
-        {metaOpen && !collapsed && (
-          <div className="submenu">
-            <NavLink to="/admin/departments" className="submenu-item">
-              <FaBuilding /> Departments & Designations
-            </NavLink>
-            <NavLink to="/admin/asset" className="submenu-item">
-              <FaBoxOpen /> Assets
-            </NavLink>
-            <NavLink to="/admin/recruit" className="submenu-item">
-              <FaUserTie /> Recruit
-            </NavLink>
-            <NavLink to="/admin/announce" className="submenu-item">
-              <FaBullhorn /> Announcements
-            </NavLink>
-            <NavLink to="/admin/holidays" className="submenu-item">
-              <FaCalendarAlt /> Holidays
-            </NavLink>
-            <NavLink to="/admin/settings" className="submenu-item">
-              <FaCog /> Settings
-            </NavLink>
-          </div>
+            {hrOpen && !collapsed && (
+              <div className="submenu">
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("employees");
+                  }}
+                >
+                  <FaUsers /> Employees
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("attendance");
+                  }}
+                >
+                  <FaClock /> Attendance
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("leavemanagement");
+                  }}
+                >
+                  <FaUmbrellaBeach /> Leaves
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("payroll");
+                  }}
+                >
+                  <FaMoneyBillWave /> Payroll
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("recruit");
+                  }}
+                >
+                  <FaUserTie /> Recruitment
+                </button>
+              </div>
+            )}
+          </>
         )}
 
-        {/* ACCOUNTS */}
-        <div
-          className="menu-item expandable"
-          onClick={() => safeToggle(setAccountOpen, !accountOpen)}
-        >
-          <div className="menu-left">
-            <FaFileInvoiceDollar />
-            {!collapsed && <span>Accounts</span>}
-          </div>
-          {!collapsed && (accountOpen ? <FaChevronDown /> : <FaChevronRight />)}
-        </div>
+        {isAdmin && (
+          <>
+            <button
+              type="button"
+              className="menu-item expandable"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                safeToggle(setAccountOpen, !accountOpen);
+              }}
+            >
+              <div className="menu-left">
+                <FaFileInvoiceDollar />
+                {!collapsed && <span>Accounts</span>}
+              </div>
+              {!collapsed &&
+                (accountOpen ? <FaChevronDown /> : <FaChevronRight />)}
+            </button>
 
-        {accountOpen && !collapsed && (
-          <div className="submenu">
-            <NavLink to="/admin/accounting" className="submenu-item">
-              Accounting
-            </NavLink>
-            <NavLink to="/admin/softwarereports" className="submenu-item">
-              Software Reports
-            </NavLink>
-            <NavLink to="/admin/hr-management" className="submenu-item">
-              HR Management
-            </NavLink>
-          </div>
+            {accountOpen && !collapsed && (
+              <div className="submenu">
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("accounting");
+                  }}
+                >
+                  <FaFileInvoiceDollar /> Accounting
+                </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("softwarereports");
+                  }}
+                >
+                  <FaChartLine /> Software Reports
+                </button>
+              </div>
+            )}
+          </>
         )}
       </nav>
     </aside>

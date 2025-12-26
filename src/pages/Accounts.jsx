@@ -15,7 +15,7 @@ const Accounts = () => {
 
   const visibleEmployees = useMemo(() => {
     if (!user) return [];
-    if (user.role === "ADMIN") return employees;
+    if (user.role === "COMPANY_ADMIN") return employees;
     return employees.filter(e => e.department === user.department);
   }, [employees, user]);
 

@@ -7,15 +7,18 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
 
   if (!user) return null;
 
-  // ✅ SAFE INITIALS (BUG FIX)
   const email = user.email || "";
-  const initials = email
-    ? email.slice(0, 2).toUpperCase()
-    : "U";
+  const initials = email ? email.slice(0, 2).toUpperCase() : "U";
+  const companyName = user.company || "Company Portal";
+  const unitName = user.unit || user.branch || "";
+  const displayTitle = unitName ? `${companyName} – ${unitName}` : companyName;
 
-  /* Close dropdown on outside click */
   useEffect(() => {
-    const close = () => setOpen(false);
+    const close = (e) => {
+      if (!e.target.closest(".profile") && !e.target.closest(".profile-menu")) {
+        setOpen(false);
+      }
+    };
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
   }, []);
@@ -23,20 +26,27 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
   return (
     <header className="navbar">
       <div className="nav-left">
-        <button className="icon-btn" onClick={onToggleSidebar}>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleSidebar();
+          }}
+        >
           <FaBars />
         </button>
 
-        {/* COMPANY NAME */}
-        <span className="nav-title">
-          {user.company} Admin
-        </span>
+        <span className="nav-title">{displayTitle} Admin</span>
       </div>
 
       <div className="nav-right">
-        <div
+        <button
+          type="button"
           className="profile"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             setOpen(!open);
           }}
@@ -44,18 +54,21 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
           <div className="avatar">{initials}</div>
           <span className="email">{user.email || ""}</span>
           <FaChevronDown />
-        </div>
+        </button>
 
         {open && (
           <div className="profile-menu">
             <div className="profile-info">
               <strong>{user.email || "—"}</strong>
-              <small>{user.company}</small>
+              <small>{companyName}</small>
             </div>
 
             <button
+              type="button"
               className="logout-btn"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 localStorage.removeItem("auth_user");
                 onLogout();
               }}
