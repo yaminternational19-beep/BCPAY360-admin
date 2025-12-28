@@ -1,0 +1,97 @@
+/* =====================================================
+   GLOBAL VARIABLES - LIGHT HRIS THEME
+===================================================== */
+:root {
+    /* COLORS: BACKGROUNDS */
+    --bg-page: #f8fafc;
+    /* Slate-50 */
+    --bg-card: #ffffff;
+    /* White */
+    --bg-muted: #f1f5f9;
+    /* Slate-100 */
+    --bg-hover: #f8fafc;
+
+    /* COLORS: TEXT */
+    --text-primary: #0f172a;
+    /* Slate-900 */
+    --text-secondary: #334155;
+    /* Slate-700 */
+    --text-muted: #64748b;
+    /* Slate-500 */
+    --text-white: #ffffff;
+
+    /* COLORS: BRAND */
+    --primary: #2563eb;
+    /* Blue-600 */
+    --primary-hover: #1d4ed8;
+    /* Blue-700 */
+    --primary-light: #eff6ff;
+    /* Blue-50 */
+
+    --secondary: #64748b;
+    /* Slate-500 */
+    --secondary-hover: #475569;
+    /* Slate-600 */
+
+    /* COLORS: STATES */
+    --danger: #ef4444;
+    /* Red-500 */
+    --danger-hover: #dc2626;
+    /* Red-600 */
+    --danger-light: #fef2f2;
+    /* Red-50 */
+
+    --success: #10b981;
+    /* Emerald-500 */
+    --success-bg: #ecfdf5;
+    /* Emerald-50 */
+
+    --warning: #f59e0b;
+    /* Amber-500 */
+    --warning-bg: #fffbeb;
+    /* Amber-50 */
+
+    /* BORDERS */
+    --border-color: #e2e8f0;
+    /* Slate-200 */
+    --border-focus: #2563eb;
+    /* Primary Blue */
+
+    /* DIMENSIONS & SPACING */
+    --header-height: 64px;
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 70px;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    /* TYPOGRAPHY */
+    --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-base: 14px;
+    --text-lg: 16px;
+    --text-xl: 20px;
+    --text-2xl: 24px;
+
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-bold: 600;
+    --weight-extrabold: 700;
+
+    /* EFFECTS */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

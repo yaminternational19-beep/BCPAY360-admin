@@ -6,7 +6,6 @@ import RoleGate from "./pages/RoleGate";
 import CodeVerify from "./pages/CodeVerify";
 import SuperAdmin from "./pages/SuperAdmin";
 import Dashboard from "./pages/Dashboard";
-import EmployeePanel from "./pages/EmployeePanel";
 import Attendance from "./pages/Attendance";
 import LeaveManagement from "./pages/LeaveManagement";
 import PayrollManagement from "./pages/PayrollManagement";
@@ -15,21 +14,19 @@ import AnnouncementModule from "./pages/AnnouncementModule";
 import RecruitmentModule from "./pages/RecruitmentModule";
 import HolidaysModule from "./pages/HolidaysModule";
 import SettingsModule from "./pages/SettingsModule";
-import DepartmentDesignation from "./pages/DepartmentDesignation";
 import Companies from "./pages/Companies";
 import Accounts from "./pages/Accounts";
 import Softwarereports from "./pages/Softwarereports";
-import EmployeeView from "./pages/EmployeeView";
-import AddHR from "./pages/AddHR";
 import HRLogin from "./pages/HRLogin";
-import EmployeeTypes from "./pages/EmployeeTypes";
-import Shifts from "./pages/Shifts";
-import BranchList from "./pages/BranchList";
-import SuperAdminRoutes from "./pages/super-admin";
-import Sidebar from "./pages/Sidebar";
-import Navbar from "./pages/Navbar";
+
+// New module imports
+import SuperAdminRoutes from "./modules/super-admin";
+import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions } from "./modules/organization";
+import EmployeeList from "./modules/employee/pages/EmployeeList";
+import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
+import Sidebar from "./layout/Sidebar";
+import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
-import HRPermissions from "./pages/HRPermissions";
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
   if (!user || !allowedRoles.includes(user.role)) {
@@ -87,7 +84,7 @@ const AdminLayout = ({ user, setUser }) => {
       <main className="app-content">
         <Routes>
           <Route path="dashboard" element={<Dashboard user={user} />} />
-          <Route path="employees" element={<EmployeePanel />} />
+          <Route path="employees" element={<EmployeeList />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="leavemanagement" element={<LeaveManagement />} />
           <Route path="payroll" element={<PayrollManagement />} />
@@ -95,7 +92,7 @@ const AdminLayout = ({ user, setUser }) => {
           <Route
             path="departments"
             element={
-              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN", "HR"]} user={user}>
                 <DepartmentDesignation user={user} />
               </RoleProtectedRoute>
             }
@@ -104,7 +101,7 @@ const AdminLayout = ({ user, setUser }) => {
             path="employee-types"
             element={
               <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                <EmployeeTypes user={user} />
+                <EmployeeTypeList user={user} />
               </RoleProtectedRoute>
             }
           />
@@ -112,7 +109,7 @@ const AdminLayout = ({ user, setUser }) => {
             path="shifts"
             element={
               <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                <Shifts user={user} />
+                <ShiftList user={user} />
               </RoleProtectedRoute>
             }
           />
@@ -125,13 +122,13 @@ const AdminLayout = ({ user, setUser }) => {
             }
           />
           <Route
-              path="hr/:hrId/permissions"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <HRPermissions />
-                </RoleProtectedRoute>
-              }
-            />
+            path="hr/:hrId/permissions"
+            element={
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                <HRPermissions />
+              </RoleProtectedRoute>
+            }
+          />
 
           <Route
             path="companies"
@@ -193,11 +190,11 @@ const AdminLayout = ({ user, setUser }) => {
             path="hr-management"
             element={
               <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                <AddHR />
+                <HRList />
               </RoleProtectedRoute>
             }
           />
-          <Route path="employee/:id" element={<EmployeeView />} />
+          <Route path="employee/:id" element={<EmployeeProfile />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </main>

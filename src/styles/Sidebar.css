@@ -1,156 +1,160 @@
 /* =====================================================
-   SIDEBAR BASE
+   SIDEBAR - ISOLATED FIX (Below Navbar)
 ===================================================== */
 .sidebar {
   width: 240px;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  height: calc(100vh - 64px);
+  /* Subtract Navbar Height */
+  position: fixed;
+  top: 64px;
+  /* Start below Navbar */
+  left: 0;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow: hidden;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
+}
+
+/* --- SCROLL AREA --- */
+.sidebar-menu {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: width 0.28s ease, transform 0.28s ease;
-  z-index: 100;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.sidebar.collapsed {
-  width: 72px;
-}
-
-/* =====================================================
-   MENU CONTAINER
-===================================================== */
-.sidebar-menu {
-  padding: 12px;
-}
-
-/* =====================================================
-   MENU ITEM (BUTTON-LIKE, NO BG)
-===================================================== */
+/* --- MENU ITEM --- */
 .menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
+  justify-content: space-between;
   padding: 10px 12px;
-  margin-bottom: 6px;
-  border: none;
-  background: transparent; /* 🔒 no background */
-  border-radius: 10px;
-  color: #374151;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  color: #334155;
+  text-decoration: none;
   font-size: 14px;
-  font-family: "Inter", system-ui, sans-serif;
-  text-align: left;
-
-  transition:
-    color 0.18s ease,
-    transform 0.18s ease;
+  font-family: inherit;
 }
 
-/* Hover: color + tiny slide */
 .menu-item:hover {
-  color: #2563eb;
-  transform: translateX(4px);
+  background-color: #f8fafc;
+  color: #0f172a;
 }
 
-/* Active: soft emphasis, still no bg */
 .menu-item.active {
-  color: #2563eb;
-  font-weight: 600;
+  background-color: #2563eb;
+  color: #ffffff;
 }
 
-/* =====================================================
-   MENU LEFT (ICON + TEXT)
-===================================================== */
 .menu-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
 }
 
-/* Icons inherit color naturally */
 .menu-item svg {
-  transition: transform 0.18s ease, color 0.18s ease;
+  font-size: 18px;
+  min-width: 18px;
 }
 
-.menu-item:hover svg {
-  transform: scale(1.08);
+.menu-item span {
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-/* =====================================================
-   SUBMENU
-===================================================== */
+/* --- SUBMENU --- */
 .submenu {
-  margin-left: 14px;
-  margin-top: 6px;
-  animation: expandSubmenu 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 12px;
+  margin-top: 4px;
 }
 
-@keyframes expandSubmenu {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =====================================================
-   SUBMENU ITEM (LIGHTER)
-===================================================== */
 .submenu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
+  gap: 12px;
   padding: 8px 12px;
-  margin-bottom: 4px;
-  border: none;
-  background: transparent; /* 🔒 no background */
-  border-radius: 8px;
-  font-size: 13px;
-  color: #6b7280;
+  border-radius: 6px;
   cursor: pointer;
-  font-family: "Inter", system-ui, sans-serif;
-  text-align: left;
-
-  transition:
-    color 0.18s ease,
-    transform 0.18s ease;
+  color: #475569;
+  font-size: 13px;
+  transition: all 0.2s ease;
 }
 
 .submenu-item:hover {
-  color: #2563eb;
-  transform: translateX(4px);
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
-/* =====================================================
-   MOBILE
-===================================================== */
-@media (max-width: 768px) {
+/* --- COLLAPSED --- */
+.sidebar.collapsed {
+  width: 72px;
+}
+
+.sidebar.collapsed .menu-item span,
+.sidebar.collapsed .menu-item>svg:last-child,
+.sidebar.collapsed .submenu {
+  display: none;
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+}
+
+.sidebar.collapsed .menu-left {
+  gap: 0;
+}
+
+/* --- LAYOUT FIX (TARGETING SIBLING CONTENT) --- */
+/* 
+   Since we cannot edit App.jsx, we use the sibling selector via Sidebar
+   to push the main content to the right. 
+   Structure: <Navbar> <Sidebar> <main class="app-content"> 
+*/
+.sidebar+.app-content {
+  margin-left: 240px;
+  /* Gap for sidebar */
+  padding: 24px;
+  width: auto;
+  min-height: calc(100vh - 64px);
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed+.app-content {
+  margin-left: 72px;
+}
+
+/* --- MOBILE --- */
+@media (max-width: 1024px) {
   .sidebar {
-    width: 260px;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
   }
-}
 
-/* =====================================================
-   OVERLAY
-===================================================== */
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 250;
-  animation: fadeOverlay 0.18s ease;
-}
-
-@keyframes fadeOverlay {
-  from {
-    opacity: 0;
+  .sidebar.mobile-open {
+    transform: translateX(0);
   }
-  to {
-    opacity: 1;
+
+  /* Reset layout margins for mobile */
+  .sidebar+.app-content,
+  .sidebar.collapsed+.app-content {
+    margin-left: 0 !important;
   }
 }
