@@ -12,7 +12,7 @@ import {
   toggleEmployeeStatus,
 } from "../../../api/employees.api";
 
-import { getDepartments } from "../../../api/master.api";
+
 
 const EmployeeList = () => {
   const user = JSON.parse(localStorage.getItem("auth_user"));
@@ -21,7 +21,6 @@ const EmployeeList = () => {
   const hrDepartment = user?.department || null;
 
   const [employees, setEmployees] = useState([]);
-  const [departments, setDepartments] = useState([]);
 
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -38,21 +37,8 @@ const EmployeeList = () => {
     }
   };
 
-  /* =========================
-     LOAD DEPARTMENTS
-  ========================= */
-  const loadDepartments = async () => {
-    try {
-      const res = await getDepartments();
-      setDepartments(res || []);
-    } catch (err) {
-      console.error("❌ Load departments failed:", err.message);
-    }
-  };
-
   useEffect(() => {
     loadEmployees();
-    loadDepartments();
   }, []);
 
   /* =========================
@@ -114,7 +100,7 @@ const EmployeeList = () => {
 
       // Update in database
       await updateEmployee(id, { is_active: 1 });
-      
+
       // Reload to ensure sync with server
       await loadEmployees();
     } catch (err) {
@@ -141,7 +127,7 @@ const EmployeeList = () => {
 
       // Update in database
       await updateEmployee(id, { is_active: 0 });
-      
+
       // Reload to ensure sync with server
       await loadEmployees();
     } catch (err) {
@@ -226,7 +212,7 @@ const EmployeeList = () => {
       {showForm && (
         <EmployeeForm
           initial={selected}
-          departments={departments}
+
           onSave={handleSave}
           onClose={() => {
             setShowForm(false);

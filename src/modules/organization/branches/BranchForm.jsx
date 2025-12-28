@@ -5,7 +5,6 @@ import "../../../styles/Branch.css";
 const EMPTY_FORM = {
   branch_code: "",
   branch_name: "",
-  company_id: "",
   location: "",
   address: "",
   phone: "",
@@ -38,7 +37,6 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
     e.preventDefault();
     const payload = {
       ...form,
-      company_id: form.company_id ? Number(form.company_id) : null,
       is_active: Boolean(form.is_active),
     };
     onSave(payload);
@@ -75,29 +73,13 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
             </div>
           </div>
 
-          <div className="form-grid">
-            <div>
-              <label>Company</label>
-              <select
-                value={form.company_id || ""}
-                onChange={(e) => change("company_id", e.target.value)}
-              >
-                <option value="">Select Company</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name || company.company_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>Location</label>
-              <input
-                placeholder="City / Location"
-                value={form.location}
-                onChange={(e) => change("location", e.target.value)}
-              />
-            </div>
+          <div>
+            <label>Location</label>
+            <input
+              placeholder="City / Location"
+              value={form.location}
+              onChange={(e) => change("location", e.target.value)}
+            />
           </div>
 
           <div>

@@ -1,5 +1,17 @@
 import React, { useEffect, useState } from "react";
 import "../../../styles/DepartmentDesignation.css";
+import {
+    getBranches,
+    getDepartments,
+    createDepartment,
+    updateDepartment,
+    deleteDepartment as apiDeleteDepartment,
+    getDesignations,
+    createDesignation,
+    updateDesignation,
+    deleteDesignation as apiDeleteDesignation,
+    toggleDesignationStatus,
+} from "../../../api/master.api";
 
 const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,36 +42,32 @@ export default function DepartmentDesignation({ user }) {
 
     const [newDept, setNewDept] = useState("");
     const [newDesignation, setNewDesignation] = useState("");
+    const [newDesignationCode, setNewDesignationCode] = useState("");
 
     const [editingDeptId, setEditingDeptId] = useState(null);
     const [editingDeptName, setEditingDeptName] = useState("");
 
     const [editingDesigId, setEditingDesigId] = useState(null);
     const [editingDesigName, setEditingDesigName] = useState("");
+    const [editingDesigCode, setEditingDesigCode] = useState("");
 
     const [loading, setLoading] = useState(false);
 
     /* ===============================
        AUTH FETCH
     ================================ */
-    const authFetch = (url, options = {}) => {
-        const token = localStorage.getItem("token");
-        return fetch(url, {
-            ...options,
-            headers: {
-                ...(options.headers || {}),
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-        });
-    };
+
 
     /* ===============================
        LOADERS
     ================================ */
     const loadBranches = async () => {
-        const res = await authFetch(`${API}/api/branches`);
-        if (res.ok) setBranches(await res.json());
+        try {
+            const data = await getBranches();
+            setBranches(data || []);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const loadDepartments = async (branchId) => {
@@ -69,10 +77,12 @@ export default function DepartmentDesignation({ user }) {
 
         if (!branchId) return;
 
-        const res = await authFetch(
-            `${API}/api/departments?branch_id=${branchId}`
-        );
-        if (res.ok) setDepartments(await res.json());
+        try {
+            const data = await getDepartments(branchId);
+            setDepartments(data || []);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const loadDesignations = async (dept, branchId) => {
@@ -81,10 +91,12 @@ export default function DepartmentDesignation({ user }) {
 
         if (!dept || !branchId) return;
 
-        const res = await authFetch(
-            `${API}/api/designations?department_id=${dept.id}&branch_id=${branchId}`
-        );
-        if (res.ok) setDesignations(await res.json());
+        try {
+            const data = await getDesignations(branchId, dept.id);
+            setDesignations(data || []);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     useEffect(() => {
@@ -94,108 +106,125 @@ export default function DepartmentDesignation({ user }) {
     /* ===============================
        DEPARTMENT ACTIONS
     ================================ */
-    const createDepartment = async () => {
+    /* ===============================
+       DEPARTMENT ACTIONS
+    ================================ */
+    const handleCreateDepartment = async () => {
         if (!canCreateDepartment || !newDept.trim() || !selectedBranch) return;
 
         setLoading(true);
-        const res = await authFetch(`${API}/api/departments`, {
-            method: "POST",
-            body: JSON.stringify({
+        try {
+            await createDepartment({
                 department_name: newDept.trim(),
                 branch_id: Number(selectedBranch),
-            }),
-        });
-        setLoading(false);
-
-        if (res.ok) {
+            });
             setNewDept("");
             loadDepartments(selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const updateDepartment = async (id) => {
+    const handleUpdateDepartment = async (id) => {
         if (!canEditDepartment || !editingDeptName.trim()) return;
 
         setLoading(true);
-        const res = await authFetch(`${API}/api/departments/${id}`, {
-            method: "PUT",
-            body: JSON.stringify({ department_name: editingDeptName }),
-        });
-        setLoading(false);
-
-        if (res.ok) {
+        try {
+            await updateDepartment(id, { department_name: editingDeptName });
             setEditingDeptId(null);
             loadDepartments(selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const deleteDepartment = async (dept) => {
+    const handleDeleteDepartment = async (dept) => {
         if (!canDeleteDepartment) return;
         if (!confirm("Delete this department?")) return;
 
-        await authFetch(`${API}/api/departments/${dept.id}`, {
-            method: "DELETE",
-        });
-
-        loadDepartments(selectedBranch);
+        try {
+            await apiDeleteDepartment(dept.id);
+            loadDepartments(selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        }
     };
 
     /* ===============================
        DESIGNATION ACTIONS
     ================================ */
-    const createDesignation = async () => {
+    /* ===============================
+       DESIGNATION ACTIONS
+    ================================ */
+    const handleCreateDesignation = async () => {
         if (
             !canCreateDesignation ||
             !newDesignation.trim() ||
+            !newDesignationCode.trim() ||
             !selectedDept ||
             !selectedBranch
         )
             return;
 
         setLoading(true);
-        const res = await authFetch(`${API}/api/designations`, {
-            method: "POST",
-            body: JSON.stringify({
+        try {
+            await createDesignation({
                 designation_name: newDesignation.trim(),
+                designation_code: newDesignationCode.trim(),
                 department_id: selectedDept.id,
                 branch_id: Number(selectedBranch),
-            }),
-        });
-        setLoading(false);
-
-        if (res.ok) {
+            });
             setNewDesignation("");
+            setNewDesignationCode("");
             loadDesignations(selectedDept, selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const updateDesignation = async (id) => {
-        if (!canEditDesignation || !editingDesigName.trim()) return;
+    const handleUpdateDesignation = async (id) => {
+        if (!canEditDesignation || !editingDesigName.trim() || !editingDesigCode.trim()) return;
 
         setLoading(true);
-        const res = await authFetch(`${API}/api/designations/${id}`, {
-            method: "PUT",
-            body: JSON.stringify({
+        try {
+            await updateDesignation(id, {
                 designation_name: editingDesigName,
-            }),
-        });
-        setLoading(false);
-
-        if (res.ok) {
+                designation_code: editingDesigCode,
+            });
             setEditingDesigId(null);
             loadDesignations(selectedDept, selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const deleteDesignation = async (desig) => {
+    const handleDeleteDesignation = async (desig) => {
         if (!canDeleteDesignation) return;
         if (!confirm("Delete this designation?")) return;
 
-        await authFetch(`${API}/api/designations/${desig.id}`, {
-            method: "DELETE",
-        });
+        try {
+            await apiDeleteDesignation(desig.id);
+            loadDesignations(selectedDept, selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        }
+    };
 
-        loadDesignations(selectedDept, selectedBranch);
+    const handleToggleStatus = async (desig) => {
+        try {
+            await toggleDesignationStatus(desig.id);
+            loadDesignations(selectedDept, selectedBranch);
+        } catch (error) {
+            alert(error.message);
+        }
     };
 
     /* ===============================
@@ -246,10 +275,10 @@ export default function DepartmentDesignation({ user }) {
                                             placeholder="New Department"
                                             value={newDept}
                                             onChange={(e) => setNewDept(e.target.value)}
-                                            onKeyPress={(e) => e.key === "Enter" && createDepartment()}
+                                            onKeyPress={(e) => e.key === "Enter" && handleCreateDepartment()}
                                         />
                                         <button
-                                            onClick={createDepartment}
+                                            onClick={handleCreateDepartment}
                                             disabled={loading || !newDept.trim()}
                                             className="btn-add"
                                         >
@@ -277,11 +306,11 @@ export default function DepartmentDesignation({ user }) {
                                                             value={editingDeptName}
                                                             onChange={(e) => setEditingDeptName(e.target.value)}
                                                             autoFocus
-                                                            onKeyPress={(e) => e.key === "Enter" && updateDepartment(d.id)}
+                                                            onKeyPress={(e) => e.key === "Enter" && handleUpdateDepartment(d.id)}
                                                         />
                                                         <div className="action-buttons">
                                                             <button
-                                                                onClick={() => updateDepartment(d.id)}
+                                                                onClick={() => handleUpdateDepartment(d.id)}
                                                                 className="btn-save"
                                                             >
                                                                 Save
@@ -318,7 +347,7 @@ export default function DepartmentDesignation({ user }) {
                                                                     className="btn-delete"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        deleteDepartment(d);
+                                                                        handleDeleteDepartment(d);
                                                                     }}
                                                                 >
                                                                     Delete
@@ -348,14 +377,19 @@ export default function DepartmentDesignation({ user }) {
                                         {canCreateDesignation && (
                                             <div className="add-section">
                                                 <input
-                                                    placeholder="New Designation"
+                                                    placeholder="Designation Name"
                                                     value={newDesignation}
                                                     onChange={(e) => setNewDesignation(e.target.value)}
-                                                    onKeyPress={(e) => e.key === "Enter" && createDesignation()}
+                                                />
+                                                <input
+                                                    placeholder="Role Code"
+                                                    value={newDesignationCode}
+                                                    onChange={(e) => setNewDesignationCode(e.target.value)}
+                                                    onKeyPress={(e) => e.key === "Enter" && handleCreateDesignation()}
                                                 />
                                                 <button
-                                                    onClick={createDesignation}
-                                                    disabled={loading || !newDesignation.trim()}
+                                                    onClick={handleCreateDesignation}
+                                                    disabled={loading || !newDesignation.trim() || !newDesignationCode.trim()}
                                                     className="btn-add"
                                                 >
                                                     Add
@@ -381,11 +415,17 @@ export default function DepartmentDesignation({ user }) {
                                                                     value={editingDesigName}
                                                                     onChange={(e) => setEditingDesigName(e.target.value)}
                                                                     autoFocus
-                                                                    onKeyPress={(e) => e.key === "Enter" && updateDesignation(d.id)}
+                                                                    placeholder="Name"
+                                                                />
+                                                                <input
+                                                                    value={editingDesigCode}
+                                                                    onChange={(e) => setEditingDesigCode(e.target.value)}
+                                                                    placeholder="Code"
+                                                                    onKeyPress={(e) => e.key === "Enter" && handleUpdateDesignation(d.id)}
                                                                 />
                                                                 <div className="action-buttons">
                                                                     <button
-                                                                        onClick={() => updateDesignation(d.id)}
+                                                                        onClick={() => handleUpdateDesignation(d.id)}
                                                                         className="btn-save"
                                                                     >
                                                                         Save
@@ -403,13 +443,23 @@ export default function DepartmentDesignation({ user }) {
                                                             </div>
                                                         ) : (
                                                             <>
-                                                                <span className="desig-name">{d.designation_name}</span>
+                                                                <span className="desig-name">
+                                                                    {d.designation_name} <small>({d.designation_code})</small>
+                                                                </span>
                                                                 <div className="action-buttons">
+                                                                    <button
+                                                                        className={`btn-delete ${d.is_active ? "warning" : "success"}`}
+                                                                        onClick={() => handleToggleStatus(d)}
+                                                                        style={{ marginLeft: 5 }}
+                                                                    >
+                                                                        {d.is_active ? "D" : "E"}
+                                                                    </button>
                                                                     {canEditDesignation && (
                                                                         <button
                                                                             onClick={() => {
                                                                                 setEditingDesigId(d.id);
                                                                                 setEditingDesigName(d.designation_name);
+                                                                                setEditingDesigCode(d.designation_code || "");
                                                                             }}
                                                                             className="btn-edit"
                                                                         >
@@ -419,7 +469,7 @@ export default function DepartmentDesignation({ user }) {
                                                                     {canDeleteDesignation && (
                                                                         <button
                                                                             className="btn-delete"
-                                                                            onClick={() => deleteDesignation(d)}
+                                                                            onClick={() => handleDeleteDesignation(d)}
                                                                         >
                                                                             Delete
                                                                         </button>

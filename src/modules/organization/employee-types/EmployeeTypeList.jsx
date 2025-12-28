@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "../../../styles/EmployeeTypes.css";
+import {
+  getBranches,
+  getEmployeeTypes,
+  createEmployeeType,
+  updateEmployeeType,
+  deleteEmployeeType as apiDeleteEmployeeType,
+  toggleEmployeeTypeStatus,
+} from "../../../api/master.api";
 
 const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,92 +19,100 @@ export default function EmployeeTypeList({ user }) {
   const canEdit = isAdmin || isHR;
   const canDelete = isAdmin;
 
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
   const [employeeTypes, setEmployeeTypes] = useState([]);
   const [newType, setNewType] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const authFetch = (url, options = {}) => {
-    const token = localStorage.getItem("token");
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...(options.headers || {}),
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+  const loadBranches = async () => {
+    try {
+      const data = await getBranches();
+      setBranches(data || []);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const loadEmployeeTypes = async () => {
+  const loadEmployeeTypes = async (branchId) => {
+    if (!branchId) {
+      setEmployeeTypes([]);
+      return;
+    }
     try {
-      const res = await authFetch(`${API}/api/employee-types`);
-      if (res.ok) {
-        const data = await res.json();
-        setEmployeeTypes(Array.isArray(data) ? data : []);
-      }
+      const data = await getEmployeeTypes(branchId);
+      setEmployeeTypes(Array.isArray(data) ? data : []);
     } catch (error) {
       setEmployeeTypes([]);
     }
   };
 
   useEffect(() => {
-    loadEmployeeTypes();
+    loadBranches();
   }, []);
 
-  const createEmployeeType = async () => {
-    if (!canCreate || !newType.trim()) return;
+  const handleCreateEmployeeType = async () => {
+    if (!canCreate || !newType.trim() || !selectedBranch) return;
 
     setLoading(true);
     try {
-      const res = await authFetch(`${API}/api/employee-types`, {
-        method: "POST",
-        body: JSON.stringify({ type_name: newType.trim() }),
+      await createEmployeeType({
+        type_name: newType.trim(),
+        branch_id: Number(selectedBranch),
       });
-      if (res.ok) {
-        setNewType("");
-        loadEmployeeTypes();
-      }
+      setNewType("");
+      loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      console.error("Failed to create employee type:", error);
+      if (error.message && error.message.includes("already exists")) {
+        alert(error.message);
+      } else {
+        console.error("Failed to create employee type:", error);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const updateEmployeeType = async (id) => {
+  const handleUpdateEmployeeType = async (id) => {
     if (!canEdit || !editingName.trim()) return;
 
     setLoading(true);
     try {
-      const res = await authFetch(`${API}/api/employee-types/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ type_name: editingName.trim() }),
-      });
-      if (res.ok) {
-        setEditingId(null);
-        setEditingName("");
-        loadEmployeeTypes();
-      }
+      await updateEmployeeType(id, { type_name: editingName.trim() });
+      setEditingId(null);
+      setEditingName("");
+      loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      console.error("Failed to update employee type:", error);
+      if (error.message && error.message.includes("already exists")) {
+        alert(error.message);
+      } else {
+        console.error("Failed to update employee type:", error);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteEmployeeType = async (id) => {
+  const handleDeleteEmployeeType = async (id) => {
     if (!canDelete) return;
     if (!confirm("Delete this employee type?")) return;
 
     try {
-      await authFetch(`${API}/api/employee-types/${id}`, {
-        method: "DELETE",
-      });
-      loadEmployeeTypes();
+      await apiDeleteEmployeeType(id);
+      loadEmployeeTypes(selectedBranch);
     } catch (error) {
       console.error("Failed to delete employee type:", error);
+    }
+  };
+
+  const handleToggleStatus = async (type) => {
+    try {
+      await toggleEmployeeTypeStatus(type.id);
+      loadEmployeeTypes(selectedBranch);
+    } catch (error) {
+      console.error("Failed to update status:", error);
     }
   };
 
@@ -104,90 +120,126 @@ export default function EmployeeTypeList({ user }) {
     <div className="et-page">
       <h2>Employee Types</h2>
 
-      {canCreate && (
-        <div className="et-actions">
-          <input
-            placeholder="New Employee Type (e.g., Permanent, Contract, Intern)"
-            value={newType}
-            onChange={(e) => setNewType(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && createEmployeeType()}
-          />
-          <button onClick={createEmployeeType} disabled={loading || !newType.trim()}>
-            Add Employee Type
-          </button>
-        </div>
-      )}
-
-      <div className="card">
-        <div className="table-wrapper">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Employee Type</th>
-                {(canEdit || canDelete) && <th>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {employeeTypes.length === 0 ? (
-                <tr>
-                  <td colSpan={canEdit || canDelete ? 2 : 1} className="empty-state">
-                    No employee types found
-                  </td>
-                </tr>
-              ) : (
-                employeeTypes.map((type) => (
-                  <tr key={type.id}>
-                    <td>
-                      {editingId === type.id ? (
-                        <input
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          onKeyPress={(e) =>
-                            e.key === "Enter" && updateEmployeeType(type.id)
-                          }
-                          autoFocus
-                        />
-                      ) : (
-                        type.type_name || type.name
-                      )}
-                    </td>
-                    {(canEdit || canDelete) && (
-                      <td className="row-actions">
-                        {editingId === type.id ? (
-                          <button onClick={() => updateEmployeeType(type.id)} disabled={loading}>
-                            Save
-                          </button>
-                        ) : (
-                          <>
-                            {canEdit && (
-                              <button
-                                onClick={() => {
-                                  setEditingId(type.id);
-                                  setEditingName(type.type_name || type.name);
-                                }}
-                              >
-                                Edit
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button
-                                className="danger"
-                                onClick={() => deleteEmployeeType(type.id)}
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="et-header-controls">
+        <select
+          value={selectedBranch}
+          onChange={(e) => {
+            setSelectedBranch(e.target.value);
+            loadEmployeeTypes(e.target.value);
+          }}
+          className="branch-select"
+        >
+          <option value="">— Select Branch —</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.branch_name}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {!selectedBranch ? (
+        <div className="hint warning">Please select a branch to manage employee types.</div>
+      ) : (
+        <>
+          {canCreate && (
+            <div className="et-actions">
+              <input
+                placeholder="New Employee Type (e.g., Permanent, Contract, Intern)"
+                value={newType}
+                onChange={(e) => setNewType(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleCreateEmployeeType()}
+              />
+              <button onClick={handleCreateEmployeeType} disabled={loading || !newType.trim()}>
+                Add Employee Type
+              </button>
+            </div>
+          )}
+
+          <div className="card">
+            <div className="table-wrapper">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Employee Type</th>
+                    <th>Status</th>
+                    {(canEdit || canDelete) && <th>Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeeTypes.length === 0 ? (
+                    <tr>
+                      <td colSpan={canEdit || canDelete ? 3 : 2} className="empty-state">
+                        No employee types found
+                      </td>
+                    </tr>
+                  ) : (
+                    employeeTypes.map((type) => (
+                      <tr key={type.id}>
+                        <td>
+                          {editingId === type.id ? (
+                            <input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyPress={(e) =>
+                                e.key === "Enter" && handleUpdateEmployeeType(type.id)
+                              }
+                              autoFocus
+                            />
+                          ) : (
+                            type.type_name || type.name
+                          )}
+                        </td>
+                        <td>
+                          <span className={`status-badge ${type.is_active ? "active" : "inactive"}`}>
+                            {type.is_active ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        {(canEdit || canDelete) && (
+                          <td className="row-actions">
+                            {editingId === type.id ? (
+                              <button onClick={() => handleUpdateEmployeeType(type.id)} disabled={loading}>
+                                Save
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  className={type.is_active ? "warning" : "success"}
+                                  onClick={() => handleToggleStatus(type)}
+                                >
+                                  {type.is_active ? "Disable" : "Enable"}
+                                </button>
+                                {canEdit && (
+                                  <button
+                                    onClick={() => {
+                                      setEditingId(type.id);
+                                      setEditingName(type.type_name || type.name);
+                                    }}
+                                  >
+                                    Edit
+                                  </button>
+                                )}
+                                {canDelete && (
+                                  <button
+                                    className="danger"
+                                    onClick={() => handleDeleteEmployeeType(type.id)}
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

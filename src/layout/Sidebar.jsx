@@ -87,8 +87,9 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
   return (
     <aside
-      className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""
-        }`}
+      className={`sidebar ${collapsed ? "collapsed" : ""} ${
+        mobileOpen ? "mobile-open" : ""
+      }`}
     >
       <nav className="sidebar-menu">
         <button
@@ -133,7 +134,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                     go("departments");
                   }}
                 >
-                  <FaBuilding /> Departments & Designations
+                  <FaBuilding /> Departments
                 </button>
                 <button
                   type="button"
@@ -313,7 +314,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
           </>
         )}
       </nav>
-    </aside >
+    </aside>
   );
 };
 

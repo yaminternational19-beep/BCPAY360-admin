@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../../../styles/AddHR.css";
+import { getBranches, getDepartments } from "../../../api/master.api";
 
 const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -18,6 +19,8 @@ export default function HRList() {
     return <p className="hint">Access denied</p>;
   }
 
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
   const [departments, setDepartments] = useState([]);
   const [form, setForm] = useState({
     department: "",
@@ -28,26 +31,42 @@ export default function HRList() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingDepts, setLoadingDepts] = useState(false);
+  const [loadingBranches, setLoadingBranches] = useState(false);
 
   useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        setLoadingBranches(true);
+        const data = await getBranches();
+        setBranches(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load branches:", err);
+      } finally {
+        setLoadingBranches(false);
+      }
+    };
+    loadBranches();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedBranch) {
+      setDepartments([]);
+      return;
+    }
+
     const loadDepartments = async () => {
       try {
         setLoadingDepts(true);
-        const res = await fetch(`${API}/api/departments`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) throw new Error();
-        setDepartments(await res.json());
-      } catch {
+        const data = await getDepartments(selectedBranch);
+        setDepartments(Array.isArray(data) ? data : []);
+      } catch (err) {
         alert("Failed to load departments");
       } finally {
         setLoadingDepts(false);
       }
     };
     loadDepartments();
-  }, [token]);
+  }, [selectedBranch]);
 
   const handleEmpIdChange = (val) => {
     setForm((p) => ({ ...p, empIdRaw: val }));
@@ -78,6 +97,7 @@ export default function HRList() {
           password: form.password,
           department: form.department,
           designation: "HR",
+          branch_id: Number(selectedBranch),
         }),
       });
       const data = await res.json();
@@ -95,14 +115,37 @@ export default function HRList() {
   return (
     <div className="add-hr-page">
       <form className="add-hr-form" onSubmit={submit}>
-        <input value={user.company} disabled />
+        <input value={user.company_name || user.company || "Company"} disabled />
+
+        <select
+          value={selectedBranch}
+          onChange={(e) => {
+            setSelectedBranch(e.target.value);
+            setForm(p => ({ ...p, department: "" }));
+          }}
+          disabled={loadingBranches}
+        >
+          <option value="">
+            {loadingBranches ? "Loading branches..." : "Select Branch"}
+          </option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.branch_name}
+            </option>
+          ))}
+        </select>
+
         <select
           value={form.department}
           onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}
-          disabled={loadingDepts}
+          disabled={loadingDepts || !selectedBranch}
         >
           <option value="">
-            {loadingDepts ? "Loading departments..." : "Select Department"}
+            {!selectedBranch
+              ? "Select Branch First"
+              : loadingDepts
+                ? "Loading departments..."
+                : "Select Department"}
           </option>
           {departments.map((d) => (
             <option key={d.id} value={d.department_name}>

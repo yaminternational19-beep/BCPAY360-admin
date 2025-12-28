@@ -92,7 +92,7 @@ const AdminLayout = ({ user, setUser }) => {
           <Route
             path="departments"
             element={
-              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN", "HR"]} user={user}>
+              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
                 <DepartmentDesignation user={user} />
               </RoleProtectedRoute>
             }

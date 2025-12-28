@@ -11,7 +11,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import "../../../styles/EmployeeForm.css";
-import { getDesignationsByDepartment, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
+import { getDepartments, getDesignations, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
 import { getLastEmployeeCode } from "../../../api/employees.api";
 
 const EMPTY_FORM = {
@@ -119,12 +119,13 @@ const MOCK_SHIFTS = [
   { id: 3, shift_name: "Morning Shift", name: "Morning Shift", start_time: "06:00", end_time: "14:00" },
 ];
 
-const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
+const EmployeeForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
   const authUser = JSON.parse(localStorage.getItem("auth_user")) || {};
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [employeeTypes, setEmployeeTypes] = useState([]);
   const [shifts, setShifts] = useState([]);
@@ -134,17 +135,17 @@ const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
   useEffect(() => {
     if (initial) {
       setForm({
-      ...EMPTY_FORM,
-      ...initial,
-      joining_date: initial.joining_date?.slice(0, 10) || "",
-      dob: initial.dob?.slice(0, 10) || "",
-      pf_join_date: initial.pf_join_date?.slice(0, 10) || "",
-      esic_join_date: initial.esic_join_date?.slice(0, 10) || "",
-      has_multiple_branches: Array.isArray(initial.branch_ids) && initial.branch_ids.length > 0,
-      branch_ids: initial.branch_ids || [],
-      branch_id: initial.branch_id || "",
-      password: "",
-    });
+        ...EMPTY_FORM,
+        ...initial,
+        joining_date: initial.joining_date?.slice(0, 10) || "",
+        dob: initial.dob?.slice(0, 10) || "",
+        pf_join_date: initial.pf_join_date?.slice(0, 10) || "",
+        esic_join_date: initial.esic_join_date?.slice(0, 10) || "",
+        has_multiple_branches: Array.isArray(initial.branch_ids) && initial.branch_ids.length > 0,
+        branch_ids: initial.branch_ids || [],
+        branch_id: initial.branch_id || "",
+        password: "",
+      });
 
     } else {
       setForm({
@@ -167,44 +168,20 @@ const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
           }));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isEdit]);
 
   useEffect(() => {
-    if (!form.department_id) {
+    if (!form.department_id || !form.branch_id) {
       setDesignations([]);
       return;
     }
-    getDesignationsByDepartment(form.department_id)
+    getDesignations(form.branch_id, form.department_id)
       .then(setDesignations)
       .catch(() => setDesignations([]));
-  }, [form.department_id]);
+  }, [form.department_id, form.branch_id]);
 
   useEffect(() => {
-    getEmployeeTypes()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setEmployeeTypes(data);
-        } else {
-          setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
-        }
-      })
-      .catch(() => {
-        setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
-      });
-
-    getShifts()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setShifts(data);
-        } else {
-          setShifts(MOCK_SHIFTS);
-        }
-      })
-      .catch(() => {
-        setShifts(MOCK_SHIFTS);
-      });
-
     getBranches()
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -217,6 +194,48 @@ const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
         setBranches([]);
       });
   }, []);
+
+  useEffect(() => {
+    if (!form.branch_id) {
+      setDepartments([]);
+      return;
+    }
+    getDepartments(form.branch_id)
+      .then(setDepartments)
+      .catch(() => setDepartments([]));
+  }, [form.branch_id]);
+
+  useEffect(() => {
+    if (!form.branch_id) {
+      setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
+      setShifts(MOCK_SHIFTS);
+      return;
+    }
+
+    getEmployeeTypes(form.branch_id)
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setEmployeeTypes(data);
+        } else {
+          setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
+        }
+      })
+      .catch(() => {
+        setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
+      });
+
+    getShifts(form.branch_id)
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setShifts(data);
+        } else {
+          setShifts(MOCK_SHIFTS);
+        }
+      })
+      .catch(() => {
+        setShifts(MOCK_SHIFTS);
+      });
+  }, [form.branch_id]);
 
   const change = (k, v) => {
     setForm((p) => ({ ...p, [k]: v }));
@@ -431,7 +450,7 @@ const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
               </div>
             </div>
 
-            
+
 
             <div className="form-grid">
               <div>
@@ -535,7 +554,7 @@ const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
-                      {dept.name}
+                      {dept.department_name || dept.name}
                     </option>
                   ))}
                 </select>
@@ -549,7 +568,7 @@ const EmployeeForm = ({ initial, onSave, onClose, departments = [] }) => {
                   <option value="">Select Designation</option>
                   {designations.map((desg) => (
                     <option key={desg.id} value={desg.id}>
-                      {desg.name}
+                      {desg.designation_name || desg.name}
                     </option>
                   ))}
                 </select>

@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "../../../styles/Branch.css";
 import BranchForm from "./BranchForm";
+import {
+  getBranches,
+  createBranch,
+  updateBranch,
+  toggleBranchStatus,
+} from "../../../api/master.api";
 
 const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -17,73 +23,41 @@ export default function BranchList({ user }) {
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
 
-  const authFetch = (url, options = {}) => {
-    const token = localStorage.getItem("token");
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...(options.headers || {}),
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-  };
+
 
   const loadBranches = async () => {
     try {
-      const res = await authFetch(`${API}/api/branches`);
-      if (res.ok) {
-        const data = await res.json();
-        setBranches(Array.isArray(data) ? data : []);
-      }
+      const data = await getBranches();
+      setBranches(Array.isArray(data) ? data : []);
     } catch (error) {
       setBranches([]);
     }
   };
 
-  const loadCompanies = async () => {
-    try {
-      const res = await authFetch(`${API}/api/companies`);
-      if (res.ok) {
-        const data = await res.json();
-        setCompanies(Array.isArray(data) ? data : []);
-      }
-    } catch (error) {
-      setCompanies([]);
-    }
-  };
-
   useEffect(() => {
     loadBranches();
-    loadCompanies();
   }, []);
 
   const handleSave = async (payload) => {
     setLoading(true);
     try {
       if (selected) {
-        const res = await authFetch(`${API}/api/branches/${selected.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          setShowForm(false);
-          setSelected(null);
-          loadBranches();
-        }
+        await updateBranch(selected.id, payload);
+        setShowForm(false);
+        setSelected(null);
+        loadBranches();
       } else {
-        const res = await authFetch(`${API}/api/branches`, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          setShowForm(false);
-          loadBranches();
-        }
+        await createBranch(payload);
+        setShowForm(false);
+        loadBranches();
       }
     } catch (error) {
       console.error("Failed to save branch:", error);
-      alert("Failed to save branch. Please try again.");
+      if (error.message && error.message.includes("already exists")) {
+        alert(error.message);
+      } else {
+        alert("Failed to save branch. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -105,13 +79,8 @@ export default function BranchList({ user }) {
     if (!confirm(`${newStatus ? "Activate" : "Deactivate"} branch "${branch.branch_name}"?`)) return;
 
     try {
-      const res = await authFetch(`${API}/api/branches/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ is_active: newStatus }),
-      });
-      if (res.ok) {
-        loadBranches();
-      }
+      await toggleBranchStatus(id);
+      loadBranches();
     } catch (error) {
       console.error("Failed to update branch status:", error);
       alert("Failed to update branch status.");
@@ -207,7 +176,6 @@ export default function BranchList({ user }) {
       {showForm && (
         <BranchForm
           initial={selected}
-          companies={companies}
           onSave={handleSave}
           onClose={() => {
             setShowForm(false);
