@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { hasPermission } from "../utils/permissions.js";
 import {
   FaHome,
   FaUsers,
@@ -84,6 +85,20 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
     if (collapsed) return;
     setter(value);
   };
+
+  const hrPermissions =
+    user?.role === "HR"
+      ? JSON.parse(localStorage.getItem("hr_permissions") || "[]")
+      : [];
+
+  const canAccess = (moduleKey, action = "view") => {
+    if (user?.role === "COMPANY_ADMIN") return true;
+    if (user?.role !== "HR") return false;
+
+    return hasPermission(hrPermissions, moduleKey, action);
+  };  
+
+
 
   return (
     <aside
@@ -206,61 +221,78 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
             {hrOpen && !collapsed && (
               <div className="submenu">
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("employees");
-                  }}
-                >
-                  <FaUsers /> Employees
-                </button>
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("attendance");
-                  }}
-                >
-                  <FaClock /> Attendance
-                </button>
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("leavemanagement");
-                  }}
-                >
-                  <FaUmbrellaBeach /> Leaves
-                </button>
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("payroll");
-                  }}
-                >
-                  <FaMoneyBillWave /> Payroll
-                </button>
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("recruit");
-                  }}
-                >
-                  <FaUserTie /> Recruitment
-                </button>
+                {canAccess("EMPLOYEE_MASTER") && (
+                    <button
+                      type="button"
+                      className="submenu-item"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        go("employees");
+                      }}
+                    >
+                      <FaUsers /> Employees
+                    </button>
+                  )}
+
+
+                {canAccess("ATTENDANCE") && (
+                  <button
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go("attendance");
+                    }}
+                  >
+                    <FaClock /> Attendance
+                  </button>
+                )}
+
+                {canAccess("LEAVE_MASTER") && (
+                  <button
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go("leavemanagement");
+                    }}
+                  >
+                    <FaUmbrellaBeach /> Leaves
+                  </button>
+                )}
+
+                {canAccess("PAYROLL") && (
+                  <button
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go("payroll");
+                    }}
+                  >
+                    <FaMoneyBillWave /> Payroll
+                  </button>
+                )}
+
+                {canAccess("RECRUITMENT") && (
+                  <button
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go("recruit");
+                    }}
+                  >
+                    <FaUserTie /> Recruitment
+                  </button>
+                )}
+
+
               </div>
             )}
           </>

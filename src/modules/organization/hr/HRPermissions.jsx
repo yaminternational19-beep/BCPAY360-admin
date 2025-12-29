@@ -5,6 +5,7 @@ import {
   getHRPermissions,
   saveHRPermissions,
 } from "../../../api/master.api";
+import { useParams, useNavigate } from "react-router-dom";
 
 /* ============================
    MODULE DEFINITIONS
@@ -42,10 +43,22 @@ const buildEmptyPermissions = () =>
   }));
 
 export default function HRPermissions() {
+  const { hrId } = useParams();
+  const navigate = useNavigate();
+
   const [hrList, setHrList] = useState([]);
   const [selectedHR, setSelectedHR] = useState(null);
   const [permissions, setPermissions] = useState(buildEmptyPermissions());
   const [loading, setLoading] = useState(false);
+
+  /* ============================
+     SAFETY GUARD
+  ============================ */
+  useEffect(() => {
+    if (!hrId) {
+      navigate("/admin/hr-management", { replace: true });
+    }
+  }, [hrId, navigate]);
 
   /* ============================
      LOAD HR LIST
@@ -53,112 +66,124 @@ export default function HRPermissions() {
   useEffect(() => {
     const loadHRs = async () => {
       const data = await getHRList();
-      setHrList(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setHrList(list);
+
+      // 🔥 AUTO-SELECT HR FROM URL
+      const hr = list.find((h) => h.id === Number(hrId));
+      if (!hr) {
+        navigate("/admin/hr-management", { replace: true });
+        return;
+      }
+      setSelectedHR(hr);
     };
+
     loadHRs();
-  }, []);
+  }, [hrId, navigate]);
 
   /* ============================
      LOAD HR PERMISSIONS
   ============================ */
   useEffect(() => {
-    if (!selectedHR) return;
+      if (!selectedHR) return;
 
-    const loadPermissions = async () => {
-      setLoading(true);
-      try {
-        const data = await getHRPermissions(selectedHR.id);
+      const loadPermissions = async () => {
+        setLoading(true);
+        try {
+          const data = await getHRPermissions(selectedHR.id);
 
-        if (!Array.isArray(data)) {
-          setPermissions(buildEmptyPermissions());
-          return;
-        }
-
-        setPermissions((prev) =>
-          prev.map((p) => {
-            const existing = data.find(
-              (x) => x.module_key === p.module_key
+          if (!Array.isArray(data) || data.length === 0) {
+            // default permissions
+            setPermissions((prev) =>
+              prev.map((p) =>
+                ["EMPLOYEE_MASTER", "ATTENDANCE", "LEAVE_MASTER"].includes(
+                  p.module_key
+                )
+                  ? { ...p, can_view: true }
+                  : p
+              )
             );
-            return existing ? { ...p, ...existing } : p;
-          })
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+            return;
+          }
 
-    loadPermissions();
-  }, [selectedHR]);
+          setPermissions((prev) =>
+            prev.map((p) => {
+              const existing = data.find(
+                (x) => x.module_key === p.module_key
+              );
+              return existing ? { ...p, ...existing } : p;
+            })
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadPermissions();
+    }, [selectedHR]);
+
+
 
   /* ============================
      TOGGLE PERMISSION
   ============================ */
   const toggle = (index, key) => {
-    setPermissions((prev) =>
-      prev.map((p, i) =>
-        i === index ? { ...p, [key]: !p[key] } : p
-      )
-    );
-  };
+      setPermissions((prev) =>
+        prev.map((p, i) => {
+          if (i !== index) return p;
+
+          // If VIEW is turned OFF → turn everything OFF
+          if (key === "can_view" && p.can_view) {
+            return {
+              ...p,
+              can_view: false,
+              can_create: false,
+              can_edit: false,
+              can_delete: false,
+              can_approve: false,
+            };
+          }
+
+          // If any action is enabled → VIEW must be ON
+          if (key !== "can_view" && !p.can_view) {
+            return {
+              ...p,
+              can_view: true,
+              [key]: true,
+            };
+          }
+
+          return { ...p, [key]: !p[key] };
+        })
+      );
+    };
+
 
   /* ============================
-     SAVE
+     SAVE PERMISSIONS
   ============================ */
   const save = async () => {
-    if (!selectedHR) {
-      alert("Select an HR first");
-      return;
-    }
+    if (!selectedHR) return;
 
-    const payload = {
-      hr_id: selectedHR.id,
+    await saveHRPermissions(selectedHR.id, {
       branch_id: selectedHR.branch_id,
       department_id: selectedHR.department_id,
       permissions: permissions.map(({ label, ...rest }) => rest),
-    };
+    });
 
-    await saveHRPermissions(selectedHR.id, payload);
-    alert("Permissions saved");
+    alert("Permissions saved successfully");
   };
 
   return (
     <div className="hr-permissions-page">
       <h2>HR Permissions</h2>
-      <p className="hint">
-        Select an HR to configure module-level permissions.
-      </p>
 
-      {/* HR SELECTOR */}
-      <div className="hr-selector">
-        <select
-          value={selectedHR?.id || ""}
-          onChange={(e) => {
-            const hr = hrList.find(
-              (h) => h.id === Number(e.target.value)
-            );
-            setSelectedHR(hr || null);
-            setPermissions(buildEmptyPermissions());
-          }}
-        >
-          <option value="">— Select HR —</option>
-          {hrList.map((hr) => (
-            <option key={hr.id} value={hr.id}>
-              {hr.emp_id}
-            </option>
-          ))}
-        </select>
+      <div className="hr-context">
+        <strong>HR:</strong> {selectedHR?.emp_id} &nbsp; | &nbsp;
+        <strong>Branch:</strong> {selectedHR?.branch_name} &nbsp; | &nbsp;
+        <strong>Department:</strong> {selectedHR?.department_name}
       </div>
 
-      {/* CONTEXT */}
-      {selectedHR && (
-        <div className="hr-context">
-          <strong>Branch:</strong> {selectedHR.branch_name || "—"} &nbsp; | &nbsp;
-          <strong>Department:</strong>{" "}
-          {selectedHR.department_name || "—"}
-        </div>
-      )}
-
-      {/* PERMISSIONS TABLE */}
       <div className="table-wrapper">
         <table className="permission-table">
           <thead>
@@ -186,7 +211,11 @@ export default function HRPermissions() {
                     <input
                       type="checkbox"
                       checked={perm[key]}
-                      disabled={!selectedHR || loading}
+                      disabled={
+                        !selectedHR ||
+                        loading ||
+                        (key !== "can_view" && !perm.can_view)
+                      }
                       onChange={() => toggle(idx, key)}
                     />
                   </td>
@@ -197,12 +226,24 @@ export default function HRPermissions() {
         </table>
       </div>
 
-      {/* ACTIONS */}
       <div className="actions">
-        <button className="primary" onClick={save} disabled={loading}>
+        <button
+          className="secondary"
+          onClick={() => navigate("/admin/hr-management")}
+          disabled={loading}
+        >
+          Back
+        </button>
+
+        <button
+          className="primary"
+          onClick={save}
+          disabled={loading}
+        >
           {loading ? "Saving..." : "Save Permissions"}
         </button>
       </div>
+
     </div>
   );
 }

@@ -27,6 +27,8 @@ import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
 import Sidebar from "./layout/Sidebar";
 import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
+import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
+
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
   if (!user || !allowedRoles.includes(user.role)) {
@@ -46,20 +48,20 @@ const AdminLayout = ({ user, setUser }) => {
   const isAdmin = user.role === "COMPANY_ADMIN";
   const isHR = user.role === "HR";
 
-  const adminOnlyRoutes = [
-    "/admin/departments",
-    "/admin/employee-types",
-    "/admin/shifts",
-    "/admin/branches",
-    "/admin/hr-management",
-    "/admin/accounting",
-    "/admin/softwarereports",
-    "/admin/companies",
-    "/admin/asset",
-    "/admin/announce",
-    "/admin/holidays",
-    "/admin/settings",
-  ];
+  // const adminOnlyRoutes = [
+  //   "/admin/departments",
+  //   "/admin/employee-types",
+  //   "/admin/shifts",
+  //   "/admin/branches",
+  //   "/admin/hr-management",
+  //   "/admin/accounting",
+  //   "/admin/softwarereports",
+  //   "/admin/companies",
+  //   "/admin/asset",
+  //   "/admin/announce",
+  //   "/admin/holidays",
+  //   "/admin/settings",
+  // ];
 
   const currentPath = location.pathname;
   if (!isAdmin && adminOnlyRoutes.some((route) => currentPath.startsWith(route))) {
@@ -84,11 +86,72 @@ const AdminLayout = ({ user, setUser }) => {
       <main className="app-content">
         <Routes>
           <Route path="dashboard" element={<Dashboard user={user} />} />
-          <Route path="employees" element={<EmployeeList />} />
-          <Route path="attendance" element={<Attendance />} />
-          <Route path="leavemanagement" element={<LeaveManagement />} />
-          <Route path="payroll" element={<PayrollManagement />} />
-          <Route path="recruit" element={<RecruitmentModule />} />
+          <Route
+              path="employees"
+              element={
+                <PermissionProtectedRoute
+                  user={user}
+                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                  moduleKey="EMPLOYEE_MASTER"
+                >
+                  <EmployeeList />
+                </PermissionProtectedRoute>
+              }
+            />
+
+          <Route
+              path="attendance"
+              element={
+                <PermissionProtectedRoute
+                  user={user}
+                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                  moduleKey="ATTENDANCE"
+                >
+                  <Attendance />
+                </PermissionProtectedRoute>
+              }
+            />
+
+          <Route
+              path="leavemanagement"
+              element={
+                <PermissionProtectedRoute
+                  user={user}
+                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                  moduleKey="LEAVE_MASTER"
+                >
+                  <LeaveManagement />
+                </PermissionProtectedRoute>
+              }
+            />
+
+          <Route
+              path="payroll"
+              element={
+                <PermissionProtectedRoute
+                  user={user}
+                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                  moduleKey="PAYROLL"
+                >
+                  <PayrollManagement />
+                </PermissionProtectedRoute>
+              }
+            />
+
+
+          <Route
+              path="recruit"
+              element={
+                <PermissionProtectedRoute
+                  user={user}
+                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                  moduleKey="RECRUITMENT"
+                >
+                  <RecruitmentModule />
+                </PermissionProtectedRoute>
+              }
+            />
+
           <Route
             path="departments"
             element={
@@ -142,27 +205,45 @@ const AdminLayout = ({ user, setUser }) => {
           <Route
             path="asset"
             element={
-              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="ASSET"
+                adminOverride
+              >
                 <AssetManagement />
-              </RoleProtectedRoute>
+              </PermissionProtectedRoute>
             }
           />
+
           <Route
             path="announce"
             element={
-              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="ANNOUNCE"
+                adminOverride
+              >
                 <AnnouncementModule />
-              </RoleProtectedRoute>
+              </PermissionProtectedRoute>
             }
           />
+
           <Route
             path="holidays"
             element={
-              <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="HOLIDAYS"
+                adminOverride
+              >
                 <HolidaysModule />
-              </RoleProtectedRoute>
+              </PermissionProtectedRoute>
             }
           />
+
           <Route
             path="settings"
             element={
