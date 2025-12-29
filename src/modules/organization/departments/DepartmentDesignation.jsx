@@ -15,6 +15,7 @@ import {
 
 const API = import.meta.env.VITE_API_BASE_URL;
 
+
 export default function DepartmentDesignation({ user }) {
     const isAdmin = user?.role === "COMPANY_ADMIN";
     const isHR = user?.role === "HR";

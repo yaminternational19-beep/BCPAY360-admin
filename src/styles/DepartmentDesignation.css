@@ -1,555 +1,461 @@
-/* =========================================================
-   ROOT PAGE
-========================================================= */
+/* DepartmentDesignation.css */
+
+/* CSS Variables for consistency and ease of theming */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --light-bg: #f8f9fa;
+  --dark-bg: #343a40;
+  --text-color: #212529;
+  --border-color: #dee2e6;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+  --border-radius: 8px;
+  --spacing: 1rem;
+}
+
+/* Main Page Container */
 .dd-page {
-  width: 100%;
-  height: calc(100vh - 64px);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-  overflow: hidden;
-  animation: fadeIn 0.3s ease;
+  min-height: 100vh;
+  background-color: var(--light-bg);
+  padding: var(--spacing);
+  font-family: 'Arial', sans-serif;
+  color: var(--text-color);
+  animation: fadeIn 0.5s ease-in;
 }
 
-/* =========================================================
-   CONTENT WRAPPER - Reduced Height
-========================================================= */
-.dd-content {
-  height: calc(100vh - 120px);
-  max-width: 1400px;
-  margin: 20px auto;
-  padding: 20px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  overflow: hidden;
-}
-
-/* =========================================================
-   HEADER
-========================================================= */
-.dd-header {
-  text-align: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eaeaea;
-}
-
-.dd-header h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
-  animation: slideDown 0.4s ease;
-}
-
-/* =========================================================
-   BRANCH SELECTOR
-========================================================= */
-.branch-selector {
-  text-align: center;
-  margin-bottom: 20px;
-  animation: slideDown 0.5s ease;
-}
-
-.branch-selector label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #444;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.branch-selector select {
-  padding: 10px 16px;
-  font-size: 14px;
-  border-radius: 8px;
-  border: 2px solid #ddd;
-  background: #fff;
-  min-width: 280px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.branch-selector select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-  outline: none;
-  transform: translateY(-1px);
-}
-
-/* =========================================================
-   GRID LAYOUT - Tighter Spacing
-========================================================= */
-.dd-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  min-height: 0;
-  animation: fadeInUp 0.6s ease;
-}
-
-/* =========================================================
-   CARD PANELS - Optimized Height
-========================================================= */
-.card {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  border: 1px solid #e0e0e0;
-  overflow: hidden;
-  height: 420px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card:hover {
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
-}
-
-.dept-panel, .desig-panel {
-  min-height: 420px;
-}
-
-/* =========================================================
-   PANEL HEADER - Compact
-========================================================= */
-.panel-header {
-  padding: 15px 18px;
-  border-bottom: 1px solid #eaeaea;
-  background: #f8f9fa;
-}
-
-.panel-header h3 {
-  margin: 0 0 12px 0;
-  font-size: 17px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.add-section {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.add-section input {
-  flex: 1;
-  padding: 8px 12px;
-  font-size: 13px;
-  border-radius: 6px;
-  border: 1.5px solid #ddd;
-  transition: all 0.25s ease;
-  height: 34px;
-}
-
-.add-section input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  outline: none;
-}
-
-/* =========================================================
-   BUTTONS - Reduced Size
-========================================================= */
-
-/* Add Button - SMALLER */
-.btn-add {
-  padding: 6px 12px !important;
-  font-size: 11px !important;
-  min-height: 34px !important;
-  min-width: 60px !important;
-  background: linear-gradient(135deg, #667eea, #764ba2) !important;
-  color: white !important;
-  border: none !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.btn-add:hover {
-  background: linear-gradient(135deg, #5a6fd8, #6a4190) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3) !important;
-}
-
-.btn-add:active {
-  transform: translateY(0) !important;
-}
-
-/* Action Buttons - EVEN SMALLER */
-.action-buttons button {
-  padding: 3px 8px !important;
-  font-size: 10px !important;
-  line-height: 1 !important;
-  min-height: 24px !important;
-  min-width: 45px !important;
-  border-radius: 5px !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.3px !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Edit Button */
-.btn-edit {
-  background: #4CAF50 !important;
-  color: white !important;
-  border: none !important;
-}
-
-.btn-edit:hover {
-  background: #45a049 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3) !important;
-}
-
-/* Delete Button */
-.btn-delete {
-  background: #dc3545 !important;
-  color: white !important;
-  border: none !important;
-}
-
-.btn-delete:hover {
-  background: #c82333 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3) !important;
-}
-
-/* Save Button */
-.btn-save {
-  background: #2196F3 !important;
-  color: white !important;
-  border: none !important;
-}
-
-.btn-save:hover {
-  background: #1976D2 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3) !important;
-}
-
-/* Cancel Button */
-.btn-cancel {
-  background: #6c757d !important;
-  color: white !important;
-  border: none !important;
-}
-
-.btn-cancel:hover {
-  background: #5a6268 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3) !important;
-}
-
-/* Disabled state */
-button:disabled {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* =========================================================
-   PANEL CONTENT - Compact Scrollable Areas
-========================================================= */
-.panel-content {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-}
-
-/* =========================================================
-   LIST STYLES - Compact
-========================================================= */
-.dept-list, .desig-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.dept-item, .desig-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 1px solid #eee;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  animation: slideIn 0.4s ease forwards;
-  animation-delay: calc(var(--item-index, 0) * 0.05s);
-}
-
-.dept-item:hover {
-  background: #f0f0f0;
-  border-color: #e0e0e0;
-  transform: translateX(3px);
-}
-
-.dept-item.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-color: #667eea;
-  color: white;
-}
-
-.dept-item.active .dept-name {
-  color: white;
-  font-weight: 600;
-}
-
-.dept-item.active .btn-edit,
-.dept-item.active .btn-delete {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-}
-
-.dept-item.active .btn-edit:hover,
-.dept-item.active .btn-delete:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-}
-
-.dept-name, .desig-name {
-  flex: 1;
-  font-weight: 500;
-  font-size: 14px;
-  color: #333;
-  padding-right: 8px;
-}
-
-.desig-item .desig-name {
-  color: #444;
-}
-
-/* =========================================================
-   EDIT MODE - Compact
-========================================================= */
-.edit-mode {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.edit-mode input {
-  flex: 1;
-  padding: 7px 10px;
-  font-size: 13px;
-  border-radius: 6px;
-  border: 2px solid #667eea;
-  background: white;
-  height: 30px;
-  transition: all 0.25s ease;
-}
-
-.edit-mode input:focus {
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-  outline: none;
-}
-
-/* =========================================================
-   PLACEHOLDER STATES
-========================================================= */
-.panel-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #888;
-  text-align: center;
-  padding: 30px;
-  animation: fadeIn 0.6s ease;
-}
-
-.placeholder-icon {
-  font-size: 32px;
-  margin-bottom: 12px;
-  color: #ccc;
-  opacity: 0.6;
-}
-
-.empty-item {
-  text-align: center;
-  padding: 20px;
-  color: #888;
-  font-style: italic;
-  background: #f9f9f9;
-  border-radius: 8px;
-  border: 2px dashed #ddd;
-  animation: fadeIn 0.5s ease;
-}
-
-/* =========================================================
-   HINTS & WARNINGS
-========================================================= */
-.hint {
-  text-align: center;
-  padding: 12px;
-  color: #666;
-  font-style: italic;
-  animation: fadeIn 0.5s ease;
-}
-
-.hint.warning {
-  color: #e6a23c;
-  background: #fdf6ec;
-  border-radius: 6px;
-  margin: 10px 0;
-  border: 1px solid #faecd8;
-  animation: shake 0.5s ease;
-}
-
-/* =========================================================
-   SCROLLBAR STYLING - Slimmer
-========================================================= */
-.panel-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.panel-content::-webkit-scrollbar-track {
-  background: #f5f5f5;
-  border-radius: 3px;
-}
-
-.panel-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-  transition: background 0.3s ease;
-}
-
-.panel-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* =========================================================
-   ANIMATIONS & TRANSITIONS
-========================================================= */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Content Wrapper */
+.dd-content {
+  max-width: 1300px;
+  height: auto;
+  margin: 0 auto;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: slideUp 0.5s ease-out;
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
+/* Header */
+.dd-header {
+  background: var(--primary-color);
+  color: white;
+  padding: var(--spacing);
+  text-align: center;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
+.dd-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-/* Item enter animation */
-.dept-item, .desig-item {
-  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  opacity: 0;
+/* Branch Selector */
+.branch-selector {
+  padding: var(--spacing);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--light-bg);
 }
 
-/* =========================================================
-   RESPONSIVE DESIGN
-========================================================= */
-@media (max-width: 1024px) {
-  .dd-content {
-    padding: 16px;
-    margin: 15px;
-    height: calc(100vh - 100px);
-  }
-  
-  .dd-grid {
-    gap: 16px;
-  }
-  
-  .card {
-    height: 380px;
-  }
+.branch-selector label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.branch-selector select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: var(--transition);
+  background: white;
+}
+
+.branch-selector select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+/* Hint/Warning */
+.hint {
+  padding: var(--spacing);
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.hint.warning {
+  color: var(--warning-color);
+  background: rgba(255, 193, 7, 0.05);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  border-radius: var(--border-radius);
+}
+
+/* Grid Layout for Panels */
+.dd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing);
+  padding: var(--spacing);
 }
 
 @media (max-width: 768px) {
   .dd-grid {
     grid-template-columns: 1fr;
-    height: auto;
-    min-height: 0;
-    gap: 15px;
-  }
-  
-  .card {
-    height: 320px;
-    min-height: 320px;
-  }
-  
-  .panel-header {
-    padding: 12px 15px;
-  }
-  
-  .panel-content {
-    padding: 12px;
-  }
-  
-  .branch-selector select {
-    min-width: 240px;
-  }
-  
-  .dd-header h2 {
-    font-size: 20px;
+    gap: 0.75rem;
   }
 }
 
+/* Panel Styles */
+.card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+.card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.panel-header {
+  background: var(--light-bg);
+  padding: 0.75rem var(--spacing);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.add-section {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.add-section input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  transition: var(--transition);
+  flex: 1;
+  min-width: 120px;
+  background: white;
+}
+
+.add-section input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.btn-add {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.btn-add:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.btn-add:disabled {
+  background: var(--secondary-color);
+  cursor: not-allowed;
+}
+
+.panel-content {
+  padding: var(--spacing);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Department List */
+.dept-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dept-item {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: var(--transition);
+  animation: slideInLeft 0.3s ease-out;
+  animation-delay: calc(var(--item-index) * 0.1s);
+  animation-fill-mode: both;
+  background: white;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.dept-item:hover {
+  background: var(--light-bg);
+  transform: translateX(2px);
+}
+
+.dept-item.active {
+  background: rgba(0, 123, 255, 0.05);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.dept-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* Designation List */
+.desig-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.desig-item {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: var(--transition);
+  animation: slideInRight 0.3s ease-out;
+  animation-delay: calc(var(--item-index) * 0.1s);
+  animation-fill-mode: both;
+  background: white;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.desig-item:hover {
+  background: var(--light-bg);
+  transform: translateX(-2px);
+}
+
+.desig-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.desig-name small {
+  color: var(--secondary-color);
+  font-weight: 400;
+}
+
+/* Placeholder */
+.panel-placeholder {
+  padding: 2rem;
+  text-align: center;
+  color: var(--secondary-color);
+  font-size: 0.95rem;
+}
+
+.placeholder-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Edit Mode */
+.edit-mode {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.edit-mode input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  transition: var(--transition);
+  background: white;
+}
+
+.edit-mode input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.btn-edit, .btn-save, .btn-cancel, .btn-delete {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.btn-edit {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-save {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-save:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-cancel {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-delete {
+  background: var(--danger-color);
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.btn-delete.warning {
+  background: var(--warning-color);
+  color: black;
+}
+
+.btn-delete.warning:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+}
+
+.btn-delete.success {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-delete.success:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+/* Empty Items */
+.empty-item {
+  text-align: center;
+  color: var(--secondary-color);
+  padding: 1rem;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Responsive Adjustments */
 @media (max-width: 480px) {
-  .dd-content {
-    padding: 12px;
-    margin: 10px;
-    height: calc(100vh - 80px);
+  .dd-page {
+    padding: 0.5rem;
   }
-  
-  .add-section {
-    flex-direction: column;
-    gap: 6px;
+
+  .dd-header h2 {
+    font-size: 1.25rem;
   }
-  
-  .edit-mode {
+
+  .panel-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
+    gap: 0.5rem;
   }
-  
+
+  .add-section {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .add-section input {
+    min-width: auto;
+  }
+
+  .dept-item, .desig-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
   .action-buttons {
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    justify-content: center;
+    margin-top: 0.5rem;
   }
-  
-  .action-buttons button {
-    padding: 2px 6px !important;
-    font-size: 9px !important;
-    min-height: 22px !important;
-    min-width: 40px !important;
-  }
-  
-  .btn-add {
-    padding: 5px 10px !important;
-    font-size: 10px !important;
-    min-height: 30px !important;
-    min-width: 55px !important;
-  }
-  
-  .card {
-    height: 300px;
+
+  .edit-mode {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }

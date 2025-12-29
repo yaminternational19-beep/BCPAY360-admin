@@ -1,6 +1,14 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../../styles/HRPermissions.css";
+import {
+  getHRList,
+  getHRPermissions,
+  saveHRPermissions,
+} from "../../../api/master.api";
 
+/* ============================
+   MODULE DEFINITIONS
+============================ */
 const MODULES = [
   { key: "EMPLOYEE_MASTER", label: "Employees" },
   { key: "EMPLOYEE_DOCUMENTS", label: "Employee Documents" },
@@ -22,7 +30,7 @@ const MODULES = [
   { key: "REPORTS", label: "Reports" },
 ];
 
-const buildDefaultPermissions = () =>
+const buildEmptyPermissions = () =>
   MODULES.map((m) => ({
     module_key: m.key,
     label: m.label,
@@ -34,8 +42,57 @@ const buildDefaultPermissions = () =>
   }));
 
 export default function HRPermissions() {
-  const [permissions, setPermissions] = useState(buildDefaultPermissions());
+  const [hrList, setHrList] = useState([]);
+  const [selectedHR, setSelectedHR] = useState(null);
+  const [permissions, setPermissions] = useState(buildEmptyPermissions());
+  const [loading, setLoading] = useState(false);
 
+  /* ============================
+     LOAD HR LIST
+  ============================ */
+  useEffect(() => {
+    const loadHRs = async () => {
+      const data = await getHRList();
+      setHrList(Array.isArray(data) ? data : []);
+    };
+    loadHRs();
+  }, []);
+
+  /* ============================
+     LOAD HR PERMISSIONS
+  ============================ */
+  useEffect(() => {
+    if (!selectedHR) return;
+
+    const loadPermissions = async () => {
+      setLoading(true);
+      try {
+        const data = await getHRPermissions(selectedHR.id);
+
+        if (!Array.isArray(data)) {
+          setPermissions(buildEmptyPermissions());
+          return;
+        }
+
+        setPermissions((prev) =>
+          prev.map((p) => {
+            const existing = data.find(
+              (x) => x.module_key === p.module_key
+            );
+            return existing ? { ...p, ...existing } : p;
+          })
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPermissions();
+  }, [selectedHR]);
+
+  /* ============================
+     TOGGLE PERMISSION
+  ============================ */
   const toggle = (index, key) => {
     setPermissions((prev) =>
       prev.map((p, i) =>
@@ -44,39 +101,64 @@ export default function HRPermissions() {
     );
   };
 
-  const toggleRowView = (index) => {
-    setPermissions((prev) =>
-      prev.map((p, i) =>
-        i === index
-          ? {
-              ...p,
-              can_view: true,
-              can_create: true,
-              can_edit: true,
-              can_delete: false,
-            }
-          : p
-      )
-    );
-  };
+  /* ============================
+     SAVE
+  ============================ */
+  const save = async () => {
+    if (!selectedHR) {
+      alert("Select an HR first");
+      return;
+    }
 
-  const savePermissions = () => {
-    const payload = permissions.map(
-      ({ label, ...rest }) => rest
-    );
+    const payload = {
+      hr_id: selectedHR.id,
+      branch_id: selectedHR.branch_id,
+      department_id: selectedHR.department_id,
+      permissions: permissions.map(({ label, ...rest }) => rest),
+    };
 
-    console.log("HR Permissions Payload:", payload);
-
-    alert("Permissions saved (frontend ready)");
+    await saveHRPermissions(selectedHR.id, payload);
+    alert("Permissions saved");
   };
 
   return (
     <div className="hr-permissions-page">
       <h2>HR Permissions</h2>
       <p className="hint">
-        Configure module-level access for this HR. Company Admin always has full access.
+        Select an HR to configure module-level permissions.
       </p>
 
+      {/* HR SELECTOR */}
+      <div className="hr-selector">
+        <select
+          value={selectedHR?.id || ""}
+          onChange={(e) => {
+            const hr = hrList.find(
+              (h) => h.id === Number(e.target.value)
+            );
+            setSelectedHR(hr || null);
+            setPermissions(buildEmptyPermissions());
+          }}
+        >
+          <option value="">— Select HR —</option>
+          {hrList.map((hr) => (
+            <option key={hr.id} value={hr.id}>
+              {hr.emp_id}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* CONTEXT */}
+      {selectedHR && (
+        <div className="hr-context">
+          <strong>Branch:</strong> {selectedHR.branch_name || "—"} &nbsp; | &nbsp;
+          <strong>Department:</strong>{" "}
+          {selectedHR.department_name || "—"}
+        </div>
+      )}
+
+      {/* PERMISSIONS TABLE */}
       <div className="table-wrapper">
         <table className="permission-table">
           <thead>
@@ -92,31 +174,35 @@ export default function HRPermissions() {
           <tbody>
             {permissions.map((perm, idx) => (
               <tr key={perm.module_key}>
-                <td className="module-name">{perm.label}</td>
-
-                {["can_view", "can_create", "can_edit", "can_delete", "can_approve"].map(
-                  (key) => (
-                    <td key={key}>
-                      <input
-                        type="checkbox"
-                        checked={perm[key]}
-                        onChange={() => toggle(idx, key)}
-                      />
-                    </td>
-                  )
-                )}
+                <td>{perm.label}</td>
+                {[
+                  "can_view",
+                  "can_create",
+                  "can_edit",
+                  "can_delete",
+                  "can_approve",
+                ].map((key) => (
+                  <td key={key}>
+                    <input
+                      type="checkbox"
+                      checked={perm[key]}
+                      disabled={!selectedHR || loading}
+                      onChange={() => toggle(idx, key)}
+                    />
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* ACTIONS */}
       <div className="actions">
-        <button className="primary" onClick={savePermissions}>
-          Save Permissions
+        <button className="primary" onClick={save} disabled={loading}>
+          {loading ? "Saving..." : "Save Permissions"}
         </button>
       </div>
     </div>
   );
 }
-

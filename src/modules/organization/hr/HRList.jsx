@@ -1,133 +1,142 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "../../../styles/AddHR.css";
-import { getBranches, getDepartments } from "../../../api/master.api";
-
-const API = import.meta.env.VITE_API_BASE_URL;
-
-const normalizeEmpId = (value) => {
-  if (!value) return "";
-  const digits = value.replace(/\D/g, "");
-  if (!digits) return "";
-  return `EMP${digits.padStart(3, "0")}`;
-};
+import {
+  getHRList,
+  toggleHRStatus,
+  deleteHR,
+  getBranches,
+  getDepartments,
+} from "../../../api/master.api";
+import HRForm from "./HRForm";
+import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 export default function HRList() {
   const user = JSON.parse(localStorage.getItem("auth_user"));
-  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   if (user?.role !== "COMPANY_ADMIN") {
     return <p className="hint">Access denied</p>;
   }
 
+  const [hrs, setHrs] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState("");
   const [departments, setDepartments] = useState([]);
-  const [form, setForm] = useState({
-    department: "",
-    empIdRaw: "",
-    password: "",
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingHR, setEditingHR] = useState(null);
+
+  const [filters, setFilters] = useState({
+    branch_id: "",
+    department_id: "",
+    search: "",
+    status: "ALL",
   });
-  const [normalizedEmpId, setNormalizedEmpId] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [loadingDepts, setLoadingDepts] = useState(false);
-  const [loadingBranches, setLoadingBranches] = useState(false);
+
+  /* =========================
+     LOAD DATA
+  ========================= */
+  const loadHRs = async () => {
+    const data = await getHRList();
+    setHrs(Array.isArray(data) ? data : []);
+  };
 
   useEffect(() => {
-    const loadBranches = async () => {
-      try {
-        setLoadingBranches(true);
-        const data = await getBranches();
-        setBranches(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Failed to load branches:", err);
-      } finally {
-        setLoadingBranches(false);
-      }
-    };
-    loadBranches();
+    loadHRs();
+    getBranches().then(setBranches);
   }, []);
 
   useEffect(() => {
-    if (!selectedBranch) {
+    if (!filters.branch_id) {
       setDepartments([]);
       return;
     }
+    getDepartments(filters.branch_id).then(setDepartments);
+  }, [filters.branch_id]);
 
-    const loadDepartments = async () => {
-      try {
-        setLoadingDepts(true);
-        const data = await getDepartments(selectedBranch);
-        setDepartments(Array.isArray(data) ? data : []);
-      } catch (err) {
-        alert("Failed to load departments");
-      } finally {
-        setLoadingDepts(false);
+  /* =========================
+     FILTERING (CLEAN)
+  ========================= */
+  const filteredHRs = useMemo(() => {
+    return hrs.filter((hr) => {
+      if (
+        filters.branch_id &&
+        Number(hr.branch_id) !== Number(filters.branch_id)
+      )
+        return false;
+
+      if (
+        filters.department_id &&
+        Number(hr.department_id) !== Number(filters.department_id)
+      )
+        return false;
+
+      if (
+        filters.search &&
+        !hr.emp_id.toLowerCase().includes(filters.search.toLowerCase())
+      )
+        return false;
+
+      if (filters.status !== "ALL") {
+        const active = filters.status === "ACTIVE";
+        if (Boolean(hr.is_active) !== active) return false;
       }
-    };
-    loadDepartments();
-  }, [selectedBranch]);
 
-  const handleEmpIdChange = (val) => {
-    setForm((p) => ({ ...p, empIdRaw: val }));
-    setNormalizedEmpId(normalizeEmpId(val));
-  };
+      return true;
+    });
+  }, [hrs, filters]);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!form.department || !normalizedEmpId || !form.password) {
-      alert("All fields are required");
-      return;
-    }
-    if (form.password.length < 8) {
-      alert("Password must be at least 8 characters");
-      return;
-    }
+  /* =========================
+     EXPORT
+  ========================= */
+  const exportToExcel = () => {
+    const rows = filteredHRs.map((hr) => ({
+      "Emp ID": hr.emp_id,
+      Branch: hr.branch_name,
+      Department: hr.department_name,
+      Status: hr.is_active ? "Active" : "Inactive",
+    }));
 
-    try {
-      setLoading(true);
-      const res = await fetch(`${API}/api/hr`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          emp_id: normalizedEmpId,
-          password: form.password,
-          department: form.department,
-          designation: "HR",
-          branch_id: Number(selectedBranch),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      alert("HR created successfully");
-      setForm({ department: "", empIdRaw: "", password: "" });
-      setNormalizedEmpId("");
-    } catch (err) {
-      alert(err.message || "Failed to create HR");
-    } finally {
-      setLoading(false);
-    }
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "HRs");
+
+    XLSX.writeFile(workbook, "HR_List.xlsx");
   };
 
   return (
     <div className="add-hr-page">
-      <form className="add-hr-form" onSubmit={submit}>
-        <input value={user.company_name || user.company || "Company"} disabled />
+      <div className="page-header">
+        <h2>HR Management</h2>
+        <div className="header-actions">
+          <button
+            className="primary"
+            onClick={() => {
+              setEditingHR(null);
+              setShowForm(true);
+            }}
+          >
+            Add HR
+          </button>
+          <button className="secondary" onClick={exportToExcel}>
+            Export Excel
+          </button>
+        </div>
+      </div>
 
+      {/* FILTER BAR */}
+      <div className="filter-bar">
         <select
-          value={selectedBranch}
-          onChange={(e) => {
-            setSelectedBranch(e.target.value);
-            setForm(p => ({ ...p, department: "" }));
-          }}
-          disabled={loadingBranches}
+          value={filters.branch_id}
+          onChange={(e) =>
+            setFilters((p) => ({
+              ...p,
+              branch_id: e.target.value,
+              department_id: "",
+            }))
+          }
         >
-          <option value="">
-            {loadingBranches ? "Loading branches..." : "Select Branch"}
-          </option>
+          <option value="">All Branches</option>
           {branches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.branch_name}
@@ -136,53 +145,119 @@ export default function HRList() {
         </select>
 
         <select
-          value={form.department}
-          onChange={(e) => setForm((p) => ({ ...p, department: e.target.value }))}
-          disabled={loadingDepts || !selectedBranch}
+          value={filters.department_id}
+          disabled={!filters.branch_id}
+          onChange={(e) =>
+            setFilters((p) => ({ ...p, department_id: e.target.value }))
+          }
         >
-          <option value="">
-            {!selectedBranch
-              ? "Select Branch First"
-              : loadingDepts
-                ? "Loading departments..."
-                : "Select Department"}
-          </option>
+          <option value="">All Departments</option>
           {departments.map((d) => (
-            <option key={d.id} value={d.department_name}>
+            <option key={d.id} value={d.id}>
               {d.department_name}
             </option>
           ))}
         </select>
+
         <input
-          placeholder="Employee ID (1, 34, emp9)"
-          value={form.empIdRaw}
-          onChange={(e) => handleEmpIdChange(e.target.value)}
+          placeholder="Search by Emp ID"
+          value={filters.search}
+          onChange={(e) =>
+            setFilters((p) => ({ ...p, search: e.target.value }))
+          }
         />
-        {normalizedEmpId && (
-          <div className="emp-preview">
-            Will be saved as <strong>{normalizedEmpId}</strong>
-          </div>
-        )}
-        <div className="password-field">
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Temporary password (min 8 chars)"
-            value={form.password}
-            onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-          />
-          <button
-            type="button"
-            className="toggle-btn"
-            onClick={() => setShowPassword((p) => !p)}
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
-        </div>
-        <button disabled={loading || loadingDepts}>
-          {loading ? "Creating HR..." : "Create HR"}
-        </button>
-      </form>
+
+        <select
+          value={filters.status}
+          onChange={(e) =>
+            setFilters((p) => ({ ...p, status: e.target.value }))
+          }
+        >
+          <option value="ALL">All</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
+      </div>
+
+      {/* HR TABLE */}
+      <table className="table">
+        <thead>
+          <tr>
+            <th>Emp ID</th>
+            <th>Branch</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredHRs.map((hr) => (
+            <tr key={hr.id}>
+              <td>{hr.emp_id}</td>
+              <td>{hr.branch_name}</td>
+              <td>{hr.department_name}</td>
+              <td>{hr.is_active ? "Active" : "Inactive"}</td>
+              <td className="row-actions">
+                <button
+                  onClick={() => {
+                    setEditingHR(hr);
+                    setShowForm(true);
+                  }}
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() =>
+                    navigate(`/admin/hr/${hr.id}/permissions`)
+                  }
+                >
+                  Permissions
+                </button>
+
+                <button
+                  onClick={async () => {
+                    await toggleHRStatus(hr.id);
+                    loadHRs();
+                  }}
+                >
+                  {hr.is_active ? "Disable" : "Enable"}
+                </button>
+
+                <button
+                  className="danger"
+                  onClick={async () => {
+                    if (!confirm("Delete this HR?")) return;
+                    await deleteHR(hr.id);
+                    loadHRs();
+                  }}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+          {!filteredHRs.length && (
+            <tr>
+              <td colSpan={5} className="empty-state">
+                No HRs found
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      {/* FORM MODAL */}
+      {showForm && (
+        <HRForm
+          initialData={editingHR}
+          onClose={() => setShowForm(false)}
+          onSuccess={() => {
+            setShowForm(false);
+            loadHRs();
+          }}
+        />
+      )}
     </div>
   );
 }
-

@@ -94,3 +94,55 @@ export const toggleShiftStatus = (id) =>
 
 export const deleteShift = (id) =>
   api(`/api/shifts/${id}`, { method: "DELETE" });
+
+
+
+/* ===================================================================================
+   HR USERS
+   =================================================================================== */
+export const getHRList = () =>
+  api("/api/hr");
+
+export const getHRDetails = (hrId) =>
+  api(`/api/hr/${hrId}`);
+
+export const createHR = (data) =>
+  api("/api/hr", { method: "POST", body: JSON.stringify(data) });
+
+export const updateHR = (id, data) =>
+  api(`/api/hr/${id}`, { method: "PUT", body: JSON.stringify(data) });
+
+export const toggleHRStatus = (id) =>
+  api(`/api/hr/${id}/status`, { method: "PATCH" });
+
+export const deleteHR = (id) =>
+  api(`/api/hr/${id}`, { method: "DELETE" });
+
+
+
+
+/* ===================================================================================
+   HR PERMISSIONS
+   =================================================================================== */
+export const getHRPermissions = (hrId) =>
+  api(`/api/hr-permissions/${hrId}`);
+
+export const saveHRPermissions = (hrId, payload) =>
+  api(`/api/hr-permissions/${hrId}`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteHRPermission = (hrId, moduleKey) =>
+  api(`/api/hr-permissions/${hrId}/${moduleKey}`, {
+    method: "DELETE",
+  });
+
+export const resetHRPermissions = (hrId) =>
+  api(`/api/hr-permissions/${hrId}`, {
+    method: "DELETE",
+  });
+
+
+  
+
