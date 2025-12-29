@@ -6,7 +6,7 @@ import { API_BASE } from "../utils/apiBase";
 /* ===============================
    EMP ID NORMALIZER
 =============================== */
-const normalizeEmpId = (value) => {
+const normalize_emp_id = (value) => {
   if (!value) return "";
   if (/^EMP\d{3}$/i.test(value)) return value.toUpperCase();
 
@@ -16,81 +16,52 @@ const normalizeEmpId = (value) => {
   return `EMP${digits.padStart(3, "0")}`;
 };
 
-export default function HRLogin({ onLogin }) {
+export default function HRLogin({ on_login }) {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState("LOGIN"); // LOGIN | OTP
-  const [loading, setLoading] = useState(false);
-  const [tempLoginId, setTempLoginId] = useState(null);
+  const [step, set_step] = useState("LOGIN");
+  const [loading, set_loading] = useState(false);
+  const [temp_login_id, set_temp_login_id] = useState(null);
 
-  const [companies, setCompanies] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const [companies, set_companies] = useState([]);
+  const [normalized_emp_id, set_normalized_emp_id] = useState("");
 
-  const [normalizedEmpId, setNormalizedEmpId] = useState("");
-
-  const [form, setForm] = useState({
-    companyId: "",
-    department: "",
-    empIdRaw: "",
+  const [form, set_form] = useState({
+    company_id: "",
+    emp_id_raw: "",
     password: "",
     otp: "",
   });
 
   /* ===============================
-     LOAD COMPANIES
+     LOAD COMPANIES (OPTIONAL)
   ================================ */
   useEffect(() => {
     fetch(`${API_BASE}/api/companies/public`)
       .then((r) => r.json())
-      .then(setCompanies)
+      .then(set_companies)
       .catch(() => alert("Failed to load companies"));
   }, []);
 
   /* ===============================
-     LOAD DEPARTMENTS (BY COMPANY)
+     HR PRE LOGIN
   ================================ */
-  useEffect(() => {
-    if (!form.companyId) {
-      setDepartments([]);
-      return;
-    }
-
-    fetch(`${API_BASE}/api/departments/public?companyId=${form.companyId}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-      },
-    })
-      .then((r) => r.json())
-      .then(setDepartments)
-      .catch(() => alert("Failed to load departments"));
-  }, [form.companyId]);
-
-  /* ===============================
-     HR PRE-LOGIN
-  ================================ */
-  const submitHRLogin = async (e) => {
+  const submit_hr_login = async (e) => {
     e.preventDefault();
 
-    if (
-      !form.companyId ||
-      !form.department ||
-      !normalizedEmpId ||
-      !form.password
-    ) {
+    if (!form.company_id || !normalized_emp_id || !form.password) {
       alert("All fields required");
       return;
     }
 
     try {
-      setLoading(true);
+      set_loading(true);
 
       const res = await fetch(`${API_BASE}/api/hr/pre-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyId: form.companyId,
-          department: form.department,
-          emp_id: normalizedEmpId,
+          emp_id: normalized_emp_id,
           password: form.password,
         }),
       });
@@ -98,35 +69,35 @@ export default function HRLogin({ onLogin }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      setTempLoginId(data.tempLoginId);
-      setStep("OTP");
+      set_temp_login_id(data.tempLoginId);
+      set_step("OTP");
     } catch (err) {
-      alert(err.message || "HR login failed");
+      alert(err.message || "Login failed");
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
   };
 
   /* ===============================
-     HR OTP VERIFY
+     OTP VERIFY
   ================================ */
-  const submitOTP = async (e) => {
+  const submit_otp = async (e) => {
     e.preventDefault();
 
-    if (!tempLoginId) {
+    if (!temp_login_id) {
       alert("Session expired");
-      setStep("LOGIN");
+      set_step("LOGIN");
       return;
     }
 
     try {
-      setLoading(true);
+      set_loading(true);
 
       const res = await fetch(`${API_BASE}/api/hr/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tempLoginId,
+          tempLoginId: temp_login_id,
           otp: form.otp,
         }),
       });
@@ -134,23 +105,24 @@ export default function HRLogin({ onLogin }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      const user = {
+      const auth_user = {
         role: "HR",
         verified: true,
         emp_id: data.emp_id,
-        department: data.department,
-        companyId: data.companyId,
+        company_id: data.company_id,
+        branch_id: data.branch_id,
+        department_id: data.department_id,
       };
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("auth_user", JSON.stringify(user));
-      onLogin(user);
+      localStorage.setItem("auth_user", JSON.stringify(auth_user));
 
+     
       navigate("/admin/dashboard", { replace: true });
     } catch (err) {
       alert(err.message || "OTP verification failed");
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
   };
 
@@ -160,17 +132,16 @@ export default function HRLogin({ onLogin }) {
   if (step === "LOGIN") {
     return (
       <div className="login-page">
-        <form className="login-card" onSubmit={submitHRLogin}>
+        <form className="login-card" onSubmit={submit_hr_login}>
           <h2>HR Login</h2>
 
           {/* Company */}
           <select
-            value={form.companyId}
+            value={form.company_id}
             onChange={(e) =>
-              setForm((p) => ({
-                ...p,
-                companyId: e.target.value,
-                department: "",
+              set_form((prev) => ({
+                ...prev,
+                company_id: e.target.value,
               }))
             }
           >
@@ -182,40 +153,20 @@ export default function HRLogin({ onLogin }) {
             ))}
           </select>
 
-          {/* Department */}
-          <select
-            value={form.department}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, department: e.target.value }))
-            }
-            disabled={!form.companyId}
-          >
-            <option value="">
-              {form.companyId
-                ? "Select Department"
-                : "Select company first"}
-            </option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.department_name}>
-                {d.department_name}
-              </option>
-            ))}
-          </select>
-
           {/* EMP ID */}
           <input
             placeholder="Employee ID (6, emp6, EMP006)"
-            value={form.empIdRaw}
+            value={form.emp_id_raw}
             onChange={(e) => {
               const raw = e.target.value;
-              setForm((p) => ({ ...p, empIdRaw: raw }));
-              setNormalizedEmpId(normalizeEmpId(raw));
+              set_form((prev) => ({ ...prev, emp_id_raw: raw }));
+              set_normalized_emp_id(normalize_emp_id(raw));
             }}
           />
 
-          {normalizedEmpId && (
+          {normalized_emp_id && (
             <div className="emp-preview">
-              Will be converted as <strong>{normalizedEmpId}</strong>
+              Will be converted as <strong>{normalized_emp_id}</strong>
             </div>
           )}
 
@@ -225,7 +176,7 @@ export default function HRLogin({ onLogin }) {
             placeholder="Password"
             value={form.password}
             onChange={(e) =>
-              setForm((p) => ({ ...p, password: e.target.value }))
+              set_form((prev) => ({ ...prev, password: e.target.value }))
             }
           />
 
@@ -240,14 +191,14 @@ export default function HRLogin({ onLogin }) {
   /* OTP */
   return (
     <div className="login-page">
-      <form className="login-card" onSubmit={submitOTP}>
+      <form className="login-card" onSubmit={submit_otp}>
         <h2>OTP Verification</h2>
 
         <input
           placeholder="Enter OTP"
           value={form.otp}
           onChange={(e) =>
-            setForm((p) => ({ ...p, otp: e.target.value }))
+            set_form((prev) => ({ ...prev, otp: e.target.value }))
           }
         />
 

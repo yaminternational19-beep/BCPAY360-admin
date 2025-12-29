@@ -63,10 +63,10 @@ const AdminLayout = ({ user, setUser }) => {
   //   "/admin/settings",
   // ];
 
-  const currentPath = location.pathname;
-  if (!isAdmin && adminOnlyRoutes.some((route) => currentPath.startsWith(route))) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
+  // const currentPath = location.pathname;
+  // if (!isAdmin && adminOnlyRoutes.some((route) => currentPath.startsWith(route))) {
+  //   return <Navigate to="/admin/dashboard" replace />;
+  // }
 
   const logout = () => {
     localStorage.removeItem("auth_user");
@@ -291,6 +291,9 @@ export default function App() {
   }, []);
 
   const [user, setUser] = useState(initialUser);
+      const handle_login = (user) => {
+        setUser(user);
+      };
 
   return (
     <BrowserRouter>
@@ -304,8 +307,15 @@ export default function App() {
           path="/admin/*"
           element={<AdminLayout user={user} setUser={setUser} />}
         />
+        
+        <Route
+            path="/hr/login"
+            element={<HRLogin on_login={handle_login} />}
+          />
+
+
         <Route path="*" element={<Navigate to="/login" replace />} />
-        <Route path="/hr-login" element={<HRLogin onLogin={setUser} />} />
+
       </Routes>
     </BrowserRouter>
   );
