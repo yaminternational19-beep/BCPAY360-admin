@@ -7,6 +7,7 @@ import EmployeeFilters from "../components/EmployeeFilters";
 
 import {
   listEmployees,
+  getEmployee,
   createEmployee,
   updateEmployee,
   toggleEmployeeStatus,
@@ -29,25 +30,28 @@ const EmployeeList = () => {
   /* =========================
      LOAD EMPLOYEES (DB DATA)
   ========================= */
-const loadEmployees = async () => {
+  const loadEmployees = async () => {
     try {
       const res = await listEmployees({ page: 1, limit: 50 });
 
-      const normalized = (Array.isArray(res) ? res : []).map(e => ({
+      // Handle both flat array and { rows, total } object responses
+      const rawEmployees = Array.isArray(res) ? res : (res?.rows || []);
+
+      const normalized = rawEmployees.map(e => ({
         id: e.id,
 
         employee_code: e.employee_code,
         full_name: e.full_name,
         email: e.email || "",
-        phone: e.phone || "-",               // backend not sending yet
+        phone: e.phone || "-",
 
         department: e.department_name || "-",
         designation: e.designation_name || "-",
         branch: e.branch_name || "-",
         company: e.company_name || "-",
 
-        joining_date: e.joining_date || null, // backend not sending yet
-        salary: e.salary || 0,                 // backend not sending yet
+        joining_date: e.joining_date || null,
+        salary: e.salary || 0,
 
         is_active: e.employee_status === "ACTIVE" ? 1 : 0,
       }));
@@ -98,36 +102,38 @@ const loadEmployees = async () => {
   /* =========================
      ACTION HANDLERS
   ========================= */
-  const handleEdit = (id) => {
-    const emp = employees.find((e) => e.id === id);
-    if (!emp) return;
+  const handleEdit = async (id) => {
+    try {
+      // 1. Fetch full employee details (including profile/documents)
+      const fullEmp = await getEmployee(id);
+      if (!fullEmp) return;
 
-    setSelected(emp);
-    setShowForm(true);
+      setSelected(fullEmp);
+      setShowForm(true);
+    } catch (err) {
+      alert("Failed to load employee details: " + err.message);
+    }
   };
 
   const handleActivate = async (id) => {
     const emp = employees.find((e) => e.id === id);
     if (!emp) return;
 
-    // Confirm action
     if (!window.confirm(`Activate ${emp.full_name}?`)) return;
 
     try {
-      // Optimistic update - update UI immediately
+      // Optimistic update
       setEmployees((prev) =>
         prev.map((e) =>
           e.id === id ? { ...e, is_active: 1 } : e
         )
       );
 
-      // Update in database
-      await updateEmployee(id, { is_active: 1 });
+      // Send nested status update
+      await toggleEmployeeStatus(id, "ACTIVE");
 
-      // Reload to ensure sync with server
       await loadEmployees();
     } catch (err) {
-      // Revert on error
       await loadEmployees();
       alert(err.message || "Failed to activate employee");
     }
@@ -137,24 +143,21 @@ const loadEmployees = async () => {
     const emp = employees.find((e) => e.id === id);
     if (!emp) return;
 
-    // Confirm action
-    if (!window.confirm(`Deactivate ${emp.full_name}? This will set their status to inactive.`)) return;
+    if (!window.confirm(`Deactivate ${emp.full_name}?`)) return;
 
     try {
-      // Optimistic update - update UI immediately
+      // Optimistic update
       setEmployees((prev) =>
         prev.map((e) =>
           e.id === id ? { ...e, is_active: 0 } : e
         )
       );
 
-      // Update in database
-      await updateEmployee(id, { is_active: 0 });
+      // Send nested status update
+      await toggleEmployeeStatus(id, "INACTIVE");
 
-      // Reload to ensure sync with server
       await loadEmployees();
     } catch (err) {
-      // Revert on error
       await loadEmployees();
       alert(err.message || "Failed to deactivate employee");
     }
@@ -162,9 +165,12 @@ const loadEmployees = async () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this employee?")) return;
-    console.log("Delete employee:", id);
-    // await deleteEmployee(id);
-    loadEmployees();
+    try {
+      await deleteEmployee(id);
+      loadEmployees();
+    } catch (err) {
+      alert(err.message || "Failed to delete employee");
+    }
   };
 
   /* =========================

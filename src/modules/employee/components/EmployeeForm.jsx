@@ -40,7 +40,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const authUser = JSON.parse(localStorage.getItem("auth_user")) || {};
 
   const [step, setStep] = useState(1);
-  
+
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [employeeTypes, setEmployeeTypes] = useState([]);
@@ -49,238 +49,351 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [branchesLoading, setBranchesLoading] = useState(false);
 
- const [employeeForm, setEmployeeForm] = useState({
-  employee_code: "",
-  full_name: "",
-  email: "",
-  password: "",
+  const [employeeForm, setEmployeeForm] = useState({
+    employee_code: "",
+    full_name: "",
+    email: "",
+    password: "",
 
-  country_code: "+91",
-  phone: "",
+    country_code: "+91",
+    phone: "",
 
-  employee_status: "ACTIVE",
+    employee_status: "ACTIVE",
 
-  employee_type_id: "",
-  shift_id: "",
+    employee_type_id: "",
+    shift_id: "",
 
-  joining_date: "",
-  confirmation_date: "",
-  notice_period_days: "",
+    joining_date: "",
+    confirmation_date: "",
+    notice_period_days: "",
 
-  experience_years: "",
-  salary: "",
-  ctc_annual: "",
+    experience_years: "",
+    salary: "",
+    ctc_annual: "",
 
-  job_location: "",
-  site_location: "",
+    job_location: "",
+    site_location: "",
 
-  branch_id: "",
-  department_id: "",
-  designation_id: "",
-});
-
-
-const [profileForm, setProfileForm] = useState({
-  gender: "",
-  dob: "",
-  father_name: "",
-  religion: "",
-  marital_status: "",
-
-  qualification: "",
-
-  emergency_contact: "",
-
-  address: "",
-  permanent_address: "",
-
-  bank_name: "",
-  account_number: "",
-  ifsc_code: "",
-  bank_branch_name: "",
-
-  profile_photo: null,
-});
+    branch_id: "",
+    department_id: "",
+    designation_id: "",
+  });
 
 
-const [documentsForm, setDocumentsForm] = useState({
-  pan: "",
-  aadhaar: "",
-  uan_number: "",
-  esic_number: "",
-  files: {},
-});
+  const [profileForm, setProfileForm] = useState({
+    gender: "",
+    dob: "",
+    father_name: "",
+    religion: "",
+    marital_status: "",
+
+    qualification: "",
+
+    emergency_contact: "",
+
+    address: "",
+    permanent_address: "",
+
+    bank_name: "",
+    account_number: "",
+    ifsc_code: "",
+    bank_branch_name: "",
+
+    profile_photo: null,
+  });
 
 
-
-
-
-  // 1️⃣ Employee Code (only on create)
-useEffect(() => {
-  if (isEdit) return;
-
-  let mounted = true;
-
-  getLastEmployeeCode()
-    .then((res) => {
-      if (mounted && res?.code) {
-        setEmployeeForm((p) => ({
-          ...p,
-          employee_code: res.code,
-        }));
-      }
-    })
-    .catch(() => {});
-
-  return () => {
-    mounted = false;
-  };
-}, [isEdit]);
+  const [documentsForm, setDocumentsForm] = useState({
+    pan: "",
+    aadhaar: "",
+    uan_number: "",
+    esic_number: "",
+    files: {},
+  });
 
 
 
 
-// 2️⃣ Load branches (on mount)
-useEffect(() => {
-  let mounted = true;
 
-  getBranches()
-    .then((data) => {
-      if (mounted) {
-        setBranches(Array.isArray(data) ? data : []);
-      }
-    })
-    .catch(() => {
-      if (mounted) setBranches([]);
+  // 1️⃣ Initialize Form for Edit
+  useEffect(() => {
+    if (!isEdit || !initial) return;
+
+    // Prefill main employee info
+    const ef = initial.employeeForm || initial; // Fallback for legacy data
+    setEmployeeForm({
+      employee_code: ef.employee_code || "",
+      full_name: ef.full_name || "",
+      email: ef.email || "",
+      password: "", // Always empty on edit
+
+      country_code: ef.country_code || "+91",
+      phone: ef.phone || "",
+
+      employee_status: ef.employee_status || "ACTIVE",
+
+      employee_type_id: ef.employee_type_id || "",
+      shift_id: ef.shift_id || "",
+
+      joining_date: ef.joining_date ? ef.joining_date.split("T")[0] : "",
+      confirmation_date: ef.confirmation_date ? ef.confirmation_date.split("T")[0] : "",
+      notice_period_days: ef.notice_period_days || "",
+
+      experience_years: ef.experience_years || "",
+      salary: ef.salary || "",
+      ctc_annual: ef.ctc_annual || "",
+
+      job_location: ef.job_location || "",
+      site_location: ef.site_location || "",
+
+      branch_id: ef.branch_id || "",
+      department_id: ef.department_id || "",
+      designation_id: ef.designation_id || "",
     });
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+    // Prefill Bio Data
+    if (initial.profileForm) {
+      setProfileForm({
+        gender: initial.profileForm.gender || "",
+        dob: initial.profileForm.dob ? initial.profileForm.dob.split("T")[0] : "",
+        father_name: initial.profileForm.father_name || "",
+        religion: initial.profileForm.religion || "",
+        marital_status: initial.profileForm.marital_status || "",
+        qualification: initial.profileForm.qualification || "",
+        emergency_contact: initial.profileForm.emergency_contact || "",
+        address: initial.profileForm.address || "",
+        permanent_address: initial.profileForm.permanent_address || "",
+        bank_name: initial.profileForm.bank_name || "",
+        account_number: initial.profileForm.account_number || "",
+        ifsc_code: initial.profileForm.ifsc_code || "",
+        bank_branch_name: initial.profileForm.bank_branch_name || "",
+        profile_photo: null, // Keep null as file input cannot be prefilled
+      });
+    }
+
+    // Prefill Statutory Info
+    if (initial.documentsForm) {
+      setDocumentsForm({
+        pan: initial.documentsForm.pan || "",
+        aadhaar: initial.documentsForm.aadhaar || "",
+        uan_number: initial.documentsForm.uan_number || "",
+        esic_number: initial.documentsForm.esic_number || "",
+        files: {},
+      });
+    }
+  }, [isEdit, initial]);
+
+  // 2️⃣ Employee Code (only on create)
+  useEffect(() => {
+    if (isEdit) return;
+
+    let mounted = true;
+
+    getLastEmployeeCode()
+      .then((res) => {
+        if (mounted && res?.code) {
+          setEmployeeForm((p) => ({
+            ...p,
+            employee_code: res.code,
+          }));
+        }
+      })
+      .catch(() => { });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isEdit]);
 
 
 
-// 3️⃣ Load departments (when branch changes)
-useEffect(() => {
-  if (!employeeForm.branch_id) {
-    setDepartments([]);
-    return;
-  }
 
-  getDepartments(employeeForm.branch_id)
-    .then(setDepartments)
-    .catch(() => setDepartments([]));
-}, [employeeForm.branch_id]);
+  // 2️⃣ Load branches (on mount)
+  useEffect(() => {
+    let mounted = true;
 
+    getBranches()
+      .then((data) => {
+        if (mounted) {
+          setBranches(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch(() => {
+        if (mounted) setBranches([]);
+      });
 
-// 4️⃣ Load designations (when branch + department changes)
-useEffect(() => {
-  if (!employeeForm.branch_id || !employeeForm.department_id) {
-    setDesignations([]);
-    return;
-  }
-
-  getDesignations(
-    employeeForm.branch_id,
-    employeeForm.department_id
-  )
-    .then(setDesignations)
-    .catch(() => setDesignations([]));
-}, [employeeForm.branch_id, employeeForm.department_id]);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
 
-// 5️⃣ Load employee types & shifts (when branch changes)
-useEffect(() => {
-  if (!employeeForm.branch_id) {
-    setEmployeeTypes([]);
-    setShifts([]);
-    return;
-  }
 
-  getEmployeeTypes(employeeForm.branch_id)
-    .then((data) => {
-      setEmployeeTypes(Array.isArray(data) ? data : []);
-    })
-    .catch(() => setEmployeeTypes([]));
+  // 3️⃣ Load departments (when branch changes)
+  useEffect(() => {
+    if (!employeeForm.branch_id) {
+      setDepartments([]);
+      return;
+    }
 
-  getShifts(employeeForm.branch_id)
-    .then((data) => {
-      setShifts(Array.isArray(data) ? data : []);
-    })
-    .catch(() => setShifts([]));
-}, [employeeForm.branch_id]);
+    getDepartments(employeeForm.branch_id)
+      .then(setDepartments)
+      .catch(() => setDepartments([]));
+  }, [employeeForm.branch_id]);
+
+
+  // 4️⃣ Load designations (when branch + department changes)
+  useEffect(() => {
+    if (!employeeForm.branch_id || !employeeForm.department_id) {
+      setDesignations([]);
+      return;
+    }
+
+    getDesignations(
+      employeeForm.branch_id,
+      employeeForm.department_id
+    )
+      .then(setDesignations)
+      .catch(() => setDesignations([]));
+  }, [employeeForm.branch_id, employeeForm.department_id]);
+
+
+  // 5️⃣ Load employee types & shifts (when branch changes)
+  useEffect(() => {
+    if (!employeeForm.branch_id) {
+      setEmployeeTypes([]);
+      setShifts([]);
+      return;
+    }
+
+    getEmployeeTypes(employeeForm.branch_id)
+      .then((data) => {
+        setEmployeeTypes(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setEmployeeTypes([]));
+
+    getShifts(employeeForm.branch_id)
+      .then((data) => {
+        setShifts(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setShifts([]));
+  }, [employeeForm.branch_id]);
 
 
 
   const changeEmployee = (k, v) => {
-      setEmployeeForm(p => ({ ...p, [k]: v }));
-    };
+    setEmployeeForm(p => ({ ...p, [k]: v }));
+  };
 
-    const changeProfile = (k, v) => {
-      setProfileForm(p => ({ ...p, [k]: v }));
-    };
+  const changeProfile = (k, v) => {
+    setProfileForm(p => ({ ...p, [k]: v }));
+  };
 
 
   const submit = () => {
-  const payload = {
-    employee_code: employeeForm.employee_code,
-    email: employeeForm.email,
-    password: employeeForm.password || undefined, // backend will ignore on edit
-    country_code: employeeForm.country_code,
-    phone: employeeForm.phone,
-    employee_status: employeeForm.employee_status,
-    employee_type_id: employeeForm.employee_type_id
-      ? Number(employeeForm.employee_type_id)
-      : null,
-    shift_id: employeeForm.shift_id
-      ? Number(employeeForm.shift_id)
-      : null,
-    joining_date: employeeForm.joining_date,
-    branch_id: employeeForm.branch_id
-      ? Number(employeeForm.branch_id)
-      : null,
-    department_id: employeeForm.department_id
-      ? Number(employeeForm.department_id)
-      : null,
-    designation_id: employeeForm.designation_id
-      ? Number(employeeForm.designation_id)
-      : null,
+    // 1. Basic Client-side Validation
+    if (!employeeForm.full_name?.trim()) return alert("Full Name is required");
+    if (!employeeForm.email?.trim()) return alert("Email is required");
+    if (!employeeForm.joining_date) return alert("Joining Date is required");
+    if (!employeeForm.branch_id) return alert("Branch is required");
+    if (!employeeForm.department_id) return alert("Department is required");
+    if (!employeeForm.designation_id) return alert("Designation is required");
+
+    if (!isEdit && !employeeForm.password?.trim()) {
+      return alert("Password is required for new employees");
+    }
+
+    // 2. Build Nested Payload
+    // Convert empty strings to null and IDs to Number
+    const payload = {
+      employeeForm: {
+        employee_code: employeeForm.employee_code || null,
+        full_name: employeeForm.full_name?.trim() || null,
+        email: employeeForm.email?.trim() || null,
+        password: isEdit ? undefined : (employeeForm.password || null),
+
+        country_code: employeeForm.country_code || "+91",
+        phone: employeeForm.phone || null,
+
+        employee_status: employeeForm.employee_status || "ACTIVE",
+
+        employee_type_id: employeeForm.employee_type_id ? Number(employeeForm.employee_type_id) : null,
+        shift_id: employeeForm.shift_id ? Number(employeeForm.shift_id) : null,
+
+        joining_date: employeeForm.joining_date || null,
+        confirmation_date: employeeForm.confirmation_date || null,
+        notice_period_days: employeeForm.notice_period_days ? Number(employeeForm.notice_period_days) : null,
+
+        experience_years: employeeForm.experience_years ? Number(employeeForm.experience_years) : null,
+        salary: employeeForm.salary ? Number(employeeForm.salary) : null,
+        ctc_annual: employeeForm.ctc_annual ? Number(employeeForm.ctc_annual) : null,
+
+        job_location: employeeForm.job_location || null,
+        site_location: employeeForm.site_location || null,
+
+        branch_id: employeeForm.branch_id ? Number(employeeForm.branch_id) : null,
+        department_id: employeeForm.department_id ? Number(employeeForm.department_id) : null,
+        designation_id: employeeForm.designation_id ? Number(employeeForm.designation_id) : null,
+      },
+      profileForm: {
+        gender: profileForm.gender || null,
+        dob: profileForm.dob || null,
+        father_name: profileForm.father_name || null,
+        religion: profileForm.religion || null,
+        marital_status: profileForm.marital_status || null,
+        qualification: profileForm.qualification || null,
+        emergency_contact: profileForm.emergency_contact || null,
+        address: profileForm.address || null,
+        permanent_address: profileForm.permanent_address || null,
+        bank_name: profileForm.bank_name || null,
+        account_number: profileForm.account_number || null,
+        ifsc_code: profileForm.ifsc_code || null,
+        bank_branch_name: profileForm.bank_branch_name || null,
+        // profile_photo: profileForm.profile_photo // Files might need FormData, but for now we follow JSON contract
+      },
+      documentsForm: {
+        pan: documentsForm.pan || null,
+        aadhaar: documentsForm.aadhaar || null,
+        uan_number: documentsForm.uan_number || null,
+        esic_number: documentsForm.esic_number || null,
+        // files: documentsForm.files // Same as photo
+      }
+    };
+
+    // Remove password if it's undefined (in update mode)
+    if (isEdit) {
+      delete payload.employeeForm.password;
+    }
+
+    console.log("🚀 Submitting Employee Payload:", JSON.stringify(payload, null, 2));
+    onSave(payload);
   };
 
-  // IMPORTANT: do not send password on edit
-  if (isEdit) {
-    delete payload.password;
-  }
 
-  onSave(payload);
-};
+  const FileField = ({ label, field, accept }) => (
+    <div className="upload-inline">
+      <Upload />
+      <input
+        type="file"
+        accept={accept}
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (!file) return;
 
-
- const FileField = ({ label, field, accept }) => (
-  <div className="upload-inline">
-    <Upload />
-    <input
-      type="file"
-      accept={accept}
-      onChange={(e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        setDocumentsForm((p) => ({
-          ...p,
-          files: {
-            ...p.files,
-            [field]: file,
-          },
-        }));
-      }}
-    />
-    <span>
-      {documentsForm.files?.[field]?.name || label}
-    </span>
-  </div>
-);
+          setDocumentsForm((p) => ({
+            ...p,
+            files: {
+              ...p.files,
+              [field]: file,
+            },
+          }));
+        }}
+      />
+      <span>
+        {documentsForm.files?.[field]?.name || label}
+      </span>
+    </div>
+  );
 
 
   return (
@@ -461,7 +574,7 @@ useEffect(() => {
 
             {/* Dates */}
             <div className="form-grid">
-              
+
               <div>
                 <label>Confirmation Date</label>
                 <input
@@ -556,7 +669,7 @@ useEffect(() => {
               </div>
             </div>
 
-            
+
 
             <div className="form-grid">
               <div>
@@ -598,267 +711,267 @@ useEffect(() => {
 
 
         {step === 2 && (
-      <div className="emp-form-section">
-        <h4>Personal Information</h4>
+          <div className="emp-form-section">
+            <h4>Personal Information</h4>
 
-        <div className="form-grid">
-          <div>
-            <label>Gender</label>
-            <select
-              value={profileForm.gender}
-              onChange={(e) =>
-                changeProfile("gender", e.target.value)
-              }
-            >
-              <option value="">Select</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
-          </div>
+            <div className="form-grid">
+              <div>
+                <label>Gender</label>
+                <select
+                  value={profileForm.gender}
+                  onChange={(e) =>
+                    changeProfile("gender", e.target.value)
+                  }
+                >
+                  <option value="">Select</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </div>
 
-          <div>
-            <label>Date of Birth</label>
-            <input
-              type="date"
-              value={profileForm.dob}
-              onChange={(e) =>
-                changeProfile("dob", e.target.value)
-              }
-            />
-          </div>
-        </div>
-
-        <label>Father's Name</label>
-        <input
-          value={profileForm.father_name}
-          onChange={(e) =>
-            changeProfile("father_name", e.target.value)
-          }
-        />
-
-        <div className="form-grid">
-          <div>
-            <label>Religion</label>
-            <input
-              value={profileForm.religion}
-              onChange={(e) =>
-                changeProfile("religion", e.target.value)
-              }
-            />
-          </div>
-
-          <div>
-            <label>Marital Status</label>
-            <select
-              value={profileForm.marital_status}
-              onChange={(e) =>
-                changeProfile("marital_status", e.target.value)
-              }
-            >
-              <option value="">Select</option>
-              <option>Single</option>
-              <option>Married</option>
-            </select>
-          </div>
-        </div>
-
-        <label>Qualification</label>
-        <input
-          value={profileForm.qualification}
-          onChange={(e) =>
-            changeProfile("qualification", e.target.value)
-          }
-        />
-
-              <label>Emergency Contact</label>
-              <input
-                placeholder="Emergency mobile number"
-                value={profileForm.emergency_contact}
-                onChange={(e) =>
-                  changeProfile(
-                    "emergency_contact",
-                    e.target.value.replace(/\D/g, "")
-                  )
-                }
-              />
-
-              <label>Address</label>
-              <textarea
-                placeholder="Current address"
-                value={profileForm.address}
-                onChange={(e) =>
-                  changeProfile("address", e.target.value)
-                }
-              />
-
-              <label>Permanent Address</label>
-              <textarea
-                placeholder="Full permanent address"
-                value={profileForm.permanent_address}
-                onChange={(e) =>
-                  changeProfile("permanent_address", e.target.value)
-                }
-              />
-
-              <label>Profile Picture</label>
-              <div className="upload-inline">
-                <ImageIcon />
+              <div>
+                <label>Date of Birth</label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      changeProfile("profile_photo", file);
-                    }
-                  }}
+                  type="date"
+                  value={profileForm.dob}
+                  onChange={(e) =>
+                    changeProfile("dob", e.target.value)
+                  }
                 />
-                <span>
-                  {profileForm.profile_photo?.name || "Upload profile photo"}
-                </span>
               </div>
-
-              <h4>Bank Details</h4>
-
-              <label>Bank Name</label>
-              <input
-                value={profileForm.bank_name}
-                onChange={(e) =>
-                  changeProfile("bank_name", e.target.value)
-                }
-              />
-
-              <div className="form-grid">
-                <div>
-                  <label>Account Number</label>
-                  <input
-                    value={profileForm.account_number}
-                    onChange={(e) =>
-                      changeProfile("account_number", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label>IFSC Code</label>
-                  <input
-                    value={profileForm.ifsc_code}
-                    onChange={(e) =>
-                      changeProfile(
-                        "ifsc_code",
-                        e.target.value.toUpperCase()
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <label>Bank Branch Name</label>
-              <input
-                value={profileForm.bank_branch_name}
-                onChange={(e) =>
-                  changeProfile("bank_branch_name", e.target.value)
-                }
-              />
             </div>
-          )}
+
+            <label>Father's Name</label>
+            <input
+              value={profileForm.father_name}
+              onChange={(e) =>
+                changeProfile("father_name", e.target.value)
+              }
+            />
+
+            <div className="form-grid">
+              <div>
+                <label>Religion</label>
+                <input
+                  value={profileForm.religion}
+                  onChange={(e) =>
+                    changeProfile("religion", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <label>Marital Status</label>
+                <select
+                  value={profileForm.marital_status}
+                  onChange={(e) =>
+                    changeProfile("marital_status", e.target.value)
+                  }
+                >
+                  <option value="">Select</option>
+                  <option>Single</option>
+                  <option>Married</option>
+                </select>
+              </div>
+            </div>
+
+            <label>Qualification</label>
+            <input
+              value={profileForm.qualification}
+              onChange={(e) =>
+                changeProfile("qualification", e.target.value)
+              }
+            />
+
+            <label>Emergency Contact</label>
+            <input
+              placeholder="Emergency mobile number"
+              value={profileForm.emergency_contact}
+              onChange={(e) =>
+                changeProfile(
+                  "emergency_contact",
+                  e.target.value.replace(/\D/g, "")
+                )
+              }
+            />
+
+            <label>Address</label>
+            <textarea
+              placeholder="Current address"
+              value={profileForm.address}
+              onChange={(e) =>
+                changeProfile("address", e.target.value)
+              }
+            />
+
+            <label>Permanent Address</label>
+            <textarea
+              placeholder="Full permanent address"
+              value={profileForm.permanent_address}
+              onChange={(e) =>
+                changeProfile("permanent_address", e.target.value)
+              }
+            />
+
+            <label>Profile Picture</label>
+            <div className="upload-inline">
+              <ImageIcon />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    changeProfile("profile_photo", file);
+                  }
+                }}
+              />
+              <span>
+                {profileForm.profile_photo?.name || "Upload profile photo"}
+              </span>
+            </div>
+
+            <h4>Bank Details</h4>
+
+            <label>Bank Name</label>
+            <input
+              value={profileForm.bank_name}
+              onChange={(e) =>
+                changeProfile("bank_name", e.target.value)
+              }
+            />
+
+            <div className="form-grid">
+              <div>
+                <label>Account Number</label>
+                <input
+                  value={profileForm.account_number}
+                  onChange={(e) =>
+                    changeProfile("account_number", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <label>IFSC Code</label>
+                <input
+                  value={profileForm.ifsc_code}
+                  onChange={(e) =>
+                    changeProfile(
+                      "ifsc_code",
+                      e.target.value.toUpperCase()
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <label>Bank Branch Name</label>
+            <input
+              value={profileForm.bank_branch_name}
+              onChange={(e) =>
+                changeProfile("bank_branch_name", e.target.value)
+              }
+            />
+          </div>
+        )}
 
 
         {step === 3 && (
-            <div className="emp-form-section">
-              <h4>Statutory Information</h4>
+          <div className="emp-form-section">
+            <h4>Statutory Information</h4>
 
-              {/* ===== Document Numbers ===== */}
-              <div className="form-grid">
-                <div>
-                  <label>UAN Number</label>
-                  <input
-                    placeholder="Universal Account Number"
-                    value={documentsForm.uan_number}
-                    onChange={(e) =>
-                      setDocumentsForm(p => ({
-                        ...p,
-                        uan_number: e.target.value.replace(/\D/g, "")
-                      }))
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label>ESIC Number</label>
-                  <input
-                    placeholder="ESIC Insurance Number"
-                    value={documentsForm.esic_number}
-                    onChange={(e) =>
-                      setDocumentsForm(p => ({
-                        ...p,
-                        esic_number: e.target.value
-                      }))
-                    }
-                  />
-                </div>
+            {/* ===== Document Numbers ===== */}
+            <div className="form-grid">
+              <div>
+                <label>UAN Number</label>
+                <input
+                  placeholder="Universal Account Number"
+                  value={documentsForm.uan_number}
+                  onChange={(e) =>
+                    setDocumentsForm(p => ({
+                      ...p,
+                      uan_number: e.target.value.replace(/\D/g, "")
+                    }))
+                  }
+                />
               </div>
 
-              <div className="form-grid">
-                <div>
-                  <label>PAN Number</label>
-                  <input
-                    value={documentsForm.pan}
-                    onChange={(e) =>
-                      setDocumentsForm(p => ({
-                        ...p,
-                        pan: e.target.value.toUpperCase()
-                      }))
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label>Aadhaar Number</label>
-                  <input
-                    maxLength={12}
-                    value={documentsForm.aadhaar}
-                    onChange={(e) =>
-                      setDocumentsForm(p => ({
-                        ...p,
-                        aadhaar: e.target.value.replace(/\D/g, "")
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <h4>Upload Documents</h4>
-
-              <div className="document-grid">
-                {[
-                  ["PAN Card", "PAN"],
-                  ["Aadhaar Card", "AADHAAR"],
-                  ["ESIC Form-1", "ESIC_FORM_1"],
-                  ["EPF Form-2", "EPF_FORM_2"],
-                  ["EPF Form-11", "EPF_FORM_11"],
-                  ["Form-16", "FORM_16"],
-                  ["Form-F", "FORM_F"],
-                  ["Appointment Letter", "APPOINTMENT_LETTER"],
-                  ["Confirmation Letter", "CONFIRMATION_LETTER"],
-                  ["Application Form", "APPLICATION_FORM"],
-                  ["Employee Photo List", "EMPLOYEE_PHOTO_LIST"],
-                  ["ID Card", "ID_CARD"],
-                  ["ID Card History", "ID_CARD_HISTORY"],
-                ].map(([label, type]) => (
-                  <div key={type}>
-                    <label>{label}</label>
-                    <FileField
-                      label={`Upload ${label}`}
-                      field={type}
-                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls"
-                    />
-                  </div>
-                ))}
+              <div>
+                <label>ESIC Number</label>
+                <input
+                  placeholder="ESIC Insurance Number"
+                  value={documentsForm.esic_number}
+                  onChange={(e) =>
+                    setDocumentsForm(p => ({
+                      ...p,
+                      esic_number: e.target.value
+                    }))
+                  }
+                />
               </div>
             </div>
-          )}
+
+            <div className="form-grid">
+              <div>
+                <label>PAN Number</label>
+                <input
+                  value={documentsForm.pan}
+                  onChange={(e) =>
+                    setDocumentsForm(p => ({
+                      ...p,
+                      pan: e.target.value.toUpperCase()
+                    }))
+                  }
+                />
+              </div>
+
+              <div>
+                <label>Aadhaar Number</label>
+                <input
+                  maxLength={12}
+                  value={documentsForm.aadhaar}
+                  onChange={(e) =>
+                    setDocumentsForm(p => ({
+                      ...p,
+                      aadhaar: e.target.value.replace(/\D/g, "")
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <h4>Upload Documents</h4>
+
+            <div className="document-grid">
+              {[
+                ["PAN Card", "PAN"],
+                ["Aadhaar Card", "AADHAAR"],
+                ["ESIC Form-1", "ESIC_FORM_1"],
+                ["EPF Form-2", "EPF_FORM_2"],
+                ["EPF Form-11", "EPF_FORM_11"],
+                ["Form-16", "FORM_16"],
+                ["Form-F", "FORM_F"],
+                ["Appointment Letter", "APPOINTMENT_LETTER"],
+                ["Confirmation Letter", "CONFIRMATION_LETTER"],
+                ["Application Form", "APPLICATION_FORM"],
+                ["Employee Photo List", "EMPLOYEE_PHOTO_LIST"],
+                ["ID Card", "ID_CARD"],
+                ["ID Card History", "ID_CARD_HISTORY"],
+              ].map(([label, type]) => (
+                <div key={type}>
+                  <label>{label}</label>
+                  <FileField
+                    label={`Upload ${label}`}
+                    field={type}
+                    accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
 
 

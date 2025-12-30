@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import "../../../styles/EmployeeView.css";
+import { getEmployee } from "../../../api/employees.api";
 
 const EmployeeProfile = () => {
   const { id } = useParams();
@@ -18,20 +19,7 @@ const EmployeeProfile = () => {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/employees/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error("Failed to load employee");
-        }
-
-        const data = await res.json();
+        const data = await getEmployee(id);
         setEmployee(data);
       } catch (err) {
         console.error(err);
