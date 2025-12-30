@@ -1,43 +1,44 @@
-import { api } from "./api";
+import { API_BASE } from "../utils/apiBase";
+import { authHeader } from "../utils/authHeader";
 
-/* CREATE */
-export const createEmployee = (payload) =>
-  api("/api/employees", {
+export const getEmployee = async id =>
+  fetch(`${API_BASE}/api/employees/${id}`, {
+    headers: authHeader(),
+  }).then(res => res.json());
+
+export const createEmployee = async payload =>
+  fetch(`${API_BASE}/api/employees`, {
     method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify(payload),
-  });
+  }).then(res => res.json());
 
-/* LIST */
-export const getEmployees = (params = "") =>
-  api(`/api/employees${params}`);
+export const listEmployees = async () =>
+  fetch(`${API_BASE}/api/employees`, {
+    headers: authHeader(),
+  }).then(res => res.json());
 
-/* VIEW */
-export const getEmployeeById = (id) =>
-  api(`/api/employees/${id}`);
-
-/* UPDATE */
-export const updateEmployee = (id, payload) =>
-  api(`/api/employees/${id}`, {
+export const updateEmployee = async (id, payload) =>
+  fetch(`${API_BASE}/api/employees/${id}`, {
     method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify(payload),
-  });
+  }).then(res => res.json());
 
-/* STATUS */
-export const toggleEmployeeStatus = (id) =>
-  api(`/api/employees/${id}/status`, {
+export const toggleEmployeeStatus = async id =>
+  fetch(`${API_BASE}/api/employees/${id}/status`, {
     method: "PATCH",
+    headers: authHeader(),
   });
 
-/* BIODATA */
-export const saveEmployeeBiodata = (id, payload) =>
-  api(`/api/employees/${id}/biodata`, {
-    method: "POST",
-    body: JSON.stringify(payload),
+export const deleteEmployee = async id =>
+  fetch(`${API_BASE}/api/employees/${id}`, {
+    method: "DELETE",
+    headers: authHeader(),
   });
+  
+export const getLastEmployeeCode = async () =>
+  fetch(`${API_BASE}/api/employees/last-code`, {
+    headers: authHeader(),
+  }).then(res => res.json());
 
-export const getEmployeeBiodata = (id) =>
-  api(`/api/employees/${id}/biodata`);
-
-/* LAST EMPLOYEE CODE */
-export const getLastEmployeeCode = () =>
-  api("/api/employees/last-code");

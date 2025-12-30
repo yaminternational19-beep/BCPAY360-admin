@@ -1,23 +1,35 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
-export async function api(path, options = {}) {
+
+
+export const api = async (path, options = {}) => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: options.method || "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    credentials: "include",
-    body: options.body,
-  });
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "API Error");
+  // ✅ Only attach token if it EXISTS
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  return data;
-}
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (res.status === 204 || res.status === 304) {
+    return null;
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || "API Error");
+  }
+
+  return res.json();
+};
+
+

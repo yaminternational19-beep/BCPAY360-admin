@@ -6,11 +6,12 @@ import EmployeeForm from "../components/EmployeeForm";
 import EmployeeFilters from "../components/EmployeeFilters";
 
 import {
-  getEmployees,
+  listEmployees,
   createEmployee,
   updateEmployee,
   toggleEmployeeStatus,
 } from "../../../api/employees.api";
+
 
 
 
@@ -28,14 +29,36 @@ const EmployeeList = () => {
   /* =========================
      LOAD EMPLOYEES (DB DATA)
   ========================= */
-  const loadEmployees = async () => {
+const loadEmployees = async () => {
     try {
-      const res = await getEmployees("?page=1&limit=50");
-      setEmployees(res?.employees || []);
+      const res = await listEmployees({ page: 1, limit: 50 });
+
+      const normalized = (Array.isArray(res) ? res : []).map(e => ({
+        id: e.id,
+
+        employee_code: e.employee_code,
+        full_name: e.full_name,
+        email: e.email || "",
+        phone: e.phone || "-",               // backend not sending yet
+
+        department: e.department_name || "-",
+        designation: e.designation_name || "-",
+        branch: e.branch_name || "-",
+        company: e.company_name || "-",
+
+        joining_date: e.joining_date || null, // backend not sending yet
+        salary: e.salary || 0,                 // backend not sending yet
+
+        is_active: e.employee_status === "ACTIVE" ? 1 : 0,
+      }));
+
+      setEmployees(normalized);
     } catch (err) {
       console.error("❌ Load employees failed:", err.message);
     }
   };
+
+
 
   useEffect(() => {
     loadEmployees();

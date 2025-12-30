@@ -13,6 +13,9 @@ export default function Login({ onLogin }) {
   const [companies, setCompanies] = useState([]);
   const [tempLoginId, setTempLoginId] = useState(null);
 
+  const companiesLoading = companies.length === 0;
+
+
   const [form, setForm] = useState({
     companyId: "",
     email: "",
@@ -25,13 +28,23 @@ export default function Login({ onLogin }) {
      FETCH COMPANIES (COMPANY ADMIN)
   ============================= */
   useEffect(() => {
-    if (role === "COMPANY_ADMIN" && step === "LOGIN") {
-      fetch(`${API_BASE}/api/companies/public`)
-        .then((r) => r.json())
-        .then(setCompanies)
-        .catch(() => alert("Failed to load companies"));
+  let ignore = false;
+
+  const loadCompanies = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/companies/public`);
+      const data = await res.json();
+      if (!ignore) setCompanies(data);
+    } catch (e) {
+      console.error("Company load failed");
     }
-  }, [role, step]);
+  };
+
+  loadCompanies();
+
+  return () => { ignore = true };
+}, []);
+
 
   /* =============================
      ROLE SELECT
@@ -220,18 +233,23 @@ export default function Login({ onLogin }) {
           <h2>Admin Login</h2>
 
           <select
+            disabled={companiesLoading}
             value={form.companyId}
             onChange={(e) =>
               setForm({ ...form, companyId: e.target.value })
             }
           >
-            <option value="">Select Company</option>
+            <option value="">
+              {companiesLoading ? "Loading companies..." : "Select Company"}
+            </option>
+
             {companies.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
           </select>
+
 
           <input
             placeholder="Email"

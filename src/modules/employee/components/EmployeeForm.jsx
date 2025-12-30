@@ -12,83 +12,11 @@ import {
 } from "lucide-react";
 import "../../../styles/EmployeeForm.css";
 import { getDepartments, getDesignations, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
+
 import { getLastEmployeeCode } from "../../../api/employees.api";
 
-const EMPTY_FORM = {
-  employee_code: "",
-  full_name: "",
-  email: "",
-  password: "",
-  employee_status: "ACTIVE",
-  employee_type_id: "",
-  shift_id: "",
-  country_code: "+91",
-  phone: "",
-  joining_date: "",
-  salary: "",
-  confirmation_date: "",
-  notice_period_days: "",
-  payment_mode: "",
-  salary_type: "",
-  ctc_annual: "",
-  company_name: "",
-  job_location: "",
-  site_location: "",
-  has_multiple_branches: false,
-  branch_ids: [],
-  company_unit: "",
-  department_id: "",
-  designation_id: "",
-  branch_id: "",
-  experience_years: "",
-  reference_name: "",
-  reference_contact: "",
 
-  weekly_off_type: "",
-  ot_allowed: false,
-  ot_rate: "",
-  late_deduction_applicable: false,
-  gender: "",
-  dob: "",
-  religion: "",
-  father_name: "",
-  marital_status: "",
-  qualification: "",
-  emergency_contact: "",
-  address: "",
-  permanent_address: "",
-  profile_photo: null,
-  bank_name: "",
-  account_number: "",
-  ifsc_code: "",
-  branch_name: "",
-  pan: "",
-  aadhaar: "",
-  uan_number: "",
-  esic_number: "",
-  pf_join_date: "",
-  esic_join_date: "",
-  is_disabled: false,
-  esic_required: false,
-  epf_required: false,
-  pan_file: null,
-  aadhaar_file: null,
-  esic_form_1: null,
-  epf_form_2: null,
-  epf_form_11: null,
-  form_16: null,
-  form_f: null,
-  appointment_letter: null,
-  confirmation_letter: null,
-  application_form: null,
-  employee_photo_list: null,
-  id_card: null,
-  id_card_history: null,
-  documents: [],
-  pf_applicable: false,
-  esi_applicable: false,
 
-};
 
 const COUNTRY_CODES = [
   "+91 (India)",
@@ -105,175 +33,255 @@ const COUNTRY_CODES = [
   "+880 (Bangladesh)",
 ];
 
-const MOCK_EMPLOYEE_TYPES = [
-  { id: 1, type_name: "Permanent", name: "Permanent" },
-  { id: 2, type_name: "Contract", name: "Contract" },
-  { id: 3, type_name: "Intern", name: "Intern" },
-  { id: 4, type_name: "Trainee", name: "Trainee" },
-  { id: 5, type_name: "Consultant", name: "Consultant" },
-];
 
-const MOCK_SHIFTS = [
-  { id: 1, shift_name: "General Shift", name: "General Shift", start_time: "09:00", end_time: "18:00" },
-  { id: 2, shift_name: "Night Shift", name: "Night Shift", start_time: "22:00", end_time: "06:00" },
-  { id: 3, shift_name: "Morning Shift", name: "Morning Shift", start_time: "06:00", end_time: "14:00" },
-];
 
 const EmployeeForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
   const authUser = JSON.parse(localStorage.getItem("auth_user")) || {};
 
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState(EMPTY_FORM);
+  
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [employeeTypes, setEmployeeTypes] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [branchesLoading, setBranchesLoading] = useState(false);
 
-  useEffect(() => {
-    if (initial) {
-      setForm({
-        ...EMPTY_FORM,
-        ...initial,
-        joining_date: initial.joining_date?.slice(0, 10) || "",
-        dob: initial.dob?.slice(0, 10) || "",
-        pf_join_date: initial.pf_join_date?.slice(0, 10) || "",
-        esic_join_date: initial.esic_join_date?.slice(0, 10) || "",
-        has_multiple_branches: Array.isArray(initial.branch_ids) && initial.branch_ids.length > 0,
-        branch_ids: initial.branch_ids || [],
-        branch_id: initial.branch_id || "",
-        password: "",
-      });
+ const [employeeForm, setEmployeeForm] = useState({
+  employee_code: "",
+  full_name: "",
+  email: "",
+  password: "",
 
-    } else {
-      setForm({
-        ...EMPTY_FORM,
-        company_name: authUser?.company_name || authUser?.company || "",
-        job_location: authUser?.location || "",
-      });
-    }
-  }, [initial, authUser]);
+  country_code: "+91",
+  phone: "",
 
-  useEffect(() => {
-    if (isEdit) return;
-    getLastEmployeeCode()
-      .then((res) => {
-        if (res?.last_employee_code) {
-          const next = Number(res.last_employee_code.replace(/\D/g, "")) + 1;
-          setForm((p) => ({
-            ...p,
-            employee_code: `EMP${String(next).padStart(3, "0")}`,
-          }));
-        }
-      })
-      .catch(() => { });
-  }, [isEdit]);
+  employee_status: "ACTIVE",
 
-  useEffect(() => {
-    if (!form.department_id || !form.branch_id) {
-      setDesignations([]);
-      return;
-    }
-    getDesignations(form.branch_id, form.department_id)
-      .then(setDesignations)
-      .catch(() => setDesignations([]));
-  }, [form.department_id, form.branch_id]);
+  employee_type_id: "",
+  shift_id: "",
 
-  useEffect(() => {
-    getBranches()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setBranches(data);
-        } else {
-          setBranches([]);
-        }
-      })
-      .catch(() => {
-        setBranches([]);
-      });
-  }, []);
+  joining_date: "",
+  confirmation_date: "",
+  notice_period_days: "",
 
-  useEffect(() => {
-    if (!form.branch_id) {
-      setDepartments([]);
-      return;
-    }
-    getDepartments(form.branch_id)
-      .then(setDepartments)
-      .catch(() => setDepartments([]));
-  }, [form.branch_id]);
+  experience_years: "",
+  salary: "",
+  ctc_annual: "",
 
-  useEffect(() => {
-    if (!form.branch_id) {
-      setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
-      setShifts(MOCK_SHIFTS);
-      return;
-    }
+  job_location: "",
+  site_location: "",
 
-    getEmployeeTypes(form.branch_id)
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setEmployeeTypes(data);
-        } else {
-          setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
-        }
-      })
-      .catch(() => {
-        setEmployeeTypes(MOCK_EMPLOYEE_TYPES);
-      });
+  branch_id: "",
+  department_id: "",
+  designation_id: "",
+});
 
-    getShifts(form.branch_id)
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setShifts(data);
-        } else {
-          setShifts(MOCK_SHIFTS);
-        }
-      })
-      .catch(() => {
-        setShifts(MOCK_SHIFTS);
-      });
-  }, [form.branch_id]);
 
-  const change = (k, v) => {
-    setForm((p) => ({ ...p, [k]: v }));
+const [profileForm, setProfileForm] = useState({
+  gender: "",
+  dob: "",
+  father_name: "",
+  religion: "",
+  marital_status: "",
+
+  qualification: "",
+
+  emergency_contact: "",
+
+  address: "",
+  permanent_address: "",
+
+  bank_name: "",
+  account_number: "",
+  ifsc_code: "",
+  bank_branch_name: "",
+
+  profile_photo: null,
+});
+
+
+const [documentsForm, setDocumentsForm] = useState({
+  pan: "",
+  aadhaar: "",
+  uan_number: "",
+  esic_number: "",
+  files: {},
+});
+
+
+
+
+
+  // 1️⃣ Employee Code (only on create)
+useEffect(() => {
+  if (isEdit) return;
+
+  let mounted = true;
+
+  getLastEmployeeCode()
+    .then((res) => {
+      if (mounted && res?.code) {
+        setEmployeeForm((p) => ({
+          ...p,
+          employee_code: res.code,
+        }));
+      }
+    })
+    .catch(() => {});
+
+  return () => {
+    mounted = false;
   };
+}, [isEdit]);
+
+
+
+
+// 2️⃣ Load branches (on mount)
+useEffect(() => {
+  let mounted = true;
+
+  getBranches()
+    .then((data) => {
+      if (mounted) {
+        setBranches(Array.isArray(data) ? data : []);
+      }
+    })
+    .catch(() => {
+      if (mounted) setBranches([]);
+    });
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+
+
+// 3️⃣ Load departments (when branch changes)
+useEffect(() => {
+  if (!employeeForm.branch_id) {
+    setDepartments([]);
+    return;
+  }
+
+  getDepartments(employeeForm.branch_id)
+    .then(setDepartments)
+    .catch(() => setDepartments([]));
+}, [employeeForm.branch_id]);
+
+
+// 4️⃣ Load designations (when branch + department changes)
+useEffect(() => {
+  if (!employeeForm.branch_id || !employeeForm.department_id) {
+    setDesignations([]);
+    return;
+  }
+
+  getDesignations(
+    employeeForm.branch_id,
+    employeeForm.department_id
+  )
+    .then(setDesignations)
+    .catch(() => setDesignations([]));
+}, [employeeForm.branch_id, employeeForm.department_id]);
+
+
+// 5️⃣ Load employee types & shifts (when branch changes)
+useEffect(() => {
+  if (!employeeForm.branch_id) {
+    setEmployeeTypes([]);
+    setShifts([]);
+    return;
+  }
+
+  getEmployeeTypes(employeeForm.branch_id)
+    .then((data) => {
+      setEmployeeTypes(Array.isArray(data) ? data : []);
+    })
+    .catch(() => setEmployeeTypes([]));
+
+  getShifts(employeeForm.branch_id)
+    .then((data) => {
+      setShifts(Array.isArray(data) ? data : []);
+    })
+    .catch(() => setShifts([]));
+}, [employeeForm.branch_id]);
+
+
+
+  const changeEmployee = (k, v) => {
+      setEmployeeForm(p => ({ ...p, [k]: v }));
+    };
+
+    const changeProfile = (k, v) => {
+      setProfileForm(p => ({ ...p, [k]: v }));
+    };
+
 
   const submit = () => {
-    const payload = {
-      ...form,
-      department_id: Number(form.department_id) || null,
-      designation_id: Number(form.designation_id) || null,
-      employee_type_id: Number(form.employee_type_id) || null,
-      shift_id: Number(form.shift_id) || null,
-
-      salary: Number(form.salary) || 0,
-
-      branch_id: form.has_multiple_branches
-        ? null
-        : Number(form.branch_id) || null,
-
-      branch_ids: form.has_multiple_branches
-        ? form.branch_ids
-        : [],
-    };
-    if (isEdit) delete payload.password;
-    onSave(payload);
+  const payload = {
+    employee_code: employeeForm.employee_code,
+    email: employeeForm.email,
+    password: employeeForm.password || undefined, // backend will ignore on edit
+    country_code: employeeForm.country_code,
+    phone: employeeForm.phone,
+    employee_status: employeeForm.employee_status,
+    employee_type_id: employeeForm.employee_type_id
+      ? Number(employeeForm.employee_type_id)
+      : null,
+    shift_id: employeeForm.shift_id
+      ? Number(employeeForm.shift_id)
+      : null,
+    joining_date: employeeForm.joining_date,
+    branch_id: employeeForm.branch_id
+      ? Number(employeeForm.branch_id)
+      : null,
+    department_id: employeeForm.department_id
+      ? Number(employeeForm.department_id)
+      : null,
+    designation_id: employeeForm.designation_id
+      ? Number(employeeForm.designation_id)
+      : null,
   };
 
-  const FileField = ({ label, field, accept }) => (
-    <div className="upload-inline">
-      <Upload />
-      <input
-        type="file"
-        onChange={(e) => change(field, e.target.files[0])}
-        accept={accept}
-      />
-      <span>{form[field]?.name || label}</span>
-    </div>
-  );
+  // IMPORTANT: do not send password on edit
+  if (isEdit) {
+    delete payload.password;
+  }
+
+  onSave(payload);
+};
+
+
+ const FileField = ({ label, field, accept }) => (
+  <div className="upload-inline">
+    <Upload />
+    <input
+      type="file"
+      accept={accept}
+      onChange={(e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setDocumentsForm((p) => ({
+          ...p,
+          files: {
+            ...p.files,
+            [field]: file,
+          },
+        }));
+      }}
+    />
+    <span>
+      {documentsForm.files?.[field]?.name || label}
+    </span>
+  </div>
+);
+
 
   return (
     <div className="emp-modal-backdrop">
@@ -300,16 +308,19 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
           <div className="emp-form-section">
             <h4>Employee & Login Information</h4>
 
+            {/* Employee Code + Status */}
             <div className="form-grid">
               <div>
                 <label>Employee Code</label>
-                <input readOnly value={form.employee_code} />
+                <input readOnly value={employeeForm.employee_code} />
               </div>
               <div>
                 <label>Employee Status</label>
                 <select
-                  value={form.employee_status}
-                  onChange={(e) => change("employee_status", e.target.value)}
+                  value={employeeForm.employee_status}
+                  onChange={(e) =>
+                    changeEmployee("employee_status", e.target.value)
+                  }
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
@@ -317,27 +328,36 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               </div>
             </div>
 
+            {/* Name + Email */}
             <label>Full Name (As per Govt ID)</label>
             <input
               placeholder="Employee full name"
-              value={form.full_name}
-              onChange={(e) => change("full_name", e.target.value)}
+              value={employeeForm.full_name}
+              onChange={(e) =>
+                changeEmployee("full_name", e.target.value)
+              }
             />
 
             <label>Email</label>
             <input
               placeholder="employee@email.com"
-              value={form.email}
-              onChange={(e) => change("email", e.target.value)}
+              value={employeeForm.email}
+              onChange={(e) =>
+                changeEmployee("email", e.target.value)
+              }
             />
 
+            {/* Phone */}
             <div className="form-grid">
               <div>
                 <label>Country Code</label>
                 <select
-                  value={form.country_code}
+                  value={employeeForm.country_code}
                   onChange={(e) =>
-                    change("country_code", e.target.value.split(" ")[0])
+                    changeEmployee(
+                      "country_code",
+                      e.target.value.split(" ")[0]
+                    )
                   }
                 >
                   {COUNTRY_CODES.map((c) => (
@@ -349,14 +369,18 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <label>Phone Number</label>
                 <input
                   placeholder="Mobile number"
-                  value={form.phone}
+                  value={employeeForm.phone}
                   onChange={(e) =>
-                    change("phone", e.target.value.replace(/\D/g, ""))
+                    changeEmployee(
+                      "phone",
+                      e.target.value.replace(/\D/g, "")
+                    )
                   }
                 />
               </div>
             </div>
 
+            {/* Password (Create only) */}
             {!isEdit && (
               <>
                 <label>Password</label>
@@ -364,8 +388,10 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Create password"
-                    value={form.password}
-                    onChange={(e) => change("password", e.target.value)}
+                    value={employeeForm.password}
+                    onChange={(e) =>
+                      changeEmployee("password", e.target.value)
+                    }
                   />
                   <button
                     type="button"
@@ -376,575 +402,465 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 </div>
               </>
             )}
+            {/* Org Mapping */}
+            <div className="form-grid">
+              <div>
+                <label>Branch</label>
+                <select
+                  value={employeeForm.branch_id}
+                  onChange={(e) =>
+                    changeEmployee("branch_id", e.target.value)
+                  }
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.branch_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
+            {/* Type + Shift */}
             <div className="form-grid">
               <div>
                 <label>Employee Type</label>
                 <select
-                  value={form.employee_type_id || ""}
-                  onChange={(e) => change("employee_type_id", e.target.value)}
+                  value={employeeForm.employee_type_id}
+                  onChange={(e) =>
+                    changeEmployee("employee_type_id", e.target.value)
+                  }
                 >
                   <option value="">Select Employee Type</option>
-                  {employeeTypes?.map((type) => (
+                  {employeeTypes.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.type_name || type.name}
                     </option>
                   ))}
                 </select>
               </div>
+
               <div>
                 <label>Shift</label>
                 <select
-                  value={form.shift_id || ""}
-                  onChange={(e) => change("shift_id", e.target.value)}
+                  value={employeeForm.shift_id}
+                  onChange={(e) =>
+                    changeEmployee("shift_id", e.target.value)
+                  }
                 >
                   <option value="">Select Shift</option>
-                  {shifts?.map((shift) => (
+                  {shifts.map((shift) => (
                     <option key={shift.id} value={shift.id}>
                       {shift.shift_name || shift.name}
-                      {shift.start_time && shift.end_time
-                        ? ` (${shift.start_time} - ${shift.end_time})`
-                        : ""}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
-            <div className="form-grid">
-              <div>
-                <label>Joining Date</label>
-                <input
-                  type="date"
-                  value={form.joining_date}
-                  onChange={(e) => change("joining_date", e.target.value)}
-                />
-              </div>
-              <div>
-                <label>Salary</label>
-                <input
-                  type="number"
-                  placeholder="Monthly salary"
-                  value={form.salary}
-                  onChange={(e) => change("salary", e.target.value)}
-                />
-              </div>
-            </div>
 
+            {/* Dates */}
             <div className="form-grid">
+              
               <div>
                 <label>Confirmation Date</label>
                 <input
                   type="date"
-                  value={form.confirmation_date}
-                  onChange={(e) => change("confirmation_date", e.target.value)}
+                  value={employeeForm.confirmation_date}
+                  onChange={(e) =>
+                    changeEmployee("confirmation_date", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <label>Joining Date</label>
+                <input
+                  type="date"
+                  value={employeeForm.joining_date}
+                  onChange={(e) =>
+                    changeEmployee("joining_date", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Salary */}
+            <div className="form-grid">
+              <div>
+                <label>Salary (Monthly)</label>
+                <input
+                  type="number"
+                  value={employeeForm.salary}
+                  onChange={(e) =>
+                    changeEmployee("salary", e.target.value)
+                  }
+                />
+              </div>
+              <div>
+                <label>CTC (Annual)</label>
+                <input
+                  type="number"
+                  value={employeeForm.ctc_annual}
+                  onChange={(e) =>
+                    changeEmployee("ctc_annual", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Experience */}
+            <div className="form-grid">
+              <div>
+                <label>Experience (Years)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={employeeForm.experience_years}
+                  onChange={(e) =>
+                    changeEmployee("experience_years", e.target.value)
+                  }
                 />
               </div>
               <div>
                 <label>Notice Period (Days)</label>
                 <input
                   type="number"
-                  placeholder="Notice period in days"
-                  value={form.notice_period_days}
-                  onChange={(e) => change("notice_period_days", e.target.value)}
+                  value={employeeForm.notice_period_days}
+                  onChange={(e) =>
+                    changeEmployee("notice_period_days", e.target.value)
+                  }
                 />
               </div>
             </div>
 
-
-
-            <div className="form-grid">
-              <div>
-                <label>CTC (Annual)</label>
-                <input
-                  type="number"
-                  placeholder="Cost to Company (Annual)"
-                  value={form.ctc_annual}
-                  onChange={(e) => change("ctc_annual", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <h4>Company Details</h4>
-
-            <label>Company Name</label>
-            <input readOnly value={form.company_name} />
-
+            {/* Location */}
             <div className="form-grid">
               <div>
                 <label>Job Location</label>
                 <input
-                  placeholder="City / Office"
-                  value={form.job_location}
-                  onChange={(e) => change("job_location", e.target.value)}
+                  value={employeeForm.job_location}
+                  onChange={(e) =>
+                    changeEmployee("job_location", e.target.value)
+                  }
                 />
               </div>
               <div>
                 <label>Site Location</label>
                 <input
-                  placeholder="Site / Project location"
-                  value={form.site_location}
-                  onChange={(e) => change("site_location", e.target.value)}
+                  value={employeeForm.site_location}
+                  onChange={(e) =>
+                    changeEmployee("site_location", e.target.value)
+                  }
                 />
               </div>
             </div>
 
-            <label>
-              <input
-                type="checkbox"
-                checked={form.has_multiple_branches}
-                onChange={(e) =>
-                  change("has_multiple_branches", e.target.checked)
-                }
-              />
-              Employee works in multiple branches
-            </label>
-            {form.has_multiple_branches && (
-              <div className="form-grid">
-                <div>
-                  <label>Select Branches</label>
-                  <select
-                    multiple
-                    value={form.branch_ids}
-                    onChange={(e) =>
-                      change(
-                        "branch_ids",
-                        Array.from(
-                          e.target.selectedOptions,
-                          (o) => Number(o.value)
-                        )
-                      )
-                    }
-                  >
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.branch_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-            {!form.has_multiple_branches && (
-              <div className="form-grid">
-                <div>
-                  <label>Branch</label>
-                  <select
-                    value={form.branch_id || ""}
-                    onChange={(e) => change("branch_id", e.target.value)}
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.branch_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
+            
 
             <div className="form-grid">
               <div>
                 <label>Department</label>
                 <select
-                  value={form.department_id}
-                  onChange={(e) => change("department_id", e.target.value)}
+                  value={employeeForm.department_id}
+                  onChange={(e) =>
+                    changeEmployee("department_id", e.target.value)
+                  }
                 >
                   <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.department_name || dept.name}
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.department_name || d.name}
                     </option>
                   ))}
                 </select>
               </div>
+
               <div>
                 <label>Designation</label>
                 <select
-                  value={form.designation_id}
-                  onChange={(e) => change("designation_id", e.target.value)}
+                  value={employeeForm.designation_id}
+                  onChange={(e) =>
+                    changeEmployee("designation_id", e.target.value)
+                  }
                 >
                   <option value="">Select Designation</option>
-                  {designations.map((desg) => (
-                    <option key={desg.id} value={desg.id}>
-                      {desg.designation_name || desg.name}
+                  {designations.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.designation_name || g.name}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
-
-
-            <div className="form-grid">
-              <div>
-                <label>Experience (Years)</label>
-                <input
-                  type="number"
-                  placeholder="Total experience"
-                  value={form.experience_years}
-                  onChange={(e) => change("experience_years", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <div>
-                <label>Reference Name</label>
-                <input
-                  placeholder="Reference name / source"
-                  value={form.reference_name}
-                  onChange={(e) => change("reference_name", e.target.value)}
-                />
-              </div>
-              <div>
-                <label>Reference Contact</label>
-                <input
-                  placeholder="Reference contact number"
-                  value={form.reference_contact}
-                  onChange={(e) =>
-                    change(
-                      "reference_contact",
-                      e.target.value.replace(/\D/g, "")
-                    )
-                  }
-                />
-              </div>
-            </div>
           </div>
         )}
+
 
         {step === 2 && (
-          <div className="emp-form-section">
-            <h4>Personal Information</h4>
+      <div className="emp-form-section">
+        <h4>Personal Information</h4>
 
-            <div className="form-grid">
-              <div>
-                <label>Gender</label>
-                <select
-                  value={form.gender}
-                  onChange={(e) => change("gender", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div>
-                <label>Date of Birth</label>
-                <input
-                  type="date"
-                  value={form.dob}
-                  onChange={(e) => change("dob", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <label>Father's Name</label>
-            <input
-              value={form.father_name}
-              onChange={(e) => change("father_name", e.target.value)}
-            />
-
-            <div className="form-grid">
-              <div>
-                <label>Religion</label>
-                <input
-                  value={form.religion}
-                  onChange={(e) => change("religion", e.target.value)}
-                />
-              </div>
-              <div>
-                <label>Marital Status</label>
-                <select
-                  value={form.marital_status}
-                  onChange={(e) => change("marital_status", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  <option>Single</option>
-                  <option>Married</option>
-                </select>
-              </div>
-            </div>
-
-            <label>Qualification</label>
-            <input
-              value={form.qualification}
-              onChange={(e) => change("qualification", e.target.value)}
-            />
-
-            <label>Emergency Contact</label>
-            <input
-              placeholder="Emergency mobile number"
-              value={form.emergency_contact}
+        <div className="form-grid">
+          <div>
+            <label>Gender</label>
+            <select
+              value={profileForm.gender}
               onChange={(e) =>
-                change("emergency_contact", e.target.value.replace(/\D/g, ""))
+                changeProfile("gender", e.target.value)
+              }
+            >
+              <option value="">Select</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Date of Birth</label>
+            <input
+              type="date"
+              value={profileForm.dob}
+              onChange={(e) =>
+                changeProfile("dob", e.target.value)
               }
             />
+          </div>
+        </div>
 
-            <label>Address</label>
-            <textarea
-              placeholder="Current address"
-              value={form.address}
-              onChange={(e) => change("address", e.target.value)}
-            />
+        <label>Father's Name</label>
+        <input
+          value={profileForm.father_name}
+          onChange={(e) =>
+            changeProfile("father_name", e.target.value)
+          }
+        />
 
-            <label>Permanent Address</label>
-            <textarea
-              placeholder="Full permanent address"
-              value={form.permanent_address}
-              onChange={(e) => change("permanent_address", e.target.value)}
-            />
-
-            <label>Profile Picture</label>
-            <div className="upload-inline">
-              <ImageIcon />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => change("profile_photo", e.target.files[0])}
-              />
-              <span>{form.profile_photo?.name || "Upload profile photo"}</span>
-            </div>
-
-            <h4>Bank Details</h4>
-
-            <label>Bank Name</label>
+        <div className="form-grid">
+          <div>
+            <label>Religion</label>
             <input
-              value={form.bank_name}
-              onChange={(e) => change("bank_name", e.target.value)}
-            />
-
-            <div className="form-grid">
-              <div>
-                <label>Account Number</label>
-                <input
-                  value={form.account_number}
-                  onChange={(e) => change("account_number", e.target.value)}
-                />
-              </div>
-              <div>
-                <label>IFSC Code</label>
-                <input
-                  value={form.ifsc_code}
-                  onChange={(e) =>
-                    change("ifsc_code", e.target.value.toUpperCase())
-                  }
-                />
-              </div>
-            </div>
-
-            <label>Branch Name</label>
-            <input
-              value={form.branch_name}
-              onChange={(e) => change("branch_name", e.target.value)}
+              value={profileForm.religion}
+              onChange={(e) =>
+                changeProfile("religion", e.target.value)
+              }
             />
           </div>
-        )}
 
-        {step === 3 && (
-          <div className="emp-form-section">
-            <h4>Statutory Info</h4>
+          <div>
+            <label>Marital Status</label>
+            <select
+              value={profileForm.marital_status}
+              onChange={(e) =>
+                changeProfile("marital_status", e.target.value)
+              }
+            >
+              <option value="">Select</option>
+              <option>Single</option>
+              <option>Married</option>
+            </select>
+          </div>
+        </div>
 
-            <div className="form-grid">
-              <div>
-                <label>UAN Number</label>
-                <input
-                  placeholder="Universal Account Number"
-                  value={form.uan_number}
-                  onChange={(e) => change("uan_number", e.target.value.replace(/\D/g, ""))}
-                />
-              </div>
-              <div>
-                <label>ESIC Number</label>
-                <input
-                  placeholder="ESIC Insurance Number"
-                  value={form.esic_number}
-                  onChange={(e) => change("esic_number", e.target.value)}
-                />
-              </div>
-            </div>
+        <label>Qualification</label>
+        <input
+          value={profileForm.qualification}
+          onChange={(e) =>
+            changeProfile("qualification", e.target.value)
+          }
+        />
 
-            <div className="form-grid">
-              <div>
-                <label>PF Join Date</label>
-                <input
-                  type="date"
-                  value={form.pf_join_date}
-                  onChange={(e) => change("pf_join_date", e.target.value)}
-                />
-              </div>
-              <div>
-                <label>ESIC Join Date</label>
-                <input
-                  type="date"
-                  value={form.esic_join_date}
-                  onChange={(e) => change("esic_join_date", e.target.value)}
-                />
-              </div>
-            </div>
-
-            <label>
+              <label>Emergency Contact</label>
               <input
-                type="checkbox"
-                checked={form.is_disabled}
-                onChange={(e) => change("is_disabled", e.target.checked)}
-              />
-              Is Disabled
-            </label>
-
-            <h4>Identity & Statutory Documents</h4>
-
-            <div className="form-grid">
-              <div>
-                <label>PAN Number</label>
-                <input
-                  value={form.pan}
-                  onChange={(e) => change("pan", e.target.value.toUpperCase())}
-                />
-              </div>
-              <div>
-                <label>PAN File</label>
-                <FileField
-                  label="Upload PAN Card"
-                  field="pan_file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <div>
-                <label>Aadhaar Number</label>
-                <input
-                  maxLength={12}
-                  value={form.aadhaar}
-                  onChange={(e) =>
-                    change("aadhaar", e.target.value.replace(/\D/g, ""))
-                  }
-                />
-              </div>
-              <div>
-                <label>Aadhaar File</label>
-                <FileField
-                  label="Upload Aadhaar Card"
-                  field="aadhaar_file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-            </div>
-
-            <div className="document-grid">
-              <div>
-                <label>ESIC Form-1</label>
-                <FileField
-                  label="Upload ESIC Form-1"
-                  field="esic_form_1"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-              <div>
-                <label>EPF Form-2</label>
-                <FileField
-                  label="Upload EPF Form-2"
-                  field="epf_form_2"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-              <div>
-                <label>EPF Form-11</label>
-                <FileField
-                  label="Upload EPF Form-11"
-                  field="epf_form_11"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-              <div>
-                <label>Form-16</label>
-                <FileField label="Upload Form-16" field="form_16" accept=".pdf" />
-              </div>
-              <div>
-                <label>Form-F</label>
-                <FileField
-                  label="Upload Form-F"
-                  field="form_f"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-              <div>
-                <label>Appointment Letter</label>
-                <FileField
-                  label="Upload Appointment Letter"
-                  field="appointment_letter"
-                  accept=".pdf"
-                />
-              </div>
-              <div>
-                <label>Confirmation Letter</label>
-                <FileField
-                  label="Upload Confirmation Letter"
-                  field="confirmation_letter"
-                  accept=".pdf"
-                />
-              </div>
-              <div>
-                <label>Application Form</label>
-                <FileField
-                  label="Upload Application Form"
-                  field="application_form"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-              <div>
-                <label>Photo-wise Employee List</label>
-                <FileField
-                  label="Upload Photo-wise List"
-                  field="employee_photo_list"
-                  accept=".pdf,.xlsx,.xls"
-                />
-              </div>
-              <div>
-                <label>ID Card</label>
-                <FileField
-                  label="Upload ID Card"
-                  field="id_card"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                />
-              </div>
-              <div>
-                <label>ID Card History</label>
-                <FileField
-                  label="Upload ID Card History"
-                  field="id_card_history"
-                  accept=".pdf"
-                />
-              </div>
-            </div>
-
-            <h4>Other Documents</h4>
-            <div className="upload-box">
-              <Upload />
-              <p>Additional Documents</p>
-              <input
-                type="file"
-                multiple
+                placeholder="Emergency mobile number"
+                value={profileForm.emergency_contact}
                 onChange={(e) =>
-                  change("documents", [
-                    ...form.documents,
-                    ...Array.from(e.target.files),
-                  ])
+                  changeProfile(
+                    "emergency_contact",
+                    e.target.value.replace(/\D/g, "")
+                  )
+                }
+              />
+
+              <label>Address</label>
+              <textarea
+                placeholder="Current address"
+                value={profileForm.address}
+                onChange={(e) =>
+                  changeProfile("address", e.target.value)
+                }
+              />
+
+              <label>Permanent Address</label>
+              <textarea
+                placeholder="Full permanent address"
+                value={profileForm.permanent_address}
+                onChange={(e) =>
+                  changeProfile("permanent_address", e.target.value)
+                }
+              />
+
+              <label>Profile Picture</label>
+              <div className="upload-inline">
+                <ImageIcon />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      changeProfile("profile_photo", file);
+                    }
+                  }}
+                />
+                <span>
+                  {profileForm.profile_photo?.name || "Upload profile photo"}
+                </span>
+              </div>
+
+              <h4>Bank Details</h4>
+
+              <label>Bank Name</label>
+              <input
+                value={profileForm.bank_name}
+                onChange={(e) =>
+                  changeProfile("bank_name", e.target.value)
+                }
+              />
+
+              <div className="form-grid">
+                <div>
+                  <label>Account Number</label>
+                  <input
+                    value={profileForm.account_number}
+                    onChange={(e) =>
+                      changeProfile("account_number", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>IFSC Code</label>
+                  <input
+                    value={profileForm.ifsc_code}
+                    onChange={(e) =>
+                      changeProfile(
+                        "ifsc_code",
+                        e.target.value.toUpperCase()
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
+              <label>Bank Branch Name</label>
+              <input
+                value={profileForm.bank_branch_name}
+                onChange={(e) =>
+                  changeProfile("bank_branch_name", e.target.value)
                 }
               />
             </div>
+          )}
 
-            <ul className="file-list">
-              {form.documents.map((f, i) => (
-                <li key={i}>{f.name}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+
+        {step === 3 && (
+            <div className="emp-form-section">
+              <h4>Statutory Information</h4>
+
+              {/* ===== Document Numbers ===== */}
+              <div className="form-grid">
+                <div>
+                  <label>UAN Number</label>
+                  <input
+                    placeholder="Universal Account Number"
+                    value={documentsForm.uan_number}
+                    onChange={(e) =>
+                      setDocumentsForm(p => ({
+                        ...p,
+                        uan_number: e.target.value.replace(/\D/g, "")
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>ESIC Number</label>
+                  <input
+                    placeholder="ESIC Insurance Number"
+                    value={documentsForm.esic_number}
+                    onChange={(e) =>
+                      setDocumentsForm(p => ({
+                        ...p,
+                        esic_number: e.target.value
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="form-grid">
+                <div>
+                  <label>PAN Number</label>
+                  <input
+                    value={documentsForm.pan}
+                    onChange={(e) =>
+                      setDocumentsForm(p => ({
+                        ...p,
+                        pan: e.target.value.toUpperCase()
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label>Aadhaar Number</label>
+                  <input
+                    maxLength={12}
+                    value={documentsForm.aadhaar}
+                    onChange={(e) =>
+                      setDocumentsForm(p => ({
+                        ...p,
+                        aadhaar: e.target.value.replace(/\D/g, "")
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <h4>Upload Documents</h4>
+
+              <div className="document-grid">
+                {[
+                  ["PAN Card", "PAN"],
+                  ["Aadhaar Card", "AADHAAR"],
+                  ["ESIC Form-1", "ESIC_FORM_1"],
+                  ["EPF Form-2", "EPF_FORM_2"],
+                  ["EPF Form-11", "EPF_FORM_11"],
+                  ["Form-16", "FORM_16"],
+                  ["Form-F", "FORM_F"],
+                  ["Appointment Letter", "APPOINTMENT_LETTER"],
+                  ["Confirmation Letter", "CONFIRMATION_LETTER"],
+                  ["Application Form", "APPLICATION_FORM"],
+                  ["Employee Photo List", "EMPLOYEE_PHOTO_LIST"],
+                  ["ID Card", "ID_CARD"],
+                  ["ID Card History", "ID_CARD_HISTORY"],
+                ].map(([label, type]) => (
+                  <div key={type}>
+                    <label>{label}</label>
+                    <FileField
+                      label={`Upload ${label}`}
+                      field={type}
+                      accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+
 
         <div className="emp-form-footer">
           {step > 1 && (
@@ -952,17 +868,20 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               <ChevronLeft /> Back
             </button>
           )}
+
           {step < 3 && (
             <button className="primary" onClick={() => setStep(step + 1)}>
               Save & Continue <ChevronRight />
             </button>
           )}
+
           {step === 3 && (
             <button className="primary" onClick={submit}>
               Save Employee
             </button>
           )}
         </div>
+
       </div>
     </div>
   );
