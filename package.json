@@ -1,13 +1,15 @@
 {
-  "name": "frontend",
+  "name": "hris-admin-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "HRIS Admin Frontend - React SPA for AWS EC2 deployment",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "serve": "vite preview --port 4173"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

@@ -144,5 +144,32 @@ export const resetHRPermissions = (hrId) =>
   });
 
 
-  
+  /* ===================================================================================
+   ADMIN – ATTENDANCE
+   =================================================================================== */
 
+/* 🔹 GET EMPLOYEES (ADMIN) */
+export const getAdminAttendanceEmployees = () =>
+  api("/api/admin/attendance/employees");
+
+/* 🔹 GET ATTENDANCE MATRIX (ADMIN) */
+export const getAdminAttendanceMatrix = ({ from, to, branch_id, department_id }) =>
+  api(
+    `/api/admin/attendance/matrix?from=${from}&to=${to}` +
+    (branch_id ? `&branch_id=${branch_id}` : "") +
+    (department_id ? `&department_id=${department_id}` : "")
+  );
+
+/* ✅ APPROVE REQUEST */
+export const approveAttendanceRequest = (log_id) =>
+  api("/api/admin/attendance/approve", {
+    method: "POST",
+    body: JSON.stringify({ log_id }),
+  });
+
+/* ❌ REJECT REQUEST */
+export const rejectAttendanceRequest = ({ log_id, reason }) =>
+  api("/api/admin/attendance/reject", {
+    method: "POST",
+    body: JSON.stringify({ log_id, reason }),
+  });
