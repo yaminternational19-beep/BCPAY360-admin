@@ -13,7 +13,6 @@ import {
     toggleDesignationStatus,
 } from "../../../api/master.api";
 
-const API = import.meta.env.VITE_API_BASE_URL;
 
 
 export default function DepartmentDesignation({ user }) {

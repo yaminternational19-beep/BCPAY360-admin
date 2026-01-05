@@ -10,7 +10,6 @@ import {
 } from "../../../api/master.api";
 
 
-const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function BranchList({ user }) {
   const isAdmin = user?.role === "COMPANY_ADMIN";
@@ -90,16 +89,16 @@ export default function BranchList({ user }) {
   };
 
   const handleDelete = async (id) => {
-      if (!confirm("Are you sure you want to delete this branch?")) return;
+    if (!confirm("Are you sure you want to delete this branch?")) return;
 
-      try {
-        await deleteBranch(id);
-        loadBranches();
-      } catch (error) {
-        console.error("Failed to delete branch:", error);
-        alert("Failed to delete branch.");
-      }
-    };
+    try {
+      await deleteBranch(id);
+      loadBranches();
+    } catch (error) {
+      console.error("Failed to delete branch:", error);
+      alert("Failed to delete branch.");
+    }
+  };
 
 
   const formatDate = (dateString) => {
@@ -167,28 +166,28 @@ export default function BranchList({ user }) {
                     <td>{formatDate(branch.created_at || branch.created_date)}</td>
                     {(canEdit || canDelete) && (
                       <td className="row-actions">
-                          {canEdit && (
-                            <button onClick={() => handleEdit(branch.id)}>Edit</button>
-                          )}
+                        {canEdit && (
+                          <button onClick={() => handleEdit(branch.id)}>Edit</button>
+                        )}
 
-                          {canEdit && (
-                            <button
-                              onClick={() => handleToggleStatus(branch.id)}
-                              className={branch.is_active ? "warning" : "success"}
-                            >
-                              {branch.is_active ? "Disable" : "Enable"}
-                            </button>
-                          )}
+                        {canEdit && (
+                          <button
+                            onClick={() => handleToggleStatus(branch.id)}
+                            className={branch.is_active ? "warning" : "success"}
+                          >
+                            {branch.is_active ? "Disable" : "Enable"}
+                          </button>
+                        )}
 
-                          {canDelete && (
-                            <button
-                              className="danger"
-                              onClick={() => handleDelete(branch.id)}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </td>
+                        {canDelete && (
+                          <button
+                            className="danger"
+                            onClick={() => handleDelete(branch.id)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
 
                     )}
                   </tr>

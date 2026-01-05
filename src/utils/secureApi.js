@@ -1,3 +1,5 @@
+import { API_BASE } from "./apiBase";
+
 export const secureApi = async (path, options = {}) => {
   const token = localStorage.getItem("token");
 

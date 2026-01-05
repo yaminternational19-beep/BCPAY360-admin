@@ -11,7 +11,6 @@ import {
   toggleShiftStatus,
 } from "../../../api/master.api";
 
-const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function Shift({ user }) {
   const isAdmin = user?.role === "COMPANY_ADMIN";
