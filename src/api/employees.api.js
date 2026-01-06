@@ -1,18 +1,26 @@
 import { API_BASE } from "../utils/apiBase";
 import { authHeader } from "../utils/authHeader";
+import { handleApiError } from "../utils/apiUtils";
 
-export const getEmployee = async id =>
+// 1. Employee Core (ID-based)
+export const getEmployeeById = async (id) =>
   fetch(`${API_BASE}/api/employees/${id}`, {
     headers: authHeader(),
-  }).then(res => res.json());
+  }).then(handleApiError);
 
-export const createEmployee = async payload =>
+export const createEmployee = async (formData) =>
   fetch(`${API_BASE}/api/employees`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify(payload),
-  }).then(res => res.json());
+    headers: { ...authHeader() },
+    body: formData,
+  }).then(handleApiError);
 
+export const updateEmployeeById = async (id, formData) =>
+  fetch(`${API_BASE}/api/employees/${id}`, {
+    method: "PUT",
+    headers: { ...authHeader() },
+    body: formData,
+  }).then(handleApiError);
 
 export const listEmployees = async (params = {}) => {
   const query = new URLSearchParams();
@@ -24,17 +32,29 @@ export const listEmployees = async (params = {}) => {
 
   return fetch(url, {
     headers: authHeader(),
-  }).then(res => res.json());
+  }).then(handleApiError);
 };
 
-export const updateEmployee = async (id, payload) =>
-  fetch(`${API_BASE}/api/employees/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify(payload),
-  }).then(res => res.json());
+export const deleteEmployeeById = async (id, force = false) => {
+  const url = force
+    ? `${API_BASE}/api/employees/${id}?force=true`
+    : `${API_BASE}/api/employees/${id}`;
+  return fetch(url, {
+    method: "DELETE",
+    headers: authHeader(),
+  }).then(res => {
+    if (!res.ok) return handleApiError(res);
+    return res.json();
+  });
+};
 
-export const toggleEmployeeStatus = async (id, status) => {
+export const activateEmployeeById = async (id) =>
+  fetch(`${API_BASE}/api/employees/${id}/activate`, {
+    method: "PATCH",
+    headers: authHeader(),
+  }).then(handleApiError);
+
+export const toggleEmployeeStatusById = async (id, status) => {
   const payload = {
     employeeForm: {
       employee_status: status
@@ -44,27 +64,17 @@ export const toggleEmployeeStatus = async (id, status) => {
     method: "PATCH",
     headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify(payload),
-  }).then(res => res.json());
+  }).then(handleApiError);
 };
 
-export const deleteEmployee = async (id, force = false) => {
-  const url = force
-    ? `${API_BASE}/api/employees/${id}?force=true`
-    : `${API_BASE}/api/employees/${id}`;
-  return fetch(url, {
-    method: "DELETE",
+// 2. Documents (CODE-based)
+export const getEmployeeDocuments = async (employee_code) =>
+  fetch(`${API_BASE}/api/employee-documents/${employee_code}`, {
     headers: authHeader(),
-  });
-};
+  }).then(handleApiError);
 
-export const activateEmployee = async id =>
-  fetch(`${API_BASE}/api/employees/${id}/activate`, {
-    method: "PATCH",
-    headers: authHeader(),
-  }).then(res => res.json());
-
+// 3. Specials
 export const getLastEmployeeCode = async () =>
   fetch(`${API_BASE}/api/employees/last-code`, {
     headers: authHeader(),
-  }).then(res => res.json());
-
+  }).then(handleApiError);

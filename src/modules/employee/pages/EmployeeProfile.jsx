@@ -18,11 +18,14 @@ import {
   Trash2
 } from "lucide-react";
 import "../../../styles/EmployeeView.css";
-import { getEmployee, toggleEmployeeStatus, deleteEmployee, activateEmployee } from "../../../api/employees.api";
+import { getEmployeeById, getEmployeeDocuments, deleteEmployeeById, activateEmployeeById } from "../../../api/employees.api";
+
+import { useToast } from "../../../context/ToastContext";
 
 const EmployeeProfile = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // URL param is numeric ID
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [data, setData] = useState({
     employee: null,
@@ -34,44 +37,71 @@ const EmployeeProfile = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchEmployeeData = async () => {
       setLoading(true);
       try {
-        const response = await getEmployee(id);
-        // API response structure: { "employee": {}, "profile": {}, "documents": [] }
-        if (response) {
+        // 1. Fetch Bio-Data by ID
+        const empRes = await getEmployeeById(id);
+
+        if (!empRes) {
+          if (isMounted) {
+            setError("Employee not found");
+            toast.error("Employee not found");
+          }
+          return;
+        }
+
+        const employeeObj = empRes.employee || empRes;
+        const employeeCode = employeeObj.employee_code;
+
+        // 2. Fetch Documents by Code (if code exists)
+        let docsRes = [];
+        if (employeeCode) {
+          try {
+            docsRes = await getEmployeeDocuments(employeeCode);
+          } catch (docErr) {
+            console.warn("Failed to fetch documents:", docErr.message);
+            // Don't fail the whole page if only docs fail
+          }
+        }
+
+        if (isMounted) {
           setData({
-            employee: response.employee || null,
-            profile: response.profile || null,
-            documents: response.documents || []
+            employee: employeeObj || null,
+            profile: empRes.profile || null,
+            documents: Array.isArray(docsRes) ? docsRes : []
           });
-        } else {
-          setError("Employee not found");
         }
       } catch (err) {
-        console.error("Error fetching employee:", err);
-        setError("Unable to load employee details. Please try again.");
+        if (isMounted) {
+          setError(err.message || "Unable to load employee details");
+          toast.error(err.message || "Unable to load employee details");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchEmployeeData();
-  }, [id]);
+    return () => { isMounted = false; };
+  }, [id, toast]);
 
   const handleDeactivate = async () => {
-    const message = `Deactivate employee?\nThis will disable the employee account.\nAll data and documents will remain safe.`;
+    const message = `Deactivate employee?\nThis will disable the employee account.`;
     if (!window.confirm(message)) return;
 
     setToggling(true);
     try {
-      await deleteEmployee(id); // Soft deactivate
+      await deleteEmployeeById(id); // Soft deactivate
       setData(prev => ({
         ...prev,
         employee: { ...prev.employee, employee_status: 'INACTIVE' }
       }));
+      toast.success("Employee deactivated successfully");
     } catch (err) {
-      alert(err.message || "Failed to deactivate employee");
+      toast.error(err.message || "Failed to deactivate employee");
     } finally {
       setToggling(false);
     }
@@ -82,27 +112,29 @@ const EmployeeProfile = () => {
 
     setToggling(true);
     try {
-      await activateEmployee(id);
+      await activateEmployeeById(id);
       setData(prev => ({
         ...prev,
         employee: { ...prev.employee, employee_status: 'ACTIVE' }
       }));
+      toast.success("Employee activated successfully");
     } catch (err) {
-      alert(err.message || "Failed to activate employee");
+      toast.error(err.message || "Failed to activate employee");
     } finally {
       setToggling(false);
     }
   };
 
   const handleDeleteEmployee = async () => {
-    const message = `Delete employee permanently?\nThis action will permanently remove the employee and all related records.\nThis cannot be undone.`;
+    const message = `Delete employee permanently?\nThis action will permanently remove the employee.\nThis cannot be undone.`;
     if (!window.confirm(message)) return;
 
     try {
-      await deleteEmployee(id, true); // Permanent delete
+      await deleteEmployeeById(id, true); // Permanent delete
+      toast.success("Employee deleted permanently");
       navigate('/admin/employees');
     } catch (err) {
-      alert(err.message || "Failed to delete employee");
+      toast.error(err.message || "Failed to delete employee");
     }
   };
 
@@ -312,19 +344,23 @@ const EmployeeProfile = () => {
                   {documents.map((doc, idx) => (
                     <li key={idx} className="doc-item">
                       <div className="doc-info">
-                        <span className="doc-type">{doc.type || "Document"}</span>
+                        <span className="doc-type">{doc.document_type || "Document"}</span>
                         <span className="doc-name">{doc.document_number ? `No: ${doc.document_number}` : `File ${idx + 1}`}</span>
                       </div>
                       <div className="doc-actions">
-                        {doc.url && (
-                          <>
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="doc-btn view" title="View">
-                              <Eye size={16} />
-                            </a>
-                            <a href={doc.url} download className="doc-btn download" title="Download">
-                              <Download size={16} />
-                            </a>
-                          </>
+                        {doc.view_url && (
+                          <a href={doc.view_url} target="_blank" rel="noopener noreferrer" className="doc-btn view" title="View">
+                            <Eye size={16} />
+                          </a>
+                        )}
+                        {doc.download_url && (
+                          <button
+                            onClick={() => window.open(doc.download_url, "_blank")}
+                            className="doc-btn download"
+                            title="Download"
+                          >
+                            <Download size={16} />
+                          </button>
                         )}
                       </div>
                     </li>

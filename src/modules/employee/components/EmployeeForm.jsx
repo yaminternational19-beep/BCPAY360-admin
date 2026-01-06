@@ -12,11 +12,8 @@ import {
 } from "lucide-react";
 import "../../../styles/EmployeeForm.css";
 import { getDepartments, getDesignations, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
-
 import { getLastEmployeeCode } from "../../../api/employees.api";
-
-
-
+import { useToast } from "../../../context/ToastContext";
 
 const COUNTRY_CODES = [
   "+91 (India)",
@@ -33,13 +30,13 @@ const COUNTRY_CODES = [
   "+880 (Bangladesh)",
 ];
 
-
-
 const EmployeeForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
+  const toast = useToast();
   const authUser = JSON.parse(localStorage.getItem("auth_user")) || {};
 
   const [step, setStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
@@ -47,7 +44,6 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const [shifts, setShifts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
-  const [branchesLoading, setBranchesLoading] = useState(false);
 
   const [employeeForm, setEmployeeForm] = useState({
     employee_code: "",
@@ -112,15 +108,15 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   });
 
 
-
-
-
   // 1️⃣ Initialize Form for Edit
   useEffect(() => {
     if (!isEdit || !initial) return;
 
-    // Prefill main employee info
-    const ef = initial.employeeForm || initial; // Fallback for legacy data
+    // Handle initial data which might be structured differently
+    const ef = initial.employee || initial;
+    const pf = initial.profile || {};
+    const docs = initial.documents || [];
+
     setEmployeeForm({
       employee_code: ef.employee_code || "",
       full_name: ef.full_name || "",
@@ -151,36 +147,36 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       designation_id: ef.designation_id || "",
     });
 
-    // Prefill Bio Data
-    if (initial.profileForm) {
+    if (pf) {
       setProfileForm({
-        gender: initial.profileForm.gender || "",
-        dob: initial.profileForm.dob ? initial.profileForm.dob.split("T")[0] : "",
-        father_name: initial.profileForm.father_name || "",
-        religion: initial.profileForm.religion || "",
-        marital_status: initial.profileForm.marital_status || "",
-        qualification: initial.profileForm.qualification || "",
-        emergency_contact: initial.profileForm.emergency_contact || "",
-        address: initial.profileForm.address || "",
-        permanent_address: initial.profileForm.permanent_address || "",
-        bank_name: initial.profileForm.bank_name || "",
-        account_number: initial.profileForm.account_number || "",
-        ifsc_code: initial.profileForm.ifsc_code || "",
-        bank_branch_name: initial.profileForm.bank_branch_name || "",
-        profile_photo: null, // Keep null as file input cannot be prefilled
+        gender: pf.gender || "",
+        dob: pf.dob ? pf.dob.split("T")[0] : "",
+        father_name: pf.father_name || "",
+        religion: pf.religion || "",
+        marital_status: pf.marital_status || "",
+        qualification: pf.qualification || "",
+        emergency_contact: pf.emergency_contact || "",
+        address: pf.address || "",
+        permanent_address: pf.permanent_address || "",
+        bank_name: pf.bank_name || "",
+        account_number: pf.account_number || "",
+        ifsc_code: pf.ifsc_code || "",
+        bank_branch_name: pf.bank_branch_name || "",
+        profile_photo: null,
       });
     }
 
-    // Prefill Statutory Info
-    if (initial.documentsForm) {
-      setDocumentsForm({
-        pan: initial.documentsForm.pan || "",
-        aadhaar: initial.documentsForm.aadhaar || "",
-        uan_number: initial.documentsForm.uan_number || "",
-        esic_number: initial.documentsForm.esic_number || "",
-        files: {},
-      });
-    }
+    // Map existing docs to the form numbers if needed
+    // However, the backend expects 'pan', 'aadhaar' in documentsForm
+    // We'll try to find them from the docs array if they are not already in pf (though pf doesn't have them)
+    setDocumentsForm({
+      pan: docs.find(d => d.document_type === "PAN")?.document_number || "",
+      aadhaar: docs.find(d => d.document_type === "AADHAAR")?.document_number || "",
+      uan_number: docs.find(d => d.document_type === "UAN")?.document_number || "",
+      esic_number: docs.find(d => d.document_type === "ESIC")?.document_number || "",
+      files: {},
+      existing: docs // keep track for UI
+    });
   }, [isEdit, initial]);
 
   // 2️⃣ Employee Code (only on create)
@@ -198,7 +194,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
           }));
         }
       })
-      .catch(() => { });
+      .catch((err) => {
+        console.error("Failed to get employee code", err);
+      });
 
     return () => {
       mounted = false;
@@ -290,110 +288,113 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   };
 
 
-  const submit = () => {
+  const submit = async () => {
     // 1. Basic Client-side Validation
-    if (!employeeForm.full_name?.trim()) return alert("Full Name is required");
-    if (!employeeForm.email?.trim()) return alert("Email is required");
-    if (!employeeForm.joining_date) return alert("Joining Date is required");
-    if (!employeeForm.branch_id) return alert("Branch is required");
-    if (!employeeForm.department_id) return alert("Department is required");
-    if (!employeeForm.designation_id) return alert("Designation is required");
+    if (!employeeForm.full_name?.trim()) return toast.error("Full Name is required");
+    if (!employeeForm.email?.trim()) return toast.error("Email is required");
+    if (!employeeForm.joining_date) return toast.error("Joining Date is required");
+    if (!employeeForm.branch_id) return toast.error("Branch is required");
+    if (!employeeForm.department_id) return toast.error("Department is required");
+    if (!employeeForm.designation_id) return toast.error("Designation is required");
 
     if (!isEdit && !employeeForm.password?.trim()) {
-      return alert("Password is required for new employees");
+      return toast.error("Password is required for new employees");
     }
 
-    // 2. Build Nested Payload
-    // Convert empty strings to null and IDs to Number
-    const payload = {
-      employeeForm: {
-        employee_code: employeeForm.employee_code || null,
-        full_name: employeeForm.full_name?.trim() || null,
-        email: employeeForm.email?.trim() || null,
-        password: isEdit ? undefined : (employeeForm.password || null),
+    setIsSaving(true);
+    try {
+      // Build FormData
+      const formData = new FormData();
 
-        country_code: employeeForm.country_code || "+91",
-        phone: employeeForm.phone || null,
-
-        employee_status: employeeForm.employee_status || "ACTIVE",
-
+      // JSON parts
+      const employeeData = {
+        ...employeeForm,
         employee_type_id: employeeForm.employee_type_id ? Number(employeeForm.employee_type_id) : null,
         shift_id: employeeForm.shift_id ? Number(employeeForm.shift_id) : null,
-
-        joining_date: employeeForm.joining_date || null,
-        confirmation_date: employeeForm.confirmation_date || null,
-        notice_period_days: employeeForm.notice_period_days ? Number(employeeForm.notice_period_days) : null,
-
-        experience_years: employeeForm.experience_years ? Number(employeeForm.experience_years) : null,
-        salary: employeeForm.salary ? Number(employeeForm.salary) : null,
-        ctc_annual: employeeForm.ctc_annual ? Number(employeeForm.ctc_annual) : null,
-
-        job_location: employeeForm.job_location || null,
-        site_location: employeeForm.site_location || null,
-
         branch_id: employeeForm.branch_id ? Number(employeeForm.branch_id) : null,
         department_id: employeeForm.department_id ? Number(employeeForm.department_id) : null,
         designation_id: employeeForm.designation_id ? Number(employeeForm.designation_id) : null,
-      },
-      profileForm: {
-        gender: profileForm.gender || null,
-        dob: profileForm.dob || null,
-        father_name: profileForm.father_name || null,
-        religion: profileForm.religion || null,
-        marital_status: profileForm.marital_status || null,
-        qualification: profileForm.qualification || null,
-        emergency_contact: profileForm.emergency_contact || null,
-        address: profileForm.address || null,
-        permanent_address: profileForm.permanent_address || null,
-        bank_name: profileForm.bank_name || null,
-        account_number: profileForm.account_number || null,
-        ifsc_code: profileForm.ifsc_code || null,
-        bank_branch_name: profileForm.bank_branch_name || null,
-        // profile_photo: profileForm.profile_photo // Files might need FormData, but for now we follow JSON contract
-      },
-      documentsForm: {
+        salary: employeeForm.salary ? Number(employeeForm.salary) : null,
+        ctc_annual: employeeForm.ctc_annual ? Number(employeeForm.ctc_annual) : null,
+        experience_years: employeeForm.experience_years ? Number(employeeForm.experience_years) : null,
+        notice_period_days: employeeForm.notice_period_days ? Number(employeeForm.notice_period_days) : null,
+      };
+
+      if (isEdit) {
+        delete employeeData.password;
+      }
+
+      formData.append("employeeForm", JSON.stringify(employeeData));
+      formData.append("profileForm", JSON.stringify(profileForm));
+
+      const docData = {
         pan: documentsForm.pan || null,
         aadhaar: documentsForm.aadhaar || null,
         uan_number: documentsForm.uan_number || null,
         esic_number: documentsForm.esic_number || null,
-        // files: documentsForm.files // Same as photo
+      };
+      formData.append("documentsForm", JSON.stringify(docData));
+
+      // Profile Photo
+      if (profileForm.profile_photo instanceof File) {
+        formData.append("profile_photo", profileForm.profile_photo);
       }
-    };
 
-    // Remove password if it's undefined (in update mode)
-    if (isEdit) {
-      delete payload.employeeForm.password;
+      // Dynamic Files from documentsForm.files
+      Object.entries(documentsForm.files || {}).forEach(([type, file]) => {
+        if (file instanceof File) {
+          formData.append(type, file);
+        }
+      });
+
+      console.log("🚀 Submitting FormData for Employee...");
+      await onSave(formData);
+      // toast is handled in parent handleSave or can be handled here if we await it 
+    } catch (err) {
+      console.error("Submit error:", err);
+      toast.error(err.message || "Failed to save employee");
+    } finally {
+      setIsSaving(false);
     }
-
-    console.log("🚀 Submitting Employee Payload:", JSON.stringify(payload, null, 2));
-    onSave(payload);
   };
 
 
-  const FileField = ({ label, field, accept }) => (
-    <div className="upload-inline">
-      <Upload />
-      <input
-        type="file"
-        accept={accept}
-        onChange={(e) => {
-          const file = e.target.files[0];
-          if (!file) return;
+  const FileField = ({ label, field, accept }) => {
+    const existing = documentsForm.existing?.find(d => d.document_type === field);
 
-          setDocumentsForm((p) => ({
-            ...p,
-            files: {
-              ...p.files,
-              [field]: file,
-            },
-          }));
-        }}
-      />
-      <span>
-        {documentsForm.files?.[field]?.name || label}
-      </span>
-    </div>
-  );
+    return (
+      <div className="upload-inline">
+        <Upload />
+        <input
+          type="file"
+          accept={accept}
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            setDocumentsForm((p) => ({
+              ...p,
+              files: {
+                ...p.files,
+                [field]: file,
+              },
+            }));
+          }}
+        />
+        <div className="file-info">
+          {documentsForm.files?.[field] ? (
+            <span className="new-file">{documentsForm.files[field].name} (Ready to upload)</span>
+          ) : existing ? (
+            <a href={existing.view_url || existing.url} target="_blank" rel="noreferrer" className="existing-file">
+              View Existing {field}
+            </a>
+          ) : (
+            <span>{label}</span>
+          )}
+        </div>
+      </div>
+    );
+  };
 
 
   return (
@@ -827,9 +828,17 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                   }
                 }}
               />
-              <span>
-                {profileForm.profile_photo?.name || "Upload profile photo"}
-              </span>
+              <div className="file-info">
+                {profileForm.profile_photo ? (
+                  <span className="new-file">{profileForm.profile_photo.name} (Ready to upload)</span>
+                ) : initial?.profile?.profile_photo ? (
+                  <a href={initial.profile.profile_photo} target="_blank" rel="noreferrer" className="existing-file">
+                    View Existing Photo
+                  </a>
+                ) : (
+                  <span>Upload profile photo</span>
+                )}
+              </div>
             </div>
 
             <h4>Bank Details</h4>
@@ -956,9 +965,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 ["Appointment Letter", "APPOINTMENT_LETTER"],
                 ["Confirmation Letter", "CONFIRMATION_LETTER"],
                 ["Application Form", "APPLICATION_FORM"],
-                ["Employee Photo List", "EMPLOYEE_PHOTO_LIST"],
                 ["ID Card", "ID_CARD"],
-                ["ID Card History", "ID_CARD_HISTORY"],
               ].map(([label, type]) => (
                 <div key={type}>
                   <label>{label}</label>
@@ -977,20 +984,20 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
         <div className="emp-form-footer">
           {step > 1 && (
-            <button onClick={() => setStep(step - 1)}>
+            <button onClick={() => setStep(step - 1)} disabled={isSaving}>
               <ChevronLeft /> Back
             </button>
           )}
 
           {step < 3 && (
-            <button className="primary" onClick={() => setStep(step + 1)}>
+            <button className="primary" onClick={() => setStep(step + 1)} disabled={isSaving}>
               Save & Continue <ChevronRight />
             </button>
           )}
 
           {step === 3 && (
-            <button className="primary" onClick={submit}>
-              Save Employee
+            <button className="primary" onClick={submit} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Employee"}
             </button>
           )}
         </div>

@@ -7,25 +7,28 @@ import EmployeeFilters from "../components/EmployeeFilters";
 
 import {
   listEmployees,
-  getEmployee,
+  getEmployeeById,
   createEmployee,
-  updateEmployee,
-  toggleEmployeeStatus,
-  deleteEmployee,
-  activateEmployee,
+  updateEmployeeById,
+  toggleEmployeeStatusById,
+  deleteEmployeeById,
+  activateEmployeeById,
 } from "../../../api/employees.api";
 
 
 
 
+import { useToast } from "../../../context/ToastContext";
+
 const EmployeeList = () => {
+  const toast = useToast();
   const user = JSON.parse(localStorage.getItem("auth_user"));
 
   const isCompanyAdmin = user?.role === "COMPANY_ADMIN";
   const hrDepartment = user?.department || null;
 
   const [employees, setEmployees] = useState([]);
-  const [togglingIds, setTogglingIds] = useState(new Set());
+  const [togglingIds, setTogglingIds] = useState(new Set()); // Stores numeric IDs during API calls
 
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -36,35 +39,28 @@ const EmployeeList = () => {
   const loadEmployees = async () => {
     try {
       const res = await listEmployees({ page: 1, limit: 50 });
-
-      // Handle both flat array and { rows, total } object responses
       const rawEmployees = Array.isArray(res) ? res : (res?.rows || []);
 
       const normalized = rawEmployees.map(e => ({
         id: e.id,
-
         employee_code: e.employee_code,
         full_name: e.full_name,
         email: e.email || "",
         phone: e.phone || "-",
-
         department: e.department_name || "-",
         designation: e.designation_name || "-",
         branch: e.branch_name || "-",
         company: e.company_name || "-",
-
         joining_date: e.joining_date || null,
         salary: e.salary || 0,
-
         employee_status: e.employee_status || "INACTIVE",
       }));
 
       setEmployees(normalized);
     } catch (err) {
-      console.error("❌ Load employees failed:", err.message);
+      toast.error("Failed to load employees: " + err.message);
     }
   };
-
 
 
   useEffect(() => {
@@ -76,11 +72,7 @@ const EmployeeList = () => {
   ========================= */
   const visibleEmployees = useMemo(() => {
     if (isCompanyAdmin) return employees;
-
-    // HR → only their department
-    return employees.filter(
-      (e) => e.department === hrDepartment
-    );
+    return employees.filter((e) => e.department === hrDepartment);
   }, [employees, isCompanyAdmin, hrDepartment]);
 
   /* =========================
@@ -89,16 +81,20 @@ const EmployeeList = () => {
   const handleSave = async (payload) => {
     try {
       if (selected) {
-        await updateEmployee(selected.id, payload); // DB ID
+        const id = selected.employee?.id || selected.id;
+        await updateEmployeeById(id, payload);
+        toast.success("Employee updated successfully");
       } else {
         await createEmployee(payload);
+        toast.success("Employee created successfully");
       }
 
       setShowForm(false);
       setSelected(null);
       loadEmployees();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || "Failed to save employee");
+      throw err;
     }
   };
 
@@ -107,31 +103,27 @@ const EmployeeList = () => {
   ========================= */
   const handleEdit = async (id) => {
     try {
-      // 1. Fetch full employee details (including profile/documents)
-      const fullEmp = await getEmployee(id);
+      const fullEmp = await getEmployeeById(id);
       if (!fullEmp) return;
-
       setSelected(fullEmp);
       setShowForm(true);
     } catch (err) {
-      alert("Failed to load employee details: " + err.message);
+      toast.error("Failed to load employee details: " + err.message);
     }
   };
 
   const handleActivate = async (id) => {
-    const emp = employees.find((e) => e.id === id);
-    if (!emp) return;
-
     if (!window.confirm(`Activate employee? \nThis will re-enable the employee account.`)) return;
 
     setTogglingIds(prev => new Set(prev).add(id));
     try {
-      await activateEmployee(id);
+      await activateEmployeeById(id);
       setEmployees(prev =>
         prev.map(e => (e.id === id ? { ...e, employee_status: 'ACTIVE' } : e))
       );
+      toast.success("Employee activated successfully");
     } catch (err) {
-      alert(err.message || "Failed to activate employee");
+      toast.error(err.message || "Failed to activate employee");
     } finally {
       setTogglingIds(prev => {
         const next = new Set(prev);
@@ -142,20 +134,18 @@ const EmployeeList = () => {
   };
 
   const handleDeactivate = async (id) => {
-    const emp = employees.find((e) => e.id === id);
-    if (!emp) return;
-
-    const message = `Deactivate employee?\nThis will disable the employee account.\nAll data and documents will remain safe.`;
+    const message = `Deactivate employee?\nThis will disable the employee account.`;
     if (!window.confirm(message)) return;
 
     setTogglingIds(prev => new Set(prev).add(id));
     try {
-      await deleteEmployee(id); // Soft deactivate
+      await deleteEmployeeById(id);
       setEmployees(prev =>
         prev.map(e => (e.id === id ? { ...e, employee_status: 'INACTIVE' } : e))
       );
+      toast.success("Employee deactivated successfully");
     } catch (err) {
-      alert(err.message || "Failed to deactivate employee");
+      toast.error(err.message || "Failed to deactivate employee");
     } finally {
       setTogglingIds(prev => {
         const next = new Set(prev);
@@ -166,18 +156,16 @@ const EmployeeList = () => {
   };
 
   const handleDeleteEmployee = async (id) => {
-    const emp = employees.find((e) => e.id === id);
-    if (!emp) return;
-
-    const message = `Delete employee permanently?\nThis action will permanently remove the employee and all related records.\nThis cannot be undone.`;
+    const message = `Delete employee permanently?\nThis action will permanently remove the employee.\nThis cannot be undone.`;
     if (!window.confirm(message)) return;
 
     setTogglingIds(prev => new Set(prev).add(id));
     try {
-      await deleteEmployee(id, true); // Permanent delete
-      await loadEmployees(); // Total refresh
+      await deleteEmployeeById(id, true);
+      await loadEmployees();
+      toast.success("Employee deleted permanently");
     } catch (err) {
-      alert(err.message || "Failed to delete employee");
+      toast.error(err.message || "Failed to delete employee");
     } finally {
       setTogglingIds(prev => {
         const next = new Set(prev);

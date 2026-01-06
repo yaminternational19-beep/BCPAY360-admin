@@ -1,11 +1,15 @@
 .employee-view-container {
-  padding: 24px;
+  padding: 0;
+  padding-bottom: 24px;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  min-height: 100%;
-  overflow-y: auto;
+  min-height: max-content;
+  overflow: visible;
+  scroll-behavior: smooth;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1e293b;
   animation: fadeIn 0.5s ease-in-out;
+  display: flex;
+  flex-direction: column;
 }
 
 .employee-view-error {
