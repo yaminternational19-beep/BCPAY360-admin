@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
 
   // Base public path - use '/' for root deployment
-  base: '/',
+  base: '/admin',
 
   // Build configuration
   build: {
