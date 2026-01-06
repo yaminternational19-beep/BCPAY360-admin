@@ -300,7 +300,7 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/admin">
         <Routes>
           <Route path="/login" element={<Login onLogin={setUser} />} />
           <Route path="/super-admin/login" element={<SuperAdmin />} />
