@@ -11,6 +11,8 @@ import {
   createEmployee,
   updateEmployee,
   toggleEmployeeStatus,
+  deleteEmployee,
+  activateEmployee,
 } from "../../../api/employees.api";
 
 
@@ -23,6 +25,7 @@ const EmployeeList = () => {
   const hrDepartment = user?.department || null;
 
   const [employees, setEmployees] = useState([]);
+  const [togglingIds, setTogglingIds] = useState(new Set());
 
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -53,7 +56,7 @@ const EmployeeList = () => {
         joining_date: e.joining_date || null,
         salary: e.salary || 0,
 
-        is_active: e.employee_status === "ACTIVE" ? 1 : 0,
+        employee_status: e.employee_status || "INACTIVE",
       }));
 
       setEmployees(normalized);
@@ -119,23 +122,22 @@ const EmployeeList = () => {
     const emp = employees.find((e) => e.id === id);
     if (!emp) return;
 
-    if (!window.confirm(`Activate ${emp.full_name}?`)) return;
+    if (!window.confirm(`Activate employee? \nThis will re-enable the employee account.`)) return;
 
+    setTogglingIds(prev => new Set(prev).add(id));
     try {
-      // Optimistic update
-      setEmployees((prev) =>
-        prev.map((e) =>
-          e.id === id ? { ...e, is_active: 1 } : e
-        )
+      await activateEmployee(id);
+      setEmployees(prev =>
+        prev.map(e => (e.id === id ? { ...e, employee_status: 'ACTIVE' } : e))
       );
-
-      // Send nested status update
-      await toggleEmployeeStatus(id, "ACTIVE");
-
-      await loadEmployees();
     } catch (err) {
-      await loadEmployees();
       alert(err.message || "Failed to activate employee");
+    } finally {
+      setTogglingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -143,33 +145,45 @@ const EmployeeList = () => {
     const emp = employees.find((e) => e.id === id);
     if (!emp) return;
 
-    if (!window.confirm(`Deactivate ${emp.full_name}?`)) return;
+    const message = `Deactivate employee?\nThis will disable the employee account.\nAll data and documents will remain safe.`;
+    if (!window.confirm(message)) return;
 
+    setTogglingIds(prev => new Set(prev).add(id));
     try {
-      // Optimistic update
-      setEmployees((prev) =>
-        prev.map((e) =>
-          e.id === id ? { ...e, is_active: 0 } : e
-        )
+      await deleteEmployee(id); // Soft deactivate
+      setEmployees(prev =>
+        prev.map(e => (e.id === id ? { ...e, employee_status: 'INACTIVE' } : e))
       );
-
-      // Send nested status update
-      await toggleEmployeeStatus(id, "INACTIVE");
-
-      await loadEmployees();
     } catch (err) {
-      await loadEmployees();
       alert(err.message || "Failed to deactivate employee");
+    } finally {
+      setTogglingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this employee?")) return;
+  const handleDeleteEmployee = async (id) => {
+    const emp = employees.find((e) => e.id === id);
+    if (!emp) return;
+
+    const message = `Delete employee permanently?\nThis action will permanently remove the employee and all related records.\nThis cannot be undone.`;
+    if (!window.confirm(message)) return;
+
+    setTogglingIds(prev => new Set(prev).add(id));
     try {
-      await deleteEmployee(id);
-      loadEmployees();
+      await deleteEmployee(id, true); // Permanent delete
+      await loadEmployees(); // Total refresh
     } catch (err) {
       alert(err.message || "Failed to delete employee");
+    } finally {
+      setTogglingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -180,10 +194,10 @@ const EmployeeList = () => {
     () => ({
       total: visibleEmployees.length,
       active: visibleEmployees.filter(
-        (e) => Number(e.is_active) === 1
+        (e) => e.employee_status === "ACTIVE"
       ).length,
       inactive: visibleEmployees.filter(
-        (e) => Number(e.is_active) === 0
+        (e) => e.employee_status !== "ACTIVE"
       ).length,
     }),
     [visibleEmployees]
@@ -229,10 +243,11 @@ const EmployeeList = () => {
 
         <EmployeeListComponent
           employees={visibleEmployees}
+          togglingIds={togglingIds}
           onEdit={handleEdit}
           onActivate={handleActivate}
           onDeactivate={handleDeactivate}
-          onDelete={handleDelete}
+          onDelete={handleDeleteEmployee}
           isAdmin={isCompanyAdmin}
         />
       </div>

@@ -47,11 +47,21 @@ export const toggleEmployeeStatus = async (id, status) => {
   }).then(res => res.json());
 };
 
-export const deleteEmployee = async id =>
-  fetch(`${API_BASE}/api/employees/${id}`, {
+export const deleteEmployee = async (id, force = false) => {
+  const url = force
+    ? `${API_BASE}/api/employees/${id}?force=true`
+    : `${API_BASE}/api/employees/${id}`;
+  return fetch(url, {
     method: "DELETE",
     headers: authHeader(),
   });
+};
+
+export const activateEmployee = async id =>
+  fetch(`${API_BASE}/api/employees/${id}/activate`, {
+    method: "PATCH",
+    headers: authHeader(),
+  }).then(res => res.json());
 
 export const getLastEmployeeCode = async () =>
   fetch(`${API_BASE}/api/employees/last-code`, {

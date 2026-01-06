@@ -1,3 +1,6 @@
+import { API_BASE } from "../utils/apiBase";
+import { authHeader } from "../utils/authHeader";
+
 export const uploadDocument = async formData =>
   fetch(`${API_BASE}/api/employee-documents`, {
     method: "POST",

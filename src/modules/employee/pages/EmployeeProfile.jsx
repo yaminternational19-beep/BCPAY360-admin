@@ -1,131 +1,345 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import jsPDF from "jspdf";
+import {
+  ArrowLeft,
+  User,
+  Briefcase,
+  MapPin,
+  CreditCard,
+  FileText,
+  Calendar,
+  Mail,
+  Phone,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  Download,
+  Eye,
+  Trash2
+} from "lucide-react";
 import "../../../styles/EmployeeView.css";
-import { getEmployee } from "../../../api/employees.api";
+import { getEmployee, toggleEmployeeStatus, deleteEmployee, activateEmployee } from "../../../api/employees.api";
 
 const EmployeeProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [employee, setEmployee] = useState(null);
+  const [data, setData] = useState({
+    employee: null,
+    profile: null,
+    documents: []
+  });
   const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(false);
   const [error, setError] = useState(null);
-  const [preview, setPreview] = useState(null);
 
-  /* =========================
-     FETCH EMPLOYEE
-  ========================= */
   useEffect(() => {
-    const fetchEmployee = async () => {
+    const fetchEmployeeData = async () => {
+      setLoading(true);
       try {
-        const data = await getEmployee(id);
-        setEmployee(data);
+        const response = await getEmployee(id);
+        // API response structure: { "employee": {}, "profile": {}, "documents": [] }
+        if (response) {
+          setData({
+            employee: response.employee || null,
+            profile: response.profile || null,
+            documents: response.documents || []
+          });
+        } else {
+          setError("Employee not found");
+        }
       } catch (err) {
-        console.error(err);
-        setError("Unable to load employee details");
+        console.error("Error fetching employee:", err);
+        setError("Unable to load employee details. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEmployee();
+    fetchEmployeeData();
   }, [id]);
 
-  /* =========================
-     STATES
-  ========================= */
+  const handleDeactivate = async () => {
+    const message = `Deactivate employee?\nThis will disable the employee account.\nAll data and documents will remain safe.`;
+    if (!window.confirm(message)) return;
+
+    setToggling(true);
+    try {
+      await deleteEmployee(id); // Soft deactivate
+      setData(prev => ({
+        ...prev,
+        employee: { ...prev.employee, employee_status: 'INACTIVE' }
+      }));
+    } catch (err) {
+      alert(err.message || "Failed to deactivate employee");
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  const handleActivate = async () => {
+    if (!window.confirm(`Activate employee? \nThis will re-enable the employee account.`)) return;
+
+    setToggling(true);
+    try {
+      await activateEmployee(id);
+      setData(prev => ({
+        ...prev,
+        employee: { ...prev.employee, employee_status: 'ACTIVE' }
+      }));
+    } catch (err) {
+      alert(err.message || "Failed to activate employee");
+    } finally {
+      setToggling(false);
+    }
+  };
+
+  const handleDeleteEmployee = async () => {
+    const message = `Delete employee permanently?\nThis action will permanently remove the employee and all related records.\nThis cannot be undone.`;
+    if (!window.confirm(message)) return;
+
+    try {
+      await deleteEmployee(id, true); // Permanent delete
+      navigate('/admin/employees');
+    } catch (err) {
+      alert(err.message || "Failed to delete employee");
+    }
+  };
+
   if (loading) {
-    return <div className="employee-view">Loading employee...</div>;
+    return (
+      <div className="employee-view-loading">
+        <div className="spinner"></div>
+        <p>Fetching employee records...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="employee-view error">{error}</div>;
+    return (
+      <div className="employee-view-error">
+        <XCircle size={48} color="#ef4444" />
+        <h2>Error</h2>
+        <p>{error}</p>
+        <button className="back-link" onClick={() => navigate(-1)} style={{ margin: '20px auto' }}>
+          <ArrowLeft size={16} /> Back to List
+        </button>
+      </div>
+    );
   }
+
+  const { employee, profile, documents } = data;
 
   if (!employee) {
-    return <div className="employee-view">Employee not found</div>;
+    return (
+      <div className="employee-view-error">
+        <XCircle size={48} color="#ef4444" />
+        <h2>Not Found</h2>
+        <p>The requested employee record could not be found.</p>
+        <button className="back-link" onClick={() => navigate(-1)} style={{ margin: '20px auto' }}>
+          <ArrowLeft size={16} /> Back to List
+        </button>
+      </div>
+    );
   }
 
-  /* =========================
-     PDF HELPERS (SAFE)
-  ========================= */
-  const downloadEmptyForm = (title) => {
-    const doc = new jsPDF();
-    doc.text(title, 14, 20);
-    doc.text("This document will be available soon.", 14, 36);
-    doc.save(`${title.replace(/\s+/g, "_")}.pdf`);
-  };
-
-  /* =========================
-     VIEW HANDLER
-  ========================= */
-  const handleView = (report) => {
-    setPreview(report);
-  };
-
   return (
-    <div className="employee-view">
-      {/* HEADER */}
-      <div className="view-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          ← Back
+    <div className="employee-view-container">
+      {/* Top Header */}
+      <div className="view-header-new">
+        <button className="back-link" onClick={() => navigate(-1)}>
+          <ArrowLeft size={18} /> Back to Employee List
         </button>
 
-        <div className="profile">
-          <div className="avatar">
-            {employee.full_name?.charAt(0)}
+        <div className="header-main">
+          <div className="profile-hero">
+            <div className="avatar-large">
+              {employee.full_name?.charAt(0).toUpperCase() || <User />}
+            </div>
+            <div className="hero-info">
+              <h1>{employee.full_name}</h1>
+              <div className="hero-badges">
+                <span className="badge code">{employee.employee_code}</span>
+                <span className={`badge status ${(employee.employee_status || '').toLowerCase()}`}>
+                  {(employee.employee_status || '').toUpperCase() === 'ACTIVE' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                  {employee.employee_status || 'UNKNOWN'}
+                </span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h2>{employee.full_name}</h2>
-            <p>
-              {employee.employee_code} · {employee.designation_name}
-            </p>
-            <p>{employee.department_name}</p>
-          </div>
-        </div>
-      </div>
+          <div className="header-actions-main">
+            <div className="header-stats">
+              <div className="stat-item">
+                <span className="label">Department</span>
+                <span className="value">{employee.department?.name || ""}</span>
+              </div>
+              <div className="stat-item">
+                <span className="label">Designation</span>
+                <span className="value">{employee.designation?.name || ""}</span>
+              </div>
+            </div>
 
-      {/* BASIC INFO */}
-      <div className="card">
-        <h3>Basic Information</h3>
-        <div className="grid">
-          <div><strong>Email:</strong> {employee.email || "—"}</div>
-          <div><strong>Phone:</strong> {employee.country_code}{employee.phone}</div>
-          <div><strong>Joining Date:</strong> {employee.joining_date}</div>
-          <div><strong>Salary:</strong> ₹{Number(employee.salary).toLocaleString()}</div>
-          <div><strong>Status:</strong> {employee.is_active ? "Active" : "Inactive"}</div>
-        </div>
-      </div>
+            <div className="profile-actions">
+              {employee.employee_status?.toUpperCase() === 'ACTIVE' ? (
+                <button
+                  className="view-action-btn deactivate"
+                  onClick={handleDeactivate}
+                  disabled={toggling}
+                >
+                  <XCircle size={16} /> {toggling ? "Updating..." : "Deactivate Account"}
+                </button>
+              ) : (
+                <button
+                  className="view-action-btn activate"
+                  onClick={handleActivate}
+                  disabled={toggling}
+                >
+                  <CheckCircle2 size={16} /> {toggling ? "Updating..." : "Activate Account"}
+                </button>
+              )}
 
-      {/* REPORT PLACEHOLDER */}
-      <div className="card">
-        <h3>Reports</h3>
-        <p>Document preview & downloads will be enabled once backend integration is complete.</p>
-
-        <button onClick={() => handleView({ title: "Employee Bio Data" })}>
-          View Sample Report
-        </button>
-      </div>
-
-      {/* MODAL PREVIEW */}
-      {preview && (
-        <div className="modal-backdrop" onClick={() => setPreview(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h3>{preview.title}</h3>
-            <p>This is a preview placeholder.</p>
-
-            <div className="modal-actions">
-              <button onClick={() => downloadEmptyForm(preview.title)}>
-                Download
-              </button>
-              <button onClick={() => setPreview(null)}>
-                Close
+              <button
+                className="view-action-btn delete-perm"
+                onClick={handleDeleteEmployee}
+                disabled={toggling}
+              >
+                <Trash2 size={16} /> Delete Permanently
               </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className="view-content-grid">
+        {/* Left Column: Info Cards */}
+        <div className="info-column">
+
+          {/* Section 1: 🧑 Employee Info */}
+          <section className="info-card">
+            <div className="card-header">
+              <Briefcase size={20} className="header-icon" />
+              <h3>Employment Details</h3>
+            </div>
+            <div className="card-body">
+              <div className="data-grid">
+                <div className="data-field">
+                  <label>Email Address</label>
+                  <span><Mail size={14} /> {employee.email || ""}</span>
+                </div>
+                <div className="data-field">
+                  <label>Phone Number</label>
+                  <span><Phone size={14} /> {(employee.country_code || "") + (employee.phone || "")}</span>
+                </div>
+                <div className="data-field">
+                  <label>Branch</label>
+                  <span><Building2 size={14} /> {employee.branch?.name || ""}</span>
+                </div>
+                <div className="data-field">
+                  <label>Joining Date</label>
+                  <span><Calendar size={14} /> {employee.joining_date ? new Date(employee.joining_date).toLocaleDateString() : ""}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: 👤 Profile Info */}
+          <section className="info-card">
+            <div className="card-header">
+              <User size={20} className="header-icon" />
+              <h3>Personal Profile</h3>
+            </div>
+            <div className="card-body">
+              {profile ? (
+                <div className="data-grid">
+                  <div className="data-field">
+                    <label>Gender</label>
+                    <span>{profile.gender || ""}</span>
+                  </div>
+                  <div className="data-field">
+                    <label>Date of Birth</label>
+                    <span>{profile.dob ? new Date(profile.dob).toLocaleDateString() : ""}</span>
+                  </div>
+                  <div className="data-field full-width">
+                    <label>Address</label>
+                    <span><MapPin size={14} /> {profile.address || ""}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="no-data">No profile information available.</p>
+              )}
+            </div>
+          </section>
+
+          {/* Section 3: Bank Details */}
+          <section className="info-card">
+            <div className="card-header">
+              <CreditCard size={20} className="header-icon" />
+              <h3>Bank Information</h3>
+            </div>
+            <div className="card-body">
+              {profile && (profile.bank_name || profile.account_number) ? (
+                <div className="data-grid">
+                  <div className="data-field">
+                    <label>Bank Name</label>
+                    <span>{profile.bank_name || ""}</span>
+                  </div>
+                  <div className="data-field">
+                    <label>Account Number</label>
+                    <span>{profile.account_number || ""}</span>
+                  </div>
+                  <div className="data-field">
+                    <label>IFSC Code</label>
+                    <span>{profile.ifsc_code || ""}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="no-data">No bank details recorded.</p>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* Right Column: Documents */}
+        <div className="action-column">
+          <section className="info-card sticky-card">
+            <div className="card-header">
+              <FileText size={20} className="header-icon" />
+              <h3>📎 Documents</h3>
+            </div>
+            <div className="card-body">
+              {documents && documents.length > 0 ? (
+                <ul className="document-list">
+                  {documents.map((doc, idx) => (
+                    <li key={idx} className="doc-item">
+                      <div className="doc-info">
+                        <span className="doc-type">{doc.type || "Document"}</span>
+                        <span className="doc-name">{doc.document_number ? `No: ${doc.document_number}` : `File ${idx + 1}`}</span>
+                      </div>
+                      <div className="doc-actions">
+                        {doc.url && (
+                          <>
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="doc-btn view" title="View">
+                              <Eye size={16} />
+                            </a>
+                            <a href={doc.url} download className="doc-btn download" title="Download">
+                              <Download size={16} />
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="no-docs">
+                  <FileText size={40} strokeWidth={1} />
+                  <p>No documents uploaded yet.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 };

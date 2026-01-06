@@ -1,3 +1,6 @@
+import { API_BASE } from "../utils/apiBase";
+import { authHeader } from "../utils/authHeader";
+
 export const saveEmployeeProfile = async payload =>
   fetch(`${API_BASE}/api/employee-profiles`, {
     method: "POST",

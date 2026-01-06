@@ -32,6 +32,7 @@ const Pagination = ({ page, totalPages, onPage }) => (
 
 const EmployeeList = ({
   employees = [],
+  togglingIds = new Set(),
   onEdit,
   onDeactivate,
   onActivate,
@@ -74,7 +75,7 @@ const EmployeeList = ({
   const filtered = useMemo(() => {
     let list = [...employees];
 
-    if (inactiveOnly) list = list.filter(e => Number(e.is_active) === 0);
+    if (inactiveOnly) list = list.filter(e => e.employee_status !== "ACTIVE");
 
     if (q) {
       const qq = q.toLowerCase();
@@ -126,7 +127,7 @@ const EmployeeList = ({
       "Joining Date": e.joining_date,
       "Employment Type": e.employment_type,
       Salary: e.salary,
-      Status: e.is_active ? "Active" : "Inactive",
+      Status: e.employee_status,
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -216,73 +217,77 @@ const EmployeeList = ({
 
         <tbody>
           {current.map(emp => {
-            const isActive = Number(emp.is_active) === 1;
+            const isActive = emp.employee_status === "ACTIVE";
             return (
-            <tr key={emp.id} className={!isActive ? "inactive-row" : ""}>
-              <td><div className="emp-photo-placeholder">👤</div></td>
-              <td>{emp.employee_code}</td>
-              <td>{emp.full_name}</td>
-              <td>{emp.phone || "-"}</td>
-              <td>{emp.email || "-"}</td>
-              <td>{emp.department}</td>
-              <td>{emp.designation}</td>
-              <td>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString() : "-"}</td>
-              <td>₹{Number(emp.salary || 0).toLocaleString()}</td>
-              <td>
-                <span className={`status ${isActive ? "active" : "inactive"}`}>
-                  {isActive ? "Active" : "Inactive"}
-                </span>
-              </td>
+              <tr key={emp.id} className={!isActive ? "inactive-row" : ""}>
+                <td><div className="emp-photo-placeholder">👤</div></td>
+                <td>{emp.employee_code}</td>
+                <td>{emp.full_name}</td>
+                <td>{emp.phone || "-"}</td>
+                <td>{emp.email || "-"}</td>
+                <td>{emp.department}</td>
+                <td>{emp.designation}</td>
+                <td>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString() : "-"}</td>
+                <td>₹{Number(emp.salary || 0).toLocaleString()}</td>
+                <td>
+                  <span className={`status ${isActive ? "active" : "inactive"}`}>
+                    {emp.employee_status}
+                  </span>
+                </td>
 
-              <td className="actions-cell">
-                <div className="row-actions">
-                  <Link
-                    to={`/admin/employee/${emp.id}`}
-                    state={{ employee: emp }}
-                    className="emp-icon-btn view"
-                    title="View"
-                  >
-                    <Eye size={18} />
-                  </Link>
-
-
-                  <button
-                    onClick={() => onEdit(emp.id)}
-                    className="emp-icon-btn edit"
-                    title="Edit"
-                  >
-                    <Pencil size={18} />
-                  </button>
-
-
-                  {isActive ? (
-                    <button
-                      onClick={() => onDeactivate(emp.id)}
-                      className="emp-icon-btn deactivate"
-                      title="Deactivate"
+                <td className="actions-cell">
+                  <div className="row-actions">
+                    <Link
+                      to={`/admin/employees/${emp.id}`}
+                      state={{ employee: emp }}
+                      className={`emp-icon-btn view ${togglingIds.has(emp.id) ? "disabled" : ""}`}
+                      title="View"
                     >
-                      <Ban size={18} />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onActivate(emp.id)}
-                      className="emp-icon-btn activate"
-                      title="Activate"
-                    >
-                      <CheckCircle size={18} />
-                    </button>
-                  )}
+                      <Eye size={18} />
+                    </Link>
 
-                  <button
-                    onClick={() => onDelete(emp.id)}
-                    className="emp-icon-btn delete"
-                    title="Delete"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </td>
-            </tr>
+
+                    <button
+                      onClick={() => onEdit(emp.id)}
+                      className="emp-icon-btn edit"
+                      title={isActive ? "Edit" : "Cannot edit inactive employee"}
+                      disabled={!isActive || togglingIds.has(emp.id)}
+                    >
+                      <Pencil size={18} />
+                    </button>
+
+
+                    {isActive ? (
+                      <button
+                        onClick={() => onDeactivate(emp.id)}
+                        className="emp-icon-btn deactivate"
+                        title="Deactivate"
+                        disabled={togglingIds.has(emp.id)}
+                      >
+                        <Ban size={18} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onActivate(emp.id)}
+                        className="emp-icon-btn activate"
+                        title="Activate"
+                        disabled={togglingIds.has(emp.id)}
+                      >
+                        <CheckCircle size={18} />
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => onDelete(emp.id)}
+                      className="emp-icon-btn delete"
+                      title="Delete Permanently"
+                      disabled={togglingIds.has(emp.id)}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
             );
           })}
         </tbody>

@@ -87,70 +87,70 @@ const AdminLayout = ({ user, setUser }) => {
         <Routes>
           <Route path="dashboard" element={<Dashboard user={user} />} />
           <Route
-              path="employees"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="EMPLOYEE_MASTER"
-                >
-                  <EmployeeList />
-                </PermissionProtectedRoute>
-              }
-            />
+            path="employees"
+            element={
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="EMPLOYEE_MASTER"
+              >
+                <EmployeeList />
+              </PermissionProtectedRoute>
+            }
+          />
 
           <Route
-              path="attendance"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="ATTENDANCE"
-                >
-                  <Attendance />
-                </PermissionProtectedRoute>
-              }
-            />
+            path="attendance"
+            element={
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="ATTENDANCE"
+              >
+                <Attendance />
+              </PermissionProtectedRoute>
+            }
+          />
 
           <Route
-              path="leavemanagement"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="LEAVE_MASTER"
-                >
-                  <LeaveManagement />
-                </PermissionProtectedRoute>
-              }
-            />
+            path="leavemanagement"
+            element={
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="LEAVE_MASTER"
+              >
+                <LeaveManagement />
+              </PermissionProtectedRoute>
+            }
+          />
 
           <Route
-              path="payroll"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="PAYROLL"
-                >
-                  <PayrollManagement />
-                </PermissionProtectedRoute>
-              }
-            />
+            path="payroll"
+            element={
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="PAYROLL"
+              >
+                <PayrollManagement />
+              </PermissionProtectedRoute>
+            }
+          />
 
 
           <Route
-              path="recruit"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="RECRUITMENT"
-                >
-                  <RecruitmentModule />
-                </PermissionProtectedRoute>
-              }
-            />
+            path="recruit"
+            element={
+              <PermissionProtectedRoute
+                user={user}
+                permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                moduleKey="RECRUITMENT"
+              >
+                <RecruitmentModule />
+              </PermissionProtectedRoute>
+            }
+          />
 
           <Route
             path="departments"
@@ -191,7 +191,7 @@ const AdminLayout = ({ user, setUser }) => {
                 <HRPermissions user={user} />
               </RoleProtectedRoute>
             }
-          />  
+          />
 
 
           <Route
@@ -276,7 +276,7 @@ const AdminLayout = ({ user, setUser }) => {
               </RoleProtectedRoute>
             }
           />
-          <Route path="employee/:id" element={<EmployeeProfile />} />
+          <Route path="employees/:id" element={<EmployeeProfile />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </main>
@@ -291,9 +291,9 @@ export default function App() {
   }, []);
 
   const [user, setUser] = useState(initialUser);
-      const handle_login = (user) => {
-        setUser(user);
-      };
+  const handle_login = (user) => {
+    setUser(user);
+  };
 
   return (
     <BrowserRouter>
@@ -307,11 +307,11 @@ export default function App() {
           path="/admin/*"
           element={<AdminLayout user={user} setUser={setUser} />}
         />
-        
+
         <Route
-            path="/hr/login"
-            element={<HRLogin on_login={handle_login} />}
-          />
+          path="/hr/login"
+          element={<HRLogin on_login={handle_login} />}
+        />
 
 
         <Route path="*" element={<Navigate to="/login" replace />} />
