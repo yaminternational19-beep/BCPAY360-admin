@@ -33,7 +33,7 @@ import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
   if (!user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
@@ -308,7 +308,7 @@ export default function App() {
           <Route path="/role" element={<RoleGate />} />
           <Route path="/verify" element={<CodeVerify onVerify={setUser} />} />
           <Route
-            path="/admin/*"
+            path="/*"
             element={<AdminLayout user={user} setUser={setUser} />}
           />
 
