@@ -33,7 +33,7 @@ import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
   if (!user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="dashboard" replace />;
+    return <Navigate to="/admin/dashboard" replace />;
   }
   return children;
 };
@@ -43,7 +43,7 @@ const AdminLayout = ({ user, setUser }) => {
   const location = useLocation();
 
   if (!user || !user.verified || !user.role) {
-    return <Navigate to="login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const isAdmin = user.role === "COMPANY_ADMIN";
@@ -300,15 +300,15 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <BrowserRouter basename="/admin">
+      <BrowserRouter>
         <Routes>
-          <Route path="login" element={<Login onLogin={setUser} />} />
-          <Route path="super-admin/login" element={<SuperAdmin />} />
-          <Route path="super-admin/*" element={<SuperAdminRoutes />} />
-          <Route path="role" element={<RoleGate />} />
-          <Route path="verify" element={<CodeVerify onVerify={setUser} />} />
+          <Route path="/login" element={<Login onLogin={setUser} />} />
+          <Route path="/super-admin/login" element={<SuperAdmin />} />
+          <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
+          <Route path="/role" element={<RoleGate />} />
+          <Route path="/verify" element={<CodeVerify onVerify={setUser} />} />
           <Route
-            path="/*"
+            path="/admin/*"
             element={<AdminLayout user={user} setUser={setUser} />}
           />
 
