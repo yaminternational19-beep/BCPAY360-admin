@@ -33,10 +33,11 @@ import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
   if (!user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 };
+
 
 const AdminLayout = ({ user, setUser }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -69,7 +70,10 @@ const AdminLayout = ({ user, setUser }) => {
 
         <main className="app-content">
           <Routes>
+            <Route index element={<Navigate to="dashboard" replace />} />
+
             <Route path="dashboard" element={<Dashboard user={user} />} />
+
             <Route
               path="employees"
               element={
@@ -284,26 +288,22 @@ export default function App() {
     <ToastProvider>
       <BrowserRouter basename="/admin">
         <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login onLogin={setUser} />} />
           <Route path="/super-admin/login" element={<SuperAdmin />} />
           <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
           <Route path="/role" element={<RoleGate />} />
           <Route path="/verify" element={<CodeVerify onVerify={setUser} />} />
+          <Route path="/hr/login" element={<HRLogin on_login={handle_login} />} />
+
+          {/* ONLY ONE AdminLayout */}
           <Route
             path="/*"
             element={<AdminLayout user={user} setUser={setUser} />}
           />
-
-          <Route
-            path="/hr/login"
-            element={<HRLogin on_login={handle_login} />}
-          />
-
-
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-
         </Routes>
       </BrowserRouter>
     </ToastProvider>
+
   );
 }

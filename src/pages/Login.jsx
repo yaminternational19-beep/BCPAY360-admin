@@ -195,7 +195,7 @@ export default function Login({ onLogin }) {
 
       // 🔥 CORRECT REDIRECT
       navigate(
-        role === "HR" ? "/" : "/admin/dashboard",
+        role === "HR" ? "/" : "/dashboard",
         { replace: true }
       );
     } catch (err) {
