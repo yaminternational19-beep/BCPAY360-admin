@@ -33,7 +33,7 @@ import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
   if (!user || !allowedRoles.includes(user.role)) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
@@ -49,25 +49,7 @@ const AdminLayout = ({ user, setUser }) => {
   const isAdmin = user.role === "COMPANY_ADMIN";
   const isHR = user.role === "HR";
 
-  // const adminOnlyRoutes = [
-  //   "/admin/departments",
-  //   "/admin/employee-types",
-  //   "/admin/shifts",
-  //   "/admin/branches",
-  //   "/admin/hr-management",
-  //   "/admin/accounting",
-  //   "/admin/softwarereports",
-  //   "/admin/companies",
-  //   "/admin/asset",
-  //   "/admin/announce",
-  //   "/admin/holidays",
-  //   "/admin/settings",
-  // ];
 
-  // const currentPath = location.pathname;
-  // if (!isAdmin && adminOnlyRoutes.some((route) => currentPath.startsWith(route))) {
-  //   return <Navigate to="/admin/dashboard" replace />;
-  // }
 
   const logout = () => {
     localStorage.removeItem("auth_user");
@@ -300,7 +282,7 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/admin">
         <Routes>
           <Route path="/login" element={<Login onLogin={setUser} />} />
           <Route path="/super-admin/login" element={<SuperAdmin />} />
@@ -308,7 +290,7 @@ export default function App() {
           <Route path="/role" element={<RoleGate />} />
           <Route path="/verify" element={<CodeVerify onVerify={setUser} />} />
           <Route
-            path="/admin/*"
+            path="/*"
             element={<AdminLayout user={user} setUser={setUser} />}
           />
 
@@ -318,7 +300,7 @@ export default function App() {
           />
 
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
         </Routes>
       </BrowserRouter>

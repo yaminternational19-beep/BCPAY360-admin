@@ -238,7 +238,7 @@ const EmployeeList = ({
                 <td className="actions-cell">
                   <div className="row-actions">
                     <Link
-                      to={`/admin/employees/${emp.id}`}
+                      to={`/employees/${emp.id}`}
                       state={{ employee: emp }}
                       className={`emp-icon-btn view ${togglingIds.has(emp.id) ? "disabled" : ""}`}
                       title="View"

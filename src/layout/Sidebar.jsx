@@ -75,11 +75,13 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
   const go = (path) => {
     const cleanPath = path.replace(/^\/admin\//, "");
     const targetRoute = isValidRoute(cleanPath)
-      ? `/admin/${cleanPath}`
-      : "/admin/dashboard";
+      ? `/${cleanPath}`
+      : "/dashboard";
+
     navigate(targetRoute);
     onCloseMobile?.();
   };
+
 
   const safeToggle = (setter, value) => {
     if (collapsed) return;
