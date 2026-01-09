@@ -3,7 +3,6 @@ import { API_BASE } from "../utils/apiBase";
 export { API_BASE };
 
 
-
 export const api = async (path, options = {}) => {
   const token = localStorage.getItem("token");
 
@@ -12,12 +11,18 @@ export const api = async (path, options = {}) => {
     ...(options.headers || {}),
   };
 
-  // ✅ Only attach token if it EXISTS
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  // ✅ HANDLE QUERY PARAMS
+  let url = `${API_BASE}${path}`;
+  if (options.params) {
+    const query = new URLSearchParams(options.params).toString();
+    url += `?${query}`;
+  }
+
+  const res = await fetch(url, {
     ...options,
     headers,
   });
@@ -33,5 +38,3 @@ export const api = async (path, options = {}) => {
 
   return res.json();
 };
-
-

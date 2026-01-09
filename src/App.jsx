@@ -7,7 +7,7 @@ import RoleGate from "./pages/RoleGate";
 import CodeVerify from "./pages/CodeVerify";
 import SuperAdmin from "./pages/SuperAdmin";
 import Dashboard from "./pages/Dashboard";
-import Attendance from "./pages/Attendance";
+import Attendance from "./modules/attendance/pages/Attendance";
 import LeaveManagement from "./pages/LeaveManagement";
 import PayrollManagement from "./pages/PayrollManagement";
 import AssetManagement from "./pages/AssetManagement";

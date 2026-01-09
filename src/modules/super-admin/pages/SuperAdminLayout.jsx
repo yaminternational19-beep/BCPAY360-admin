@@ -6,7 +6,7 @@ import "../styles/SuperAdminLayout.css";
 export default function SuperAdminLayout() {
   const logout = () => {
     localStorage.clear();
-    window.location.replace("/login");
+    window.location.replace("/admin/login");
   };
 
   return (
