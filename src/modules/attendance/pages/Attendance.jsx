@@ -1,37 +1,42 @@
 import { useEffect, useState } from "react";
 import "../../../styles/Attendance.css";
 
-
 import AttendanceHeader from "../components/AttendanceHeader";
 import AttendanceSummary from "../components/AttendanceSummary";
 import DailyAttendanceTable from "../components/DailyAttendanceTable";
+import MonthlyAttendanceTable from "../components/MonthlyAttendanceTable";
 import HistoryAttendanceDrawer from "../components/HistoryAttendanceDrawer";
 
 import {
   fetchDailyAttendance,
-  fetchHistoryAttendance
+  fetchHistoryAttendance,
+  fetchMonthlyAttendance
 } from "../../../api/master.api";
+
+/* EXPORT UTILS */
+import { exportDailyExcel } from "../../../utils/export/exportDailyExcel";
+import { exportDailyPDF } from "../../../utils/export/exportDailyPDF";
+import { exportMonthlyExcel } from "../../../utils/export/exportMonthlyExcel";
+import { exportMonthlyPDF } from "../../../utils/export/exportMonthlyPDF";
+import { exportHistoryExcel } from "../../../utils/export/exportHistoryExcel";
+import { exportHistoryPDF } from "../../../utils/export/exportHistoryPDF";
 
 const Attendance = () => {
   const today = new Date().toISOString().slice(0, 10);
 
-  const [viewType, setViewType] = useState("DAILY"); // DAILY | HISTORY
+  const [viewType, setViewType] = useState("DAILY");
+  const [attendanceMode, setAttendanceMode] = useState("DAILY");
+
   const [date, setDate] = useState(today);
+  const [rows, setRows] = useState([]);
+
+  const [monthRange, setMonthRange] = useState(null);
+  const [monthlyData, setMonthlyData] = useState([]);
 
   const [summary, setSummary] = useState(null);
-  const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [historyData, setHistoryData] = useState(null);
-  const [attendanceMode, setAttendanceMode] = useState("DAILY");
-// DAILY | MONTHLY
-
-const [monthlyData, setMonthlyData] = useState([]);
-const [monthRange, setMonthRange] = useState(null);
-
-
-
 
   const [filters, setFilters] = useState({
     search: "",
@@ -39,96 +44,117 @@ const [monthRange, setMonthRange] = useState(null);
     shiftId: "",
     status: ""
   });
-     const loadDailyAttendance = async (selectedDate) => {
-  try {
-    setLoading(true);
 
-    const res = await fetchDailyAttendance({
-      date: selectedDate,
-      ...filters
-    });
+  /* AUTO INIT MONTH */
+  useEffect(() => {
+    if (attendanceMode === "MONTHLY" && !monthRange) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const fromDate = `${y}-${String(m).padStart(2, "0")}-01`;
+      const toDate = `${y}-${String(m).padStart(2, "0")}-${new Date(y, m, 0).getDate()}`;
+      setMonthRange({ fromDate, toDate });
+    }
+  }, [attendanceMode, monthRange]);
 
-    setSummary(res.summary);
-    setRows(res.data);
-  } catch (err) {
-    console.error("Failed to load daily attendance", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  /* LOAD DAILY */
+  useEffect(() => {
+    if (viewType === "DAILY" && attendanceMode === "DAILY") {
+      setLoading(true);
+      fetchDailyAttendance({ date, ...filters })
+        .then(res => {
+          setRows(res.data);
+          setSummary(res.summary);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [date, attendanceMode, filters, viewType]);
 
+  /* LOAD MONTHLY */
+  useEffect(() => {
+    if (viewType === "DAILY" && attendanceMode === "MONTHLY" && monthRange) {
+      setLoading(true);
+      fetchMonthlyAttendance({ ...monthRange, ...filters })
+        .then(res => setMonthlyData(res.data))
+        .finally(() => setLoading(false));
+    }
+  }, [attendanceMode, monthRange, filters, viewType]);
 
-
-  /* ===========================
-     LOAD HISTORY ATTENDANCE
-  =========================== */
- const loadHistoryAttendance = async (employeeId) => {
-  try {
-    if (!employeeId) return;
-
-    setLoading(true);
-
-    const to = today;
-    const fromDate = new Date();
-    fromDate.setMonth(fromDate.getMonth() - 1);
-    const from = fromDate.toISOString().slice(0, 10);
+  /* LOAD HISTORY */
+  const loadHistoryAttendance = async (employeeId) => {
+    const from = new Date(new Date().setMonth(new Date().getMonth() - 1))
+      .toISOString()
+      .slice(0, 10);
 
     const res = await fetchHistoryAttendance({
       employeeId,
       from,
-      to
+      to: today
     });
 
-    setHistoryData(res);          // ⬅️ see fix #2
+    setHistoryData(res);
     setViewType("HISTORY");
-  } catch (err) {
-    console.error("Failed to load history attendance", err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-  
-
-
-  /* ===========================
-     EFFECT: LOAD DAILY
-  =========================== */
-  useEffect(() => {
-    if (viewType === "DAILY") {
-      loadDailyAttendance(date);
+  /* EXPORT HANDLER (THIS MAKES DOWNLOAD WORK) */
+  const handleExport = ({ type, context }) => {
+    if (context === "DAILY") {
+      type === "EXCEL"
+        ? exportDailyExcel(rows, date)
+        : exportDailyPDF(rows, date);
     }
-  }, [date, viewType]);
+
+    if (context === "MONTHLY") {
+      type === "EXCEL"
+        ? exportMonthlyExcel(monthlyData, monthRange.fromDate, monthRange.toDate)
+        : exportMonthlyPDF(monthlyData, monthRange.fromDate, monthRange.toDate);
+    }
+
+    if (context === "HISTORY" && historyData?.data?.length) {
+      const name = historyData.employee_name || "Employee";
+      type === "EXCEL"
+        ? exportHistoryExcel(historyData.data, name)
+        : exportHistoryPDF(historyData.data, name);
+    }
+  };
 
   return (
     <div className="attendance-container">
       <AttendanceHeader
         viewType={viewType}
+        attendanceMode={attendanceMode}
         date={date}
+        monthRange={monthRange}
+        filters={filters}
         onDateChange={setDate}
+        onMonthChange={setMonthRange}
+        onFilterChange={setFilters}
+        onExport={handleExport}
         onBack={() => {
           setViewType("DAILY");
-          setSelectedEmployee(null);
           setHistoryData(null);
         }}
-        filters={filters}
-        onFilterChange={setFilters}
+        onModeChange={(mode) => {
+          setAttendanceMode(mode);
+          setSummary(null);
+          if (mode === "DAILY") setMonthlyData([]);
+          if (mode === "MONTHLY") setRows([]);
+        }}
       />
 
-
-      {viewType === "DAILY" && (
+      {viewType === "DAILY" && attendanceMode === "DAILY" && (
         <>
           <AttendanceSummary summary={summary} loading={loading} />
-
           <DailyAttendanceTable
             rows={rows}
             loading={loading}
-            onViewHistory={(employeeId) => {
-              setSelectedEmployee(employeeId);
-              loadHistoryAttendance(employeeId);
-            }}
+            onViewHistory={loadHistoryAttendance}
           />
         </>
+      )}
+
+      {viewType === "DAILY" && attendanceMode === "MONTHLY" && (
+        <MonthlyAttendanceTable data={monthlyData} loading={loading} />
       )}
 
       {viewType === "HISTORY" && historyData && (

@@ -1,3 +1,259 @@
+Task:
+Refactor and enhance the existing Attendance.css file used in a React Admin Attendance module.
+
+Important constraints (must follow strictly):
+
+DO NOT rename or remove any existing class names.
+
+DO NOT change HTML structure or JSX assumptions.
+
+ONLY improve styles (colors, spacing, hover, transitions, animations).
+
+Keep the design professional, clean, high-grade (not flashy).
+
+Use subtle animations, smooth hover transitions, and modern UI patterns.
+
+Ensure tables remain readable for large datasets.
+
+Maintain responsiveness.
+
+🎨 Design Goals
+
+Modern enterprise dashboard look
+
+Clear visual hierarchy
+
+Smooth hover feedback
+
+Subtle motion (no heavy animations)
+
+Accessible contrast
+
+Consistent spacing and typography
+
+📌 Components to Style & Improve
+1. Attendance Header
+
+Classes:
+
+.attendance-header
+
+.attendance-header-left
+
+.attendance-header-right
+
+.attendance-mode-toggle
+
+.mode-btn
+
+.mode-btn.active
+
+.btn-back
+
+.attendance-filters
+
+Enhancements:
+
+Add smooth hover transitions to buttons
+
+Active mode button should have subtle elevation
+
+Header background with soft shadow
+
+Filter inputs with focus ring animation
+
+2. Tables (Daily, Monthly, History)
+
+Classes:
+
+.attendance-table-wrapper
+
+.attendance-table
+
+.attendance-table thead
+
+.attendance-table th
+
+.attendance-table td
+
+.attendance-table tr:hover
+
+.sticky-header thead th
+
+.day-col
+
+.day-cell
+
+Enhancements:
+
+Sticky headers with background blur
+
+Row hover highlight
+
+Day cell hover with subtle scale
+
+Smooth color transitions
+
+Zebra striping for readability
+
+3. Status Badges
+
+Classes:
+
+.status-badge
+
+.status-present
+
+.status-absent
+
+.status-leave
+
+.status-unmarked
+
+.status-holiday
+
+Enhancements:
+
+Rounded pill style
+
+Color-coded backgrounds
+
+Hover tooltip-ready
+
+Slight hover lift + shadow
+
+4. Employee Profile UI
+
+Classes:
+
+.employee-cell
+
+.employee-avatar
+
+.employee-avatar.large
+
+.employee-info
+
+.employee-name
+
+.employee-code
+
+.emp-name
+
+.emp-code
+
+Enhancements:
+
+Avatar hover glow
+
+Clean name/code typography
+
+Proper spacing & alignment
+
+5. Monthly Grid Totals
+
+Classes:
+
+.total-present
+
+.total-absent
+
+.total-leave
+
+.total-unmarked
+
+.total-holiday
+
+Enhancements:
+
+Bold numbers
+
+Hover highlight
+
+Subtle background tint
+
+6. History Drawer
+
+Classes:
+
+.history-drawer
+
+.history-header
+
+.employee-profile.card
+
+.history-table-wrapper
+
+.drawer-loading
+
+.table-empty
+
+Enhancements:
+
+Slide-in feel (CSS only)
+
+Card elevation
+
+Scrollbar styling
+
+Sticky table header
+
+7. Buttons & Actions
+
+Classes:
+
+.btn-reset
+
+.btn-history
+
+.export-actions
+
+.export-btn
+
+Enhancements:
+
+Button hover lift
+
+Disabled state clarity
+
+Export buttons with subtle icon-like feel (no icons required)
+
+🎞️ Animation & Interaction Guidelines
+
+Use transition: all 0.2s ease where appropriate
+
+Use transform: translateY(-1px) on hover for buttons
+
+Use box-shadow transitions for elevation
+
+Avoid infinite animations
+
+No keyframes unless necessary
+
+📐 Typography & Colors
+
+Use system fonts (no imports)
+
+Neutral grayscale base
+
+Soft blue for primary actions
+
+Red for absent, green for present, orange for leave
+
+Maintain WCAG contrast
+
+🚨 Final Output Instructions
+
+Return ONLY the updated CSS code
+
+Do NOT include explanations
+
+Do NOT include markdown
+
+Do NOT include comments unless necessary
+
+Output must fully replace the existing Attendance.css
+
 /* ===========================
    ATTENDANCE MODULE – COMMON
 =========================== */
@@ -289,6 +545,336 @@
   color: #fff;
 }
 
+.attendance-table.monthly {
+  overflow-x: auto;
+}
+
+.attendance-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.day-col,
+.day-cell {
+  text-align: center;
+  min-width: 36px;
+  font-weight: 500;
+}
+
+.status-present {
+  color: #16a34a;
+}
+
+.status-absent {
+  color: #dc2626;
+}
+
+.status-leave {
+  color: #7c3aed;
+}
+
+.status-unmarked {
+  color: #ca8a04;
+}
+
+.status-holiday {
+  color: #2563eb;
+}
+
+.emp-name {
+  font-weight: 500;
+}
+
+.emp-code {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.export-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.export-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* ===========================
+   HEADER
+=========================== */
+.attendance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.attendance-header-left h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ===========================
+   MODE TOGGLE
+=========================== */
+.attendance-mode-toggle {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.mode-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #475569;
+}
+
+.mode-btn.active {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* ===========================
+   FILTER BAR
+=========================== */
+.attendance-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 16px;
+}
+
+.filter-input,
+.filter-select,
+.monthly-range-form select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 13px;
+}
+
+/* ===========================
+   MONTHLY RANGE FORM
+=========================== */
+.monthly-range-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #334155;
+}
+
+/* ===========================
+   EXPORT BUTTONS
+=========================== */
+.export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.export-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.export-btn:hover {
+  background: #1d4ed8;
+}
+
+/* ===========================
+   MONTHLY TABLE
+=========================== */
+.attendance-table.monthly {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.attendance-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.attendance-table th {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.attendance-table td {
+  padding: 8px;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ===========================
+   EMPLOYEE COLUMN
+=========================== */
+.emp-name {
+  font-weight: 500;
+}
+
+.emp-code {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ===========================
+   STATUS COLORS
+=========================== */
+.status-present {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.status-absent {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.status-leave {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.status-unmarked {
+  color: #ca8a04;
+  font-weight: 600;
+}
+
+.status-holiday {
+  color: #2563eb;
+  font-weight: 600;
+}
+/* Profile column */
+.col-profile {
+  text-align: center;
+  width: 60px;
+}
+
+.employee-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Name column */
+.col-name {
+  min-width: 160px;
+}
+
+.employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.employee-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.employee-code {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Shift */
+.shift-cell {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.shift-cell small {
+  color: #6b7280;
+}
+
+/* Status badge (if not already) */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Day column */
+.day-col {
+  width: 36px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Day cell */
+.day-cell {
+  text-align: center;
+  font-size: 12px;
+  cursor: default;
+}
+
+/* Status colors */
+.status-present { background: #e6f7ee; color: #047857; }
+.status-absent { background: #fee2e2; color: #b91c1c; }
+.status-leave { background: #fff7ed; color: #c2410c; }
+.status-unmarked { background: #f3f4f6; color: #374151; }
+.status-holiday { background: #eff6ff; color: #1d4ed8; }
+
+/* Totals */
+.total-present,
+.total-absent,
+.total-leave,
+.total-unmarked,
+.total-holiday {
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Employee cell */
+.emp-name {
+  font-weight: 600;
+}
+
+.emp-code {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ===========================
+   HOVER EFFECT
+=========================== */
+.day-cell:hover {
+  background: #f1f5f9;
+  cursor: default;
+}
+
+
 /* ===========================
    EMPTY & LOADING
 =========================== */
@@ -302,6 +888,75 @@
   font-size: 14px;
 }
 .table-loading .spinner,
+.drawer-loading .spinner {  
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
+}
+
+/* Drawer */
+.history-drawer {
+  padding: 16px;
+}
+
+/* Header */
+.history-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.employee-profile.card {
+  display: flex;
+  gap: 16px;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.employee-avatar.large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.employee-info h3 {
+  margin: 0;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Sticky header */
+.sticky-header thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  z-index: 2;
+}
+
+/* History table wrapper */
+.history-table-wrapper {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+/* Empty / loading */
+.drawer-loading,
+.table-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}
 .drawer-loading .spinner {  
   border: 4px solid #e5e7eb;
   border-top: 4px solid #3b82f6;

@@ -1,18 +1,28 @@
 import "../../../styles/Attendance.css";
+import ExportActions from "./ExportActions";
+import MonthlyAttendanceForm from "./MonthlyAttendanceForm";
 
 const AttendanceHeader = ({
-  viewType,
-  attendanceMode,
+  viewType,          // DAILY | HISTORY
+  attendanceMode,    // DAILY | MONTHLY
   onModeChange,
+
+  /* DAILY */
   date,
   onDateChange,
+
+  /* MONTHLY */
+  monthRange,
+  onMonthChange,
+
+  /* EXPORT */
+  onExport,
+
+  /* COMMON */
   onBack,
-  filters = {
-    search: "",
-    departmentId: "",
-    shiftId: "",
-    status: ""
-  },
+
+  /* FILTERS */
+  filters,
   onFilterChange
 }) => {
   return (
@@ -30,28 +40,30 @@ const AttendanceHeader = ({
       {/* RIGHT */}
       <div className="attendance-header-right">
         {/* MODE TOGGLE */}
-        <div className="attendance-mode-toggle">
-          <button
-            className={`mode-btn ${attendanceMode === "DAILY" ? "active" : ""}`}
-            onClick={() => onModeChange("DAILY")}
-          >
-            Daily
-          </button>
-          <button
-            className={`mode-btn ${attendanceMode === "MONTHLY" ? "active" : ""}`}
-            onClick={() => onModeChange("MONTHLY")}
-          >
-            Monthly
-          </button>
-        </div>
+        {viewType === "DAILY" && (
+          <div className="attendance-mode-toggle">
+            <button
+              className={`mode-btn ${attendanceMode === "DAILY" ? "active" : ""}`}
+              onClick={() => onModeChange("DAILY")}
+            >
+              Daily
+            </button>
+            <button
+              className={`mode-btn ${attendanceMode === "MONTHLY" ? "active" : ""}`}
+              onClick={() => onModeChange("MONTHLY")}
+            >
+              Monthly
+            </button>
+          </div>
+        )}
 
-        {/* FILTERS (Daily only) */}
+        {/* DAILY FILTERS + EXPORT */}
         {viewType === "DAILY" && attendanceMode === "DAILY" && (
           <div className="attendance-filters">
             <input
               type="text"
-              placeholder="Search by name / code"
-              value={filters.search || ""}
+              placeholder="Search name / code"
+              value={filters.search}
               onChange={(e) =>
                 onFilterChange({ ...filters, search: e.target.value })
               }
@@ -66,7 +78,7 @@ const AttendanceHeader = ({
             />
 
             <select
-              value={filters.departmentId || ""}
+              value={filters.departmentId}
               onChange={(e) =>
                 onFilterChange({ ...filters, departmentId: e.target.value })
               }
@@ -76,7 +88,7 @@ const AttendanceHeader = ({
             </select>
 
             <select
-              value={filters.shiftId || ""}
+              value={filters.shiftId}
               onChange={(e) =>
                 onFilterChange({ ...filters, shiftId: e.target.value })
               }
@@ -86,7 +98,7 @@ const AttendanceHeader = ({
             </select>
 
             <select
-              value={filters.status || ""}
+              value={filters.status}
               onChange={(e) =>
                 onFilterChange({ ...filters, status: e.target.value })
               }
@@ -112,6 +124,27 @@ const AttendanceHeader = ({
             >
               Reset
             </button>
+
+            <ExportActions context="DAILY" onExport={onExport} />
+          </div>
+        )}
+
+        {/* MONTHLY FILTERS + EXPORT */}
+        {viewType === "DAILY" && attendanceMode === "MONTHLY" && (
+          <div className="attendance-filters">
+            <MonthlyAttendanceForm
+              value={monthRange}
+              onChange={onMonthChange}
+            />
+
+            <ExportActions context="MONTHLY" onExport={onExport} />
+          </div>
+        )}
+
+        {/* HISTORY EXPORT */}
+        {viewType === "HISTORY" && (
+          <div className="attendance-filters">
+            <ExportActions context="HISTORY" onExport={onExport} />
           </div>
         )}
       </div>

@@ -1,15 +1,26 @@
-export default function AttendanceModeToggle({ mode, onChange }) {
+export default function AttendanceModeToggle({
+  mode = "DAILY",
+  onChange = () => {}
+}) {
+  const handleChange = (nextMode) => {
+    if (nextMode === mode) return; // avoid unnecessary rerender
+    onChange(nextMode);
+  };
+
   return (
     <div className="mode-toggle">
       <button
-        className={mode === "DAILY" ? "active" : ""}
-        onClick={() => onChange("DAILY")}
+        type="button"
+        className={`mode-btn ${mode === "DAILY" ? "active" : ""}`}
+        onClick={() => handleChange("DAILY")}
       >
         Daily
       </button>
+
       <button
-        className={mode === "MONTHLY" ? "active" : ""}
-        onClick={() => onChange("MONTHLY")}
+        type="button"
+        className={`mode-btn ${mode === "MONTHLY" ? "active" : ""}`}
+        onClick={() => handleChange("MONTHLY")}
       >
         Monthly
       </button>

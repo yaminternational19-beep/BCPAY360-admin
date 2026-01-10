@@ -1,11 +1,28 @@
 import "../../../styles/Attendance.css";
 
+const statusLabelMap = {
+  PRESENT: "Present",
+  ABSENT: "Absent",
+  CHECKED_IN: "Checked In",
+  UNMARKED: "Unmarked",
+  LEAVE: "Leave"
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+};
 
 const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
   if (loading) {
     return (
       <div className="history-drawer">
-        <p className="drawer-loading">Loading history...</p>
+        <p className="drawer-loading">Loading attendance history…</p>
       </div>
     );
   }
@@ -16,32 +33,34 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
 
   return (
     <div className="history-drawer">
-      {/* Header */}
+      {/* ===========================
+          HEADER
+      =========================== */}
       <div className="history-header">
-        <button className="btn-back" onClick={onClose}>
-          ← Back
-        </button>
 
-        <div className="employee-profile">
+        <div className="employee-profile card">
           <img
             src={employee.photo || "/images/avatar-placeholder.png"}
             alt="profile"
             className="employee-avatar large"
           />
+
           <div className="employee-info">
             <h3>{employee.name}</h3>
-            <p>{employee.code}</p>
-            <p>
+            <p className="muted">{employee.code}</p>
+            <p className="muted">
               {employee.department} · {employee.designation}
             </p>
-            <p>Shift: {employee.shift}</p>
+            <p className="muted">Shift: {employee.shift}</p>
           </div>
         </div>
       </div>
 
-      {/* History Table */}
+      {/* ===========================
+          TABLE
+      =========================== */}
       <div className="history-table-wrapper">
-        <table className="attendance-table">
+        <table className="attendance-table sticky-header">
           <thead>
             <tr>
               <th>Date</th>
@@ -56,10 +75,12 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
           </thead>
 
           <tbody>
-            {rows.length ? (
+            {rows?.length ? (
               rows.map((row, idx) => (
                 <tr key={idx}>
-                  <td>{row.date}</td>
+                  <td title={row.date}>
+                    {formatDate(row.date)}
+                  </td>
 
                   <td>
                     <div className="shift-cell">
@@ -75,6 +96,7 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
                   <td>
                     <span
                       className={`status-badge ${row.status.toLowerCase()}`}
+                      title={statusLabelMap[row.status] || row.status}
                     >
                       {row.status}
                     </span>
@@ -91,7 +113,7 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
             ) : (
               <tr>
                 <td colSpan="8" className="table-empty">
-                  No history available
+                  No attendance history available
                 </td>
               </tr>
             )}

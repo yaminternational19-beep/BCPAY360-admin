@@ -183,3 +183,25 @@ export const fetchHistoryAttendance = ({
     }
   });
 
+  export const fetchMonthlyAttendance = ({
+  fromDate,
+  toDate,
+  page = 1,
+  limit = 20,
+  search = "",
+  departmentId = "",
+  shiftId = ""
+}) =>
+  api("/api/admin/attendance", {
+    params: {
+      viewType: "MONTHLY",
+      fromDate,
+      toDate,
+      page,
+      limit,
+      search,
+      departmentId,
+      shiftId
+    }
+  });
+
