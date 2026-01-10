@@ -33,7 +33,6 @@ const COUNTRY_CODES = [
 const EmployeeForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
   const toast = useToast();
-  const authUser = JSON.parse(localStorage.getItem("auth_user")) || {};
 
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
@@ -73,6 +72,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     branch_id: "",
     department_id: "",
     designation_id: "",
+
+    uan_number: "",
+    esic_number: "",
   });
 
 
@@ -100,12 +102,10 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
 
   const [documentsForm, setDocumentsForm] = useState({
-    pan: "",
-    aadhaar: "",
-    uan_number: "",
-    esic_number: "",
-    files: {},
-  });
+  files: {},
+  existing: [],
+});
+
 
 
   // 1️⃣ Initialize Form for Edit
@@ -145,6 +145,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       branch_id: ef.branch_id || "",
       department_id: ef.department_id || "",
       designation_id: ef.designation_id || "",
+
+      uan_number: docs.find(d => d.document_type === "UAN")?.document_number || "",
+      esic_number: docs.find(d => d.document_type === "ESIC")?.document_number || "",
     });
 
     if (pf) {
@@ -170,13 +173,10 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     // However, the backend expects 'pan', 'aadhaar' in documentsForm
     // We'll try to find them from the docs array if they are not already in pf (though pf doesn't have them)
     setDocumentsForm({
-      pan: docs.find(d => d.document_type === "PAN")?.document_number || "",
-      aadhaar: docs.find(d => d.document_type === "AADHAAR")?.document_number || "",
-      uan_number: docs.find(d => d.document_type === "UAN")?.document_number || "",
-      esic_number: docs.find(d => d.document_type === "ESIC")?.document_number || "",
-      files: {},
-      existing: docs // keep track for UI
-    });
+  files: {},
+  existing: docs || [],
+});
+
   }, [isEdit, initial]);
 
   // 2️⃣ Employee Code (only on create)
@@ -327,13 +327,17 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       formData.append("employeeForm", JSON.stringify(employeeData));
       formData.append("profileForm", JSON.stringify(profileForm));
 
-      const docData = {
-        pan: documentsForm.pan || null,
-        aadhaar: documentsForm.aadhaar || null,
-        uan_number: documentsForm.uan_number || null,
-        esic_number: documentsForm.esic_number || null,
-      };
-      formData.append("documentsForm", JSON.stringify(docData));
+      // Build documentsForm ONLY from uploaded files
+      const documentsMeta = {};
+
+Object.keys(documentsForm.files || {}).forEach((key) => {
+  documentsMeta[key] = "UPLOADED";
+});
+
+// 🔥 THIS LINE WAS MISSING
+formData.append("documentsForm", JSON.stringify(documentsMeta));
+
+
 
       // Profile Photo
       if (profileForm.profile_photo instanceof File) {
@@ -348,6 +352,13 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       });
 
       console.log("🚀 Submitting FormData for Employee...");
+      console.log("📦 documentsForm.files:", documentsForm.files);
+console.log("📦 documentsMeta:", documentsMeta);
+
+for (let pair of formData.entries()) {
+  console.log("🧾 FormData:", pair[0], pair[1]);
+}
+
       await onSave(formData);
       // toast is handled in parent handleSave or can be handled here if we await it 
     } catch (err) {
@@ -897,12 +908,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <label>UAN Number</label>
                 <input
                   placeholder="Universal Account Number"
-                  value={documentsForm.uan_number}
+                  value={employeeForm.uan_number}
                   onChange={(e) =>
-                    setDocumentsForm(p => ({
-                      ...p,
-                      uan_number: e.target.value.replace(/\D/g, "")
-                    }))
+                    changeEmployee("uan_number", e.target.value.replace(/\D/g, ""))
                   }
                 />
               </div>
@@ -911,12 +919,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <label>ESIC Number</label>
                 <input
                   placeholder="ESIC Insurance Number"
-                  value={documentsForm.esic_number}
+                  value={employeeForm.esic_number}
                   onChange={(e) =>
-                    setDocumentsForm(p => ({
-                      ...p,
-                      esic_number: e.target.value
-                    }))
+                    changeEmployee("esic_number", e.target.value)
                   }
                 />
               </div>
@@ -926,28 +931,24 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               <div>
                 <label>PAN Number</label>
                 <input
-                  value={documentsForm.pan}
-                  onChange={(e) =>
-                    setDocumentsForm(p => ({
-                      ...p,
-                      pan: e.target.value.toUpperCase()
-                    }))
-                  }
-                />
+  value={employeeForm.pan_number || ""}
+  onChange={(e) =>
+    changeEmployee("pan_number", e.target.value.toUpperCase())
+  }
+/>
+
               </div>
 
               <div>
                 <label>Aadhaar Number</label>
                 <input
-                  maxLength={12}
-                  value={documentsForm.aadhaar}
-                  onChange={(e) =>
-                    setDocumentsForm(p => ({
-                      ...p,
-                      aadhaar: e.target.value.replace(/\D/g, "")
-                    }))
-                  }
-                />
+  maxLength={12}
+  value={employeeForm.aadhaar_number || ""}
+  onChange={(e) =>
+    changeEmployee("aadhaar_number", e.target.value.replace(/\D/g, ""))
+  }
+/>
+
               </div>
             </div>
 
