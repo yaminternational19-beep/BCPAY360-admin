@@ -8,7 +8,7 @@ import CodeVerify from "./pages/CodeVerify";
 import SuperAdmin from "./pages/SuperAdmin";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./modules/attendance/pages/Attendance";
-import LeaveManagement from "./pages/LeaveManagement";
+import LeaveManagement from "./modules/leave/LeaveManagementPage";
 import PayrollManagement from "./pages/PayrollManagement";
 import AssetManagement from "./pages/AssetManagement";
 import AnnouncementModule from "./pages/AnnouncementModule";

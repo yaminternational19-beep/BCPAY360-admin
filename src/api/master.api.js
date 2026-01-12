@@ -205,3 +205,66 @@ export const fetchHistoryAttendance = ({
     }
   });
 
+
+
+
+
+
+
+
+
+
+/* ===================================================================================
+   LEAVE MASTER (ADMIN)
+   =================================================================================== */
+
+/* 🔹 Get all leave types (company-wise) */
+export const getLeaveTypes = () =>
+  api("/api/admin/leave-master/leave-types");
+
+/* 🔹 Create new leave type */
+export const createLeaveType = (data) =>
+  api("/api/admin/leave-master/leave-types", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+/* 🔹 Update leave type */
+export const updateLeaveType = (id, data) =>
+  api(`/api/admin/leave-master/leave-types/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+/* 🔹 Enable / Disable leave type */
+export const toggleLeaveTypeStatus = (id, isActive) =>
+  api(`/api/admin/leave-master/leave-types/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active: isActive }),
+  });
+export const deleteLeaveType = (id) =>
+  api(`/api/admin/leave-master/leave-types/${id}`, {
+    method: "DELETE",
+  });
+/* ===================================================================================
+   LEAVE APPROVAL (ADMIN)
+   =================================================================================== */
+
+/* 🔹 Get all pending leave requests */
+export const getPendingLeaveRequests = () =>
+  api("/api/admin/leave-approval/pending");
+
+/* 🔹 Approve leave request */
+export const approveLeaveRequest = (requestId) =>
+  api(`/api/admin/leave-approval/${requestId}/approve`, {
+    method: "POST",
+  });
+
+/* 🔹 Reject leave request */
+export const rejectLeaveRequest = (requestId, remarks) =>
+  api(`/api/admin/leave-approval/${requestId}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ remarks }),
+  });
+export const getLeaveHistory = () =>
+  api("/api/admin/leave-approval/leave-history");
