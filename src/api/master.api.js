@@ -268,3 +268,49 @@ export const rejectLeaveRequest = (requestId, remarks) =>
   });
 export const getLeaveHistory = () =>
   api("/api/admin/leave-approval/leave-history");
+
+
+
+/* ===================================================================================
+   PAYROLL (ADMIN)
+   =================================================================================== */
+
+/**
+ * 🔹 Get employees for payroll processing
+ * Query params: month, year
+ */
+export const getPayrollEmployees = ({ month, year }) =>
+  api("/api/admin/payroll/employees", {
+    params: { month, year }
+  });
+
+/**
+ * 🔹 Generate payroll batch (DRAFT)
+ * Stores payroll_employee_entries and creates payroll_batches
+ */
+export const generatePayrollBatch = (payload) =>
+  api("/api/admin/payroll/generate", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+
+  export const getLatestPayrollBatch = () =>
+  api("/api/admin/payroll/batch/latest");
+/**
+ * 🔹 Get payroll batch details (for confirm screen)
+ */
+export const getPayrollBatchDetails = (batchId) =>
+  api(`/api/admin/payroll/batches/${batchId}`);
+
+/**
+ * 🔹 Confirm payroll batch
+ * - Generates payslip
+ * - Uploads PDF to S3
+ * - Sends email
+ * - Locks batch
+ */
+export const confirmPayrollBatch = (batchId) =>
+  api(`/api/admin/payroll/batches/${batchId}/confirm`, {
+    method: "POST",
+  });

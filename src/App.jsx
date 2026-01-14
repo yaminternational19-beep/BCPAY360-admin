@@ -8,9 +8,8 @@ import CodeVerify from "./pages/CodeVerify";
 import SuperAdmin from "./pages/SuperAdmin";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./modules/attendance/pages/Attendance";
+import AssetManagement from "./pages/AssetManagement.jsx";
 import LeaveManagement from "./modules/leave/LeaveManagementPage";
-import PayrollManagement from "./pages/PayrollManagement";
-import AssetManagement from "./pages/AssetManagement";
 import AnnouncementModule from "./pages/AnnouncementModule";
 import RecruitmentModule from "./pages/RecruitmentModule";
 import HolidaysModule from "./pages/HolidaysModule";
@@ -25,6 +24,7 @@ import SuperAdminRoutes from "./modules/super-admin";
 import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions } from "./modules/organization";
 import EmployeeList from "./modules/employee/pages/EmployeeList";
 import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
+import PayrollManagement from "./modules/payroll/PayrollManagement";
 import Sidebar from "./layout/Sidebar";
 import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
@@ -114,7 +114,7 @@ const AdminLayout = ({ user, setUser }) => {
             />
 
             <Route
-              path="payroll"
+              path="payroll/*"
               element={
                 <PermissionProtectedRoute
                   user={user}
@@ -125,6 +125,7 @@ const AdminLayout = ({ user, setUser }) => {
                 </PermissionProtectedRoute>
               }
             />
+
 
 
             <Route
