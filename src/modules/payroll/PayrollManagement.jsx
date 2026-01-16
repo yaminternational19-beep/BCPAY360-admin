@@ -11,7 +11,7 @@ const PayrollManagement = () => {
         path="/"
         element={
           <div>
-            <PayrollFilters />
+            {/* <PayrollFilters /> */}
             <PayrollList />
           </div>
         }

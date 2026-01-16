@@ -17,46 +17,51 @@ const AttendanceSummary = ({ summary, loading }) => {
      DAILY SUMMARY (existing)
   =========================== */
   if ("checked_in" in summary) {
-    const {
-      total = 0,
-      present = 0,
-      checked_in = 0,
-      unmarked = 0
-    } = summary;
+  const {
+    total = 0,
+    present = 0,      // CHECKED_OUT
+    checked_in = 0,   // CHECKED_IN
+    unmarked = 0
+  } = summary;
 
-    const absent = total - present - checked_in - unmarked;
+  // ✅ TRUE PRESENT COUNT
+  const totalPresent = present + checked_in;
 
-    return (
-      <div className="attendance-summary">
-        <div className="summary-card total">
-          <p className="label">Total</p>
-          <p className="value">{total}</p>
-        </div>
+  const absent =
+    total - totalPresent - unmarked >= 0
+      ? total - totalPresent - unmarked
+      : 0;
 
-        <div className="summary-card checked-in">
-          <p className="label">Present</p>
-          <p className="value">{checked_in}</p>
-        </div>
-
-       
-
-        <div className="summary-card absent">
-          <p className="label">Absent</p>
-          <p className="value">{absent >= 0 ? absent : 0}</p>
-        </div>
-
-        <div className="summary-card leave">
-          <p className="label">Leave</p>
-          <p className="value">0</p>
-        </div>
-
-         <div className="summary-card unmarked">
-          <p className="label">Unmarked</p>
-          <p className="value">{unmarked}</p>
-        </div>
+  return (
+    <div className="attendance-summary">
+      <div className="summary-card total">
+        <p className="label">Total</p>
+        <p className="value">{total}</p>
       </div>
-    );
-  }
+
+      <div className="summary-card present">
+        <p className="label">Present</p>
+        <p className="value">{totalPresent}</p>
+      </div>
+
+      <div className="summary-card absent">
+        <p className="label">Absent</p>
+        <p className="value">{absent}</p>
+      </div>
+
+      <div className="summary-card leave">
+        <p className="label">Leave</p>
+        <p className="value">0</p>
+      </div>
+
+      <div className="summary-card unmarked">
+        <p className="label">Unmarked</p>
+        <p className="value">{unmarked}</p>
+      </div>
+    </div>
+  );
+}
+
 
   /* ===========================
      MONTHLY SUMMARY (NEW)
