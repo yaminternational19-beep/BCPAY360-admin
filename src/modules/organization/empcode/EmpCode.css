@@ -1,0 +1,64 @@
+.empcode-container {
+  max-width: 480px;
+  margin: 30px auto;
+  padding: 24px;
+  background: #0f172a;
+  border-radius: 10px;
+  border: 1px solid #334155;
+}
+
+.empcode-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #f8fafc;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: #020617;
+  border: 1px solid #475569;
+  color: #f8fafc;
+}
+
+.preview-box {
+  margin-top: 20px;
+  padding: 14px;
+  background: #020617;
+  border: 1px dashed #38bdf8;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.preview-code {
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  background: #38bdf8;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+}

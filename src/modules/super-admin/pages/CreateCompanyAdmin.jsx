@@ -4,8 +4,13 @@ import "../../../styles/Forms.css";
 
 export default function CreateCompanyAdmin() {
   const [companies, setCompanies] = useState([]);
-  const [form, setForm] = useState({ company_id: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    company_id: "",
+    email: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // 👈 NEW
 
   useEffect(() => {
     fetch(`${API_BASE}/api/companies`, {
@@ -36,16 +41,18 @@ export default function CreateCompanyAdmin() {
     if (res.ok) {
       alert("Admin created");
       setForm({ company_id: "", email: "", password: "" });
+      setShowPassword(false);
     } else {
       alert("Failed to create admin");
     }
   };
 
-  return (
+ return (
     <form className="card fade-in" onSubmit={submit}>
-      <h3>Create Company Admin</h3>
+      <h3 className="form-title">Create Company Admin</h3>
 
       <select
+        className="form-input"
         value={form.company_id}
         onChange={e => setForm({ ...form, company_id: e.target.value })}
       >
@@ -58,22 +65,35 @@ export default function CreateCompanyAdmin() {
       </select>
 
       <input
+        className="form-input"
         placeholder="Admin Email"
         value={form.email}
         onChange={e => setForm({ ...form, email: e.target.value })}
       />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={form.password}
-        onChange={e => setForm({ ...form, password: e.target.value })}
-      />
+      {/* 🔐 PASSWORD WITH EYE TOGGLE (unchanged) */}
+      <div className="password-field">
+        <input
+          className="form-input"
+          type={showPassword ? "text" : "password"}
+          placeholder="Password"
+          value={form.password}
+          onChange={e => setForm({ ...form, password: e.target.value })}
+        />
 
-      <button disabled={loading}>
+        <button
+          type="button"
+          className="eye-toggle"
+          onClick={() => setShowPassword(p => !p)}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+        >
+          {showPassword ? "🙈" : "👁️"}
+        </button>
+      </div>
+
+      <button className="form-button" disabled={loading}>
         {loading ? "Creating..." : "Create Admin"}
       </button>
     </form>
   );
 }
-

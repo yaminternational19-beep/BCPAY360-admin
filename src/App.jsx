@@ -21,13 +21,15 @@ import HRLogin from "./pages/HRLogin";
 
 // New module imports
 import SuperAdminRoutes from "./modules/super-admin";
-import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions } from "./modules/organization";
+import SoftwareReportsRoutes from "./modules/software-reports";
+import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode } from "./modules/organization";
 import EmployeeList from "./modules/employee/pages/EmployeeList";
 import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
 import PayrollManagement from "./modules/payroll/PayrollManagement";
 import Sidebar from "./layout/Sidebar";
 import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
+import "./modules/software-reports/styles/softwareReports.css";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
 
@@ -174,6 +176,14 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route
+              path="organization/emp-code"
+              element={
+                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                  <EmpCode user={user} />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
               path="hr/:hrId/permissions"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
@@ -250,10 +260,10 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route
-              path="softwarereports"
+              path="softwarereports/*"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <Softwarereports />
+                  <SoftwareReportsRoutes />
                 </RoleProtectedRoute>
               }
             />

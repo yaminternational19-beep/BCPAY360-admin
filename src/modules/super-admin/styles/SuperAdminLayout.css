@@ -1,48 +1,144 @@
+/* ===============================
+   ROOT LAYOUT
+================================ */
 .sa-layout {
   display: flex;
   min-height: 100vh;
+  background: #f1f5f9;
+  font-family: Inter, system-ui, sans-serif;
 }
 
+/* ===============================
+   SIDEBAR
+================================ */
 .sa-sidebar {
   width: 260px;
-  background: var(--sidebar);
-  color: #fff;
-  padding: 24px;
+  background: linear-gradient(180deg, #0f172a, #020617);
+  color: #e5e7eb;
+  padding: 28px 22px;
+
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
+
+  /* ❌ removed sticky */
+  flex-shrink: 0;
+
+  box-shadow: 6px 0 20px rgba(2, 6, 23, 0.35);
 }
 
+/* Brand */
 .sa-sidebar h2 {
-  margin-bottom: 10px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 18px;
 }
 
+/* ===============================
+   NAV LINKS
+================================ */
 .sa-sidebar a {
-  color: #c7d2fe;
-  padding: 12px 14px;
-  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #94a3b8;
   text-decoration: none;
-  transition: all 0.25s var(--ease);
+
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-.sa-sidebar a.active,
 .sa-sidebar a:hover {
-  background: rgba(37, 99, 235, 0.25);
+  background: rgba(148, 163, 184, 0.12);
   color: #fff;
 }
 
+.sa-sidebar a.active {
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.95),
+    rgba(29, 78, 216, 0.95)
+  );
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45);
+}
+
+/* ===============================
+   LOGOUT
+================================ */
 .logout-btn {
   margin-top: auto;
-  background: var(--danger);
+  padding: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  border-radius: 12px;
   border: none;
-  color: #fff;
-  padding: 12px;
-  border-radius: 10px;
   cursor: pointer;
+
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
 }
 
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* ===============================
+   CONTENT AREA
+================================ */
 .sa-content {
   flex: 1;
-  padding: 34px;
-  animation: fadeUp 0.4s var(--ease);
+  padding: 32px;
+  background: #f8fafc;
+
+  /* ✅ Let pages control animation */
+  overflow-x: hidden;
+}
+
+/* ❌ REMOVE THIS COMPLETELY */
+/*
+.sa-content > * {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+*/
+
+/* ===============================
+   RESPONSIVE
+================================ */
+@media (max-width: 900px) {
+  .sa-sidebar {
+    width: 220px;
+  }
+
+  .sa-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 680px) {
+  .sa-layout {
+    flex-direction: column;
+  }
+
+  .sa-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .sa-sidebar h2 {
+    display: none;
+  }
+
+  .logout-btn {
+    margin-left: auto;
+  }
 }

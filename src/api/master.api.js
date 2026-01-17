@@ -314,3 +314,9 @@ export const confirmPayrollBatch = (batchId) =>
   api(`/api/admin/payroll/batches/${batchId}/confirm`, {
     method: "POST",
   });
+
+export const generateEmployeeCode = (data) =>
+  api("/api/admin/employee/code", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });

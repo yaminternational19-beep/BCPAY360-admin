@@ -15,6 +15,9 @@ export default function Login({ onLogin }) {
 
   const companiesLoading = companies.length === 0;
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [otpResendCooldown, setOtpResendCooldown] = useState(0);
+  const [userEmail, setUserEmail] = useState("");
 
   const [form, setForm] = useState({
     companyId: "",
@@ -23,6 +26,30 @@ export default function Login({ onLogin }) {
     emp_id: "",
     otp: "",
   });
+
+  // Helper to reset form cleanly
+  const resetFormState = () => {
+    setForm({
+      companyId: "",
+      email: "",
+      password: "",
+      emp_id: "",
+      otp: "",
+    });
+    setShowPassword(false);
+    setTempLoginId(null);
+    setOtpResendCooldown(0);
+    setUserEmail("");
+  };
+
+  // OTP Resend Cooldown Timer
+  useEffect(() => {
+    if (otpResendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpResendCooldown]);
 
   /* =============================
      FETCH COMPANIES (COMPANY ADMIN)
@@ -56,6 +83,7 @@ export default function Login({ onLogin }) {
     }
 
     setRole(r);
+    resetFormState();
 
     if (r === "HR") {
       navigate("/hr/login", { replace: true });
@@ -63,6 +91,15 @@ export default function Login({ onLogin }) {
     }
 
     setStep("LOGIN");
+  };
+
+  /* =============================
+     BACK TO ROLE SELECTION
+  ============================= */
+  const handleBackToRole = () => {
+    setRole(null);
+    setStep("ROLE");
+    resetFormState();
   };
 
   /* =============================
@@ -84,7 +121,7 @@ export default function Login({ onLogin }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         company_id: Number(form.companyId),
-        email: form.email.trim(),
+        email: form.email,
         password: form.password,
       }),
 
@@ -94,6 +131,8 @@ export default function Login({ onLogin }) {
     if (!res.ok) throw new Error(data.message);
 
     setTempLoginId(data.tempLoginId);
+    setUserEmail(form.email);
+    setOtpResendCooldown(45);
     setStep("OTP");
   } catch (err) {
     alert(err.message || "Login failed");
@@ -130,6 +169,8 @@ export default function Login({ onLogin }) {
       if (!res.ok) throw new Error(data.message);
 
       setTempLoginId(data.tempLoginId);
+      setUserEmail(data.email || "your registered email");
+      setOtpResendCooldown(45);
       setStep("OTP");
     } catch (err) {
       alert(err.message || "HR login failed");
@@ -177,15 +218,14 @@ export default function Login({ onLogin }) {
                   verified: true,
                   emp_id: data.emp_id,
                   department: data.department,
-                  company_id: data.company_id, // 🔥 FIX
+                  company_id: data.company_id,
                 }
               : {
                   role: "COMPANY_ADMIN",
                   verified: true,
-                  company_id: data.company_id, // 🔥 FIX
+                  company_id: data.company_id,
                 };
 
-      // 🔐 STORE TOKEN (CRITICAL)
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
@@ -193,7 +233,6 @@ export default function Login({ onLogin }) {
       localStorage.setItem("auth_user", JSON.stringify(user));
       onLogin(user);
 
-      // 🔥 CORRECT REDIRECT
       navigate(
         role === "HR" ? "/" : "/dashboard",
         { replace: true }
@@ -206,7 +245,52 @@ export default function Login({ onLogin }) {
   };
 
   /* =============================
-     UI
+     OTP RESEND
+  ============================= */
+  const handleResendOTP = async (e) => {
+    e.preventDefault();
+
+    if (!tempLoginId || otpResendCooldown > 0) {
+      return;
+    }
+    console.log("Resend clicked", { tempLoginId, role });
+
+
+    try {
+      setLoading(true);
+
+      const url =
+        role === "HR"
+          ? `${API_BASE}/api/hr/verify-otp`
+          : `${API_BASE}/api/company-admins/verify-otp`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "RESEND",
+          tempLoginId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      if (data.tempLoginId) {
+        setTempLoginId(data.tempLoginId);
+      }
+
+      setForm({ ...form, otp: "" });
+      setOtpResendCooldown(45);
+    } catch (err) {
+      alert(err.message || "Failed to resend OTP");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =============================
+     UI - ROLE SELECTION
   ============================= */
 
   if (step === "ROLE") {
@@ -214,22 +298,50 @@ export default function Login({ onLogin }) {
       <div className="login-page">
         <div className="login-card">
           <h2>Select Role</h2>
-          <button onClick={() => selectRole("SUPER_ADMIN")}>
+          <button 
+            type="button"
+            className="primary-btn"
+            onClick={() => selectRole("SUPER_ADMIN")}
+          >
             Super Admin
           </button>
-          <button onClick={() => selectRole("COMPANY_ADMIN")}>
+          <button 
+            type="button"
+            className="primary-btn"
+            onClick={() => selectRole("COMPANY_ADMIN")}
+          >
             Company Admin
           </button>
-          <button onClick={() => selectRole("HR")}>HR</button>
+          <button 
+            type="button"
+            className="primary-btn"
+            onClick={() => selectRole("HR")}
+          >
+            HR
+          </button>
         </div>
       </div>
     );
   }
 
+  /* =============================
+     UI - COMPANY ADMIN LOGIN
+  ============================= */
   if (step === "LOGIN") {
+    const isAdminFormValid = form.companyId && form.email && form.password;
+
     return (
       <div className="login-page">
         <form className="login-card" onSubmit={submitAdminLogin}>
+          <button
+            type="button"
+            className="change-role-btn"
+            onClick={handleBackToRole}
+          >
+            <span className="arrow">←</span>
+            Change Role
+          </button>
+
           <h2>Admin Login</h2>
 
           <select
@@ -250,7 +362,6 @@ export default function Login({ onLogin }) {
             ))}
           </select>
 
-
           <input
             placeholder="Email"
             value={form.email}
@@ -259,16 +370,30 @@ export default function Login({ onLogin }) {
             }
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
-          />
+          <div className="password-input-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
 
-          <button disabled={loading}>
+          <button 
+            type="submit"
+            disabled={loading || !isAdminFormValid}
+            className="primary-btn"
+          >
             {loading ? "Checking..." : "Continue"}
           </button>
         </form>
@@ -276,10 +401,24 @@ export default function Login({ onLogin }) {
     );
   }
 
+  /* =============================
+     UI - HR LOGIN
+  ============================= */
   if (step === "HR_LOGIN") {
+    const isHRFormValid = form.emp_id && form.password;
+
     return (
       <div className="login-page">
         <form className="login-card" onSubmit={submitHRLogin}>
+          <button
+            type="button"
+            className="change-role-btn"
+            onClick={handleBackToRole}
+          >
+            <span className="arrow">←</span>
+            Change Role
+          </button>
+
           <h2>HR Login</h2>
 
           <input
@@ -290,16 +429,30 @@ export default function Login({ onLogin }) {
             }
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
-          />
+          <div className="password-input-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(!showPassword)}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
 
-          <button disabled={loading}>
+          <button 
+            type="submit"
+            disabled={loading || !isHRFormValid}
+            className="primary-btn"
+          >
             {loading ? "Checking..." : "Continue"}
           </button>
         </form>
@@ -307,23 +460,53 @@ export default function Login({ onLogin }) {
     );
   }
 
-  return (
-    <div className="login-page">
-      <form className="login-card" onSubmit={submitOTP}>
-        <h2>OTP Verification</h2>
+  /* =============================
+     UI - OTP VERIFICATION
+  ============================= */
+  if (step === "OTP") {
+    const isOTPFormValid = form.otp.length >= 4;
+    const canResend = otpResendCooldown === 0 && !loading;
 
-        <input
-          placeholder="Enter OTP"
-          value={form.otp}
-          onChange={(e) =>
-            setForm({ ...form, otp: e.target.value })
-          }
-        />
+    return (
+      <div className="login-page">
+        <form className="login-card otp-card" onSubmit={submitOTP}>
+          <h2>OTP Verification</h2>
 
-        <button disabled={loading}>
-          {loading ? "Verifying..." : "Verify"}
-        </button>
-      </form>
-    </div>
-  );
+          <p className="otp-helper">
+            OTP sent to <strong>{userEmail}</strong>
+          </p>
+
+          <input
+            placeholder="Enter OTP"
+            maxLength="6"
+            value={form.otp}
+            onChange={(e) =>
+              setForm({ ...form, otp: e.target.value })
+            }
+          />
+
+          <div className="otp-buttons">
+            <button 
+              type="submit"
+              disabled={loading || !isOTPFormValid}
+              className="primary-btn"
+            >
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
+
+            <button 
+              type="button"
+              onClick={handleResendOTP}
+              disabled={loading || !canResend}
+              className="secondary-btn"
+            >
+              {otpResendCooldown > 0
+                ? `Resend OTP (${otpResendCooldown}s)`
+                : "Resend OTP"}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 }

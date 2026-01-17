@@ -106,6 +106,116 @@
   color: #0f172a;
 }
 
+/* --- NESTED SUBMENU SECTIONS --- */
+.submenu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.submenu-header {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  padding-left: 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.submenu-header:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.submenu-header span {
+  flex: 1;
+  text-align: left;
+}
+
+.submenu-header svg {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.submenu-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 8px;
+  border-left: 2px solid #e2e8f0;
+  margin-left: 12px;
+}
+
+.submenu-header-nested {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  padding-left: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.submenu-header-nested:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.submenu-header-nested span {
+  flex: 1;
+  text-align: left;
+}
+
+.submenu-header-nested svg {
+  font-size: 11px;
+  transition: transform 0.2s ease;
+}
+
+.submenu-nested-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 8px;
+  margin-left: 8px;
+}
+
+.submenu-item-nested {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  padding-left: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #78909c;
+  font-size: 12px;
+  text-align: left;
+}
+
+.submenu-item-nested:hover {
+  background-color: #f8fafc;
+  color: #1e293b;
+  padding-left: 20px;
+}
+
 /* --- COLLAPSED --- */
 .sidebar.collapsed {
   width: 72px;

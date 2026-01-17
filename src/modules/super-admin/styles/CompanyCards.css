@@ -1,6 +1,23 @@
 .company-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
-  animation: fadeUp 0.5s var(--ease);
+}
+
+/* EMPTY */
+.company-empty {
+  padding: 48px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 16px;
+}
+
+.company-empty h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.company-empty p {
+  margin-top: 6px;
+  color: #64748b;
 }

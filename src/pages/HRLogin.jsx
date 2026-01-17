@@ -14,7 +14,7 @@ const normalize_emp_id = (value) => {
   if (!digits) return "";
 
   return `EMP${digits.padStart(3, "0")}`;
-};
+};  
 
 export default function HRLogin({ on_login }) {
   const navigate = useNavigate();
@@ -33,7 +33,8 @@ export default function HRLogin({ on_login }) {
     otp: "",
   });
 
-  /* ===============================
+  /* ===============================fix the issues same in this file also
+
      LOAD COMPANIES (OPTIONAL)
   ================================ */
   useEffect(() => {

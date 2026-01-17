@@ -31,26 +31,28 @@ export default function CreateCompany() {
     }
   };
 
-  return (
+   return (
     <form className="card fade-in" onSubmit={submit}>
-      <h3>Create Company</h3>
+      <h3 className="form-title">Create Company</h3>
 
       <input
+        className="form-input"
         placeholder="Company Name"
         value={form.name}
         onChange={e => setForm({ ...form, name: e.target.value })}
       />
 
       <input
+        className="form-input"
         placeholder="Company Email"
         value={form.email}
         onChange={e => setForm({ ...form, email: e.target.value })}
       />
 
-      <button disabled={loading}>
+      <button className="form-button" disabled={loading}>
         {loading ? "Creating..." : "Create Company"}
       </button>
     </form>
-  );
+  );  
 }
 

@@ -21,17 +21,33 @@ export default function Dashboard() {
       });
   }, []);
 
-  if (loading) return <p>Loading dashboard...</p>;
+  if (loading) {
+    return <div className="dashboard-loading">Loading dashboard…</div>;
+  }
 
   return (
-    <>
-      <div className="stat-grid">
-        <StatCard label="Total Companies" value={companies.length} />
-        <StatCard label="Active Companies" value={companies.filter(c => c.is_active).length} />
+    <div className="dashboard">
+      {/* TOP CONTEXT */}
+      <div className="dashboard-top">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Overview of companies and system status</p>
+        </div>
       </div>
 
-      <CompanyCards companies={companies} />
-    </>
+      {/* STATS */}
+      <div className="stat-grid">
+        <StatCard label="Total Companies" value={companies.length} />
+        <StatCard
+          label="Active Companies"
+          value={companies.filter(c => c.is_active).length}
+        />
+      </div>
+
+      {/* DATA */}
+      <div className="dashboard-section">
+        <CompanyCards companies={companies} />
+      </div>
+    </div>
   );
 }
-

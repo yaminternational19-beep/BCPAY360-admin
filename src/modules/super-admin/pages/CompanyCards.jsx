@@ -3,7 +3,12 @@ import "../styles/CompanyCards.css";
 
 export default function CompanyCards({ companies }) {
   if (!companies.length) {
-    return <p>No companies found.</p>;
+    return (
+      <div className="company-empty">
+        <h3>No companies yet</h3>
+        <p>Create a company to get started</p>
+      </div>
+    );
   }
 
   return (
@@ -14,4 +19,3 @@ export default function CompanyCards({ companies }) {
     </div>
   );
 }
-
