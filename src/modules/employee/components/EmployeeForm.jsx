@@ -9,11 +9,28 @@ import {
   ChevronRight,
   Upload,
   Image as ImageIcon,
+  AlertCircle,
 } from "lucide-react";
 import "../../../styles/EmployeeForm.css";
 import { getDepartments, getDesignations, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
-import { getLastEmployeeCode } from "../../../api/employees.api";
+import { getLastEmployeeCode, getAvailableCompanyForms } from "../../../api/employees.api";
 import { useToast } from "../../../context/ToastContext";
+import {
+  validateEmail,
+  validatePhone,
+  validateAge,
+  validateConfirmationDate,
+  validateJoiningDate,
+  validateSalary,
+  validateExperience,
+  validateIFSC,
+  validatePAN,
+  validateAadhaar,
+  validateUAN,
+  validateESIC,
+  validateFile,
+  formatFileSize
+} from "../../../utils/validation";
 
 const COUNTRY_CODES = [
   "+91 (India)",
@@ -30,6 +47,17 @@ const COUNTRY_CODES = [
   "+880 (Bangladesh)",
 ];
 
+// ✅ MUST be outside the component
+const DEFAULT_DOCUMENTS = [
+  { form_code: "PAN", form_name: "PAN Card" },
+  { form_code: "AADHAAR", form_name: "Aadhaar Card" },
+  { form_code: "APPLICATION_FORM", form_name: "Application Form" },
+  { form_code: "APPOINTMENT_LETTER", form_name: "Appointment Letter" },
+  { form_code: "CONFIRMATION_LETTER", form_name: "Confirmation Letter" },
+  { form_code: "ID", form_name: "ID Card" }
+];
+
+
 const EmployeeForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
   const toast = useToast();
@@ -43,6 +71,11 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const [shifts, setShifts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [companyForms, setCompanyForms] = useState([]);
+
+  // Validation State
+  const [errors, setErrors] = useState({});
+  const [sameAddress, setSameAddress] = useState(false);
 
   const [employeeForm, setEmployeeForm] = useState({
     employee_code: "",
@@ -60,7 +93,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
     joining_date: "",
     confirmation_date: "",
-    notice_period_days: "",
+    notice_period_days: "90",
 
     experience_years: "",
     salary: "",
@@ -75,6 +108,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
     uan_number: "",
     esic_number: "",
+
+    pan_number: "",    // Added to state init for consistency
+    aadhaar_number: "" // Added to state init for consistency
   });
 
 
@@ -102,9 +138,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
 
   const [documentsForm, setDocumentsForm] = useState({
-  files: {},
-  existing: [],
-});
+    files: {},
+    existing: [],
+  });
 
 
 
@@ -173,37 +209,52 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     // However, the backend expects 'pan', 'aadhaar' in documentsForm
     // We'll try to find them from the docs array if they are not already in pf (though pf doesn't have them)
     setDocumentsForm({
-  files: {},
-  existing: docs || [],
-});
+      files: {},
+      existing: docs || [],
+    });
 
   }, [isEdit, initial]);
 
   // 2️⃣ Employee Code (only on create)
   useEffect(() => {
-    if (isEdit) return;
+    if (isEdit) return;                // no auto code on edit
+    if (!employeeForm.branch_id) return; // wait until branch selected
 
-    let mounted = true;
-
-    getLastEmployeeCode()
+    getLastEmployeeCode(employeeForm.branch_id)
       .then((res) => {
-        if (mounted && res?.code) {
-          setEmployeeForm((p) => ({
-            ...p,
+        if (res?.code) {
+          setEmployeeForm((prev) => ({
+            ...prev,
             employee_code: res.code,
           }));
         }
       })
       .catch((err) => {
-        console.error("Failed to get employee code", err);
+        console.error("Failed to get employee code", err.message);
       });
+  }, [employeeForm.branch_id, isEdit]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [isEdit]);
+  const dynamicDocuments = companyForms.filter(
+    (f) =>
+      f.status === "ACTIVE" &&
+      !DEFAULT_DOCUMENTS.some((d) => d.form_code === f.form_code)
+  );
+
+  const ALL_DOCUMENTS = [...DEFAULT_DOCUMENTS, ...dynamicDocuments];
 
 
+
+  useEffect(() => {
+    getAvailableCompanyForms()
+      .then((res) => {
+        // expecting array [{ form_code, form_name, status }]
+        setCompanyForms(Array.isArray(res) ? res : res.data || []);
+      })
+      .catch((err) => {
+        console.error("Failed to load company forms", err);
+        setCompanyForms([]);
+      });
+  }, []);
 
 
   // 2️⃣ Load branches (on mount)
@@ -279,26 +330,179 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
 
 
+  const handleValidate = (name, value, formType = "employee") => {
+    let error = "";
+
+    // Employee Form Validations
+    if (formType === "employee") {
+      switch (name) {
+        case "email":
+          error = validateEmail(value);
+          break;
+        case "phone":
+          error = validatePhone(value, employeeForm.country_code);
+          break;
+        case "salary":
+          error = validateSalary(value, employeeForm.ctc_annual);
+          break;
+        case "ctc_annual":
+          // Re-validate salary when CTC changes
+          const salaryError = validateSalary(employeeForm.salary, value);
+          setErrors(prev => ({ ...prev, salary: salaryError }));
+          error = validateSalary(employeeForm.salary, value) ? "" : ""; // validateCtc? logic is in validateSalary
+          break;
+        case "experience_years":
+          error = validateExperience(value);
+          break;
+        case "confirmation_date":
+          error = validateConfirmationDate(value);
+          break;
+        case "joining_date":
+          error = validateJoiningDate(value, employeeForm.confirmation_date);
+          break;
+        case "uan_number":
+          error = validateUAN(value);
+          break;
+        case "esic_number":
+          error = validateESIC(value);
+          break;
+        case "pan_number":
+          error = validatePAN(value);
+          break;
+        case "aadhaar_number":
+          error = validateAadhaar(value);
+          break;
+        default:
+          break;
+      }
+    }
+
+    // Profile Form Validations
+    if (formType === "profile") {
+      switch (name) {
+        case "dob":
+          error = validateAge(value);
+          break;
+        case "ifsc_code":
+          error = validateIFSC(value);
+          break;
+        case "account_number":
+          // Basic check if needed, regex in utils
+          // patterns.ACCOUNT_NUMBER.test(value)
+          break;
+        default:
+          break;
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+    return error;
+  };
+
   const changeEmployee = (k, v) => {
     setEmployeeForm(p => ({ ...p, [k]: v }));
+    // Clear error on change, or validate on change? 
+    // Requirement: "On change → clear errors", "On blur → field validation"
+    if (errors[k]) {
+      setErrors(prev => ({ ...prev, [k]: "" }));
+    }
+  };
+
+  const handleBlurEmployee = (k) => {
+    handleValidate(k, employeeForm[k], "employee");
   };
 
   const changeProfile = (k, v) => {
     setProfileForm(p => ({ ...p, [k]: v }));
+    if (errors[k]) {
+      setErrors(prev => ({ ...prev, [k]: "" }));
+    }
+  };
+
+  const handleBlurProfile = (k) => {
+    handleValidate(k, profileForm[k], "profile");
+  };
+
+  // Address Sync Logic
+  useEffect(() => {
+    if (sameAddress) {
+      setProfileForm(prev => ({ ...prev, permanent_address: prev.address }));
+    }
+  }, [sameAddress, profileForm.address]);
+
+  const toggleSameAddress = (checked) => {
+    setSameAddress(checked);
+    if (checked) {
+      setProfileForm(prev => ({ ...prev, permanent_address: profileForm.address }));
+    }
   };
 
 
+  const handleNext = () => {
+    setStep((prev) => prev + 1);
+  };
+
   const submit = async () => {
-    // 1. Basic Client-side Validation
-    if (!employeeForm.full_name?.trim()) return toast.error("Full Name is required");
-    if (!employeeForm.email?.trim()) return toast.error("Email is required");
-    if (!employeeForm.joining_date) return toast.error("Joining Date is required");
-    if (!employeeForm.branch_id) return toast.error("Branch is required");
-    if (!employeeForm.department_id) return toast.error("Department is required");
-    if (!employeeForm.designation_id) return toast.error("Designation is required");
+    // 1. Full Validation before Submit
+    const newErrors = {};
+    let isValid = true;
+
+    // --- Mandatory Fields Check ---
+    if (!employeeForm.branch_id) { isValid = false; toast.error("Branch is required"); }
+    if (!employeeForm.full_name?.trim()) { isValid = false; toast.error("Full Name is required"); }
+    if (!employeeForm.email?.trim()) { isValid = false; newErrors.email = "Email is required"; }
+    if (!employeeForm.joining_date) { isValid = false; newErrors.joining_date = "Joining Date is required"; }
+    if (!employeeForm.department_id) { isValid = false; toast.error("Department is required"); }
+    if (!employeeForm.designation_id) { isValid = false; toast.error("Designation is required"); }
+    if (!profileForm.dob) { isValid = false; newErrors.dob = "Date of Birth is required"; }
 
     if (!isEdit && !employeeForm.password?.trim()) {
-      return toast.error("Password is required for new employees");
+      isValid = false;
+      toast.error("Password is required for new employees");
+    }
+
+    // --- Format Validations ---
+    const empFields = ["email", "phone", "salary", "experience_years", "confirmation_date", "joining_date", "uan_number", "esic_number", "pan_number", "aadhaar_number"];
+    empFields.forEach(f => {
+      const err = handleValidate(f, employeeForm[f], "employee");
+      if (err) {
+        newErrors[f] = err;
+        isValid = false;
+      }
+    });
+
+    const profFields = ["dob", "ifsc_code", "account_number"];
+    profFields.forEach(f => {
+      const err = handleValidate(f, profileForm[f], "profile");
+      if (err) {
+        newErrors[f] = err;
+        isValid = false;
+      }
+    });
+
+    // --- Mandatory Document Files Check ---
+    const mandatoryDocs = ["PAN", "AADHAAR"];
+    mandatoryDocs.forEach(code => {
+      const isUploaded = documentsForm.files[code];
+      const isExisting = documentsForm.existing?.some(d => d.document_type === code);
+      if (!isUploaded && !isExisting) {
+        isValid = false;
+        toast.error(`Please upload ${code} document`);
+      }
+    });
+
+    if (!isValid) {
+      setErrors(prev => ({ ...prev, ...newErrors }));
+      toast.error("Please fix all errors before saving");
+
+      // Scroll to first error
+      setTimeout(() => {
+        const firstError = document.querySelector(".error-border, .error-text");
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      return;
     }
 
     setIsSaving(true);
@@ -330,12 +534,12 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       // Build documentsForm ONLY from uploaded files
       const documentsMeta = {};
 
-Object.keys(documentsForm.files || {}).forEach((key) => {
-  documentsMeta[key] = "UPLOADED";
-});
+      Object.keys(documentsForm.files || {}).forEach((key) => {
+        documentsMeta[key] = "UPLOADED";
+      });
 
-// 🔥 THIS LINE WAS MISSING
-formData.append("documentsForm", JSON.stringify(documentsMeta));
+      // 🔥 THIS LINE WAS MISSING
+      formData.append("documentsForm", JSON.stringify(documentsMeta));
 
 
 
@@ -353,11 +557,11 @@ formData.append("documentsForm", JSON.stringify(documentsMeta));
 
       console.log("🚀 Submitting FormData for Employee...");
       console.log("📦 documentsForm.files:", documentsForm.files);
-console.log("📦 documentsMeta:", documentsMeta);
+      console.log("📦 documentsMeta:", documentsMeta);
 
-for (let pair of formData.entries()) {
-  console.log("🧾 FormData:", pair[0], pair[1]);
-}
+      for (let pair of formData.entries()) {
+        console.log("🧾 FormData:", pair[0], pair[1]);
+      }
 
       await onSave(formData);
       // toast is handled in parent handleSave or can be handled here if we await it 
@@ -372,37 +576,92 @@ for (let pair of formData.entries()) {
 
   const FileField = ({ label, field, accept }) => {
     const existing = documentsForm.existing?.find(d => d.document_type === field);
+    const uploadedFile = documentsForm.files?.[field];
 
     return (
       <div className="upload-inline">
-        <Upload />
-        <input
-          type="file"
-          accept={accept}
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        <label className="file-field-container">
+          <div className="file-field-icon">
+            {uploadedFile ? <FileText color="#4caf50" /> : existing ? <FileText color="#2196f3" /> : <Upload />}
+          </div>
 
-            setDocumentsForm((p) => ({
-              ...p,
-              files: {
-                ...p.files,
-                [field]: file,
-              },
-            }));
-          }}
-        />
-        <div className="file-info">
-          {documentsForm.files?.[field] ? (
-            <span className="new-file">{documentsForm.files[field].name} (Ready to upload)</span>
-          ) : existing ? (
-            <a href={existing.view_url || existing.url} target="_blank" rel="noreferrer" className="existing-file">
-              View Existing {field}
-            </a>
-          ) : (
-            <span>{label}</span>
-          )}
-        </div>
+          <div className="file-field-content">
+            <span className="file-label">{label}</span>
+            {uploadedFile ? (
+              <div className="file-details">
+                <span className="file-name" title={uploadedFile.name}>{uploadedFile.name}</span>
+                <span className="file-size">{formatFileSize(uploadedFile.size)}</span>
+              </div>
+            ) : existing ? (
+              <div className="file-details">
+                <span className="file-name existing">Existing Document</span>
+                <a
+                  href={existing.view_url || existing.url || existing.signedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="view-link"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  View / Download
+                </a>
+              </div>
+            ) : (
+              <span className="file-placeholder">Click to upload</span>
+            )}
+          </div>
+
+          <input
+            type="file"
+            accept={accept}
+            className="hidden-file-input"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+
+              const err = validateFile(file);
+              if (err) {
+                toast.error(err);
+                return;
+              }
+
+              setDocumentsForm((p) => ({
+                ...p,
+                files: {
+                  ...p.files,
+                  [field]: file,
+                },
+              }));
+            }}
+          />
+        </label>
+
+        {/* Replace Button for Existing/Uploaded */}
+        {(existing || uploadedFile) && (
+          <label className="replace-btn">
+            <span>Replace</span>
+            <input
+              type="file"
+              accept={accept}
+              className="hidden-file-input"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const err = validateFile(file);
+                if (err) {
+                  toast.error(err);
+                  return;
+                }
+                setDocumentsForm((p) => ({
+                  ...p,
+                  files: {
+                    ...p.files,
+                    [field]: file,
+                  },
+                }));
+              }}
+            />
+          </label>
+        )}
       </div>
     );
   };
@@ -418,13 +677,22 @@ for (let pair of formData.entries()) {
         </div>
 
         <div className="emp-step-tabs">
-          <div className={step === 1 ? "step active" : "step"}>
+          <div
+            className={step === 1 ? "step active" : "step"}
+            onClick={() => !isSaving && setStep(1)}
+          >
             <User /> Employee
           </div>
-          <div className={step === 2 ? "step active" : "step"}>
+          <div
+            className={step === 2 ? "step active" : "step"}
+            onClick={() => !isSaving && setStep(2)}
+          >
             <Building2 /> Bio Data
           </div>
-          <div className={step === 3 ? "step active" : "step"}>
+          <div
+            className={step === 3 ? "step active" : "step"}
+            onClick={() => !isSaving && setStep(3)}
+          >
             <FileText /> Documents
           </div>
         </div>
@@ -432,6 +700,25 @@ for (let pair of formData.entries()) {
         {step === 1 && (
           <div className="emp-form-section">
             <h4>Employee & Login Information</h4>
+
+            <div className="form-grid">
+              <div>
+                <label>Branch *</label>
+                <select
+                  value={employeeForm.branch_id}
+                  onChange={(e) =>
+                    changeEmployee("branch_id", e.target.value)
+                  }
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.branch_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             {/* Employee Code + Status */}
             <div className="form-grid">
@@ -454,7 +741,7 @@ for (let pair of formData.entries()) {
             </div>
 
             {/* Name + Email */}
-            <label>Full Name (As per Govt ID)</label>
+            <label>Full Name (As per Govt ID) *</label>
             <input
               placeholder="Employee full name"
               value={employeeForm.full_name}
@@ -463,14 +750,17 @@ for (let pair of formData.entries()) {
               }
             />
 
-            <label>Email</label>
+            <label>Email * <span className="helper-text">Use official email address</span></label>
             <input
+              className={errors.email ? "error-border" : ""}
               placeholder="employee@email.com"
               value={employeeForm.email}
               onChange={(e) =>
                 changeEmployee("email", e.target.value)
               }
+              onBlur={() => handleBlurEmployee("email")}
             />
+            {errors.email && <span className="error-text">{errors.email}</span>}
 
             {/* Phone */}
             <div className="form-grid">
@@ -491,8 +781,9 @@ for (let pair of formData.entries()) {
                 </select>
               </div>
               <div>
-                <label>Phone Number</label>
+                <label>Phone Number * <span className="helper-text">Include country code</span></label>
                 <input
+                  className={errors.phone ? "error-border" : ""}
                   placeholder="Mobile number"
                   value={employeeForm.phone}
                   onChange={(e) =>
@@ -501,7 +792,9 @@ for (let pair of formData.entries()) {
                       e.target.value.replace(/\D/g, "")
                     )
                   }
+                  onBlur={() => handleBlurEmployee("phone")}
                 />
+                {errors.phone && <span className="error-text">{errors.phone}</span>}
               </div>
             </div>
 
@@ -528,24 +821,7 @@ for (let pair of formData.entries()) {
               </>
             )}
             {/* Org Mapping */}
-            <div className="form-grid">
-              <div>
-                <label>Branch</label>
-                <select
-                  value={employeeForm.branch_id}
-                  onChange={(e) =>
-                    changeEmployee("branch_id", e.target.value)
-                  }
-                >
-                  <option value="">Select Branch</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.branch_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+
 
             {/* Type + Shift */}
             <div className="form-grid">
@@ -590,47 +866,59 @@ for (let pair of formData.entries()) {
               <div>
                 <label>Confirmation Date</label>
                 <input
+                  className={errors.confirmation_date ? "error-border" : ""}
                   type="date"
                   value={employeeForm.confirmation_date}
                   onChange={(e) =>
                     changeEmployee("confirmation_date", e.target.value)
                   }
+                  onBlur={() => handleBlurEmployee("confirmation_date")}
                 />
+                {errors.confirmation_date && <span className="error-text">{errors.confirmation_date}</span>}
               </div>
 
               <div>
-                <label>Joining Date</label>
+                <label>Joining Date *</label>
                 <input
+                  className={errors.joining_date ? "error-border" : ""}
                   type="date"
                   value={employeeForm.joining_date}
                   onChange={(e) =>
                     changeEmployee("joining_date", e.target.value)
                   }
+                  onBlur={() => handleBlurEmployee("joining_date")}
                 />
+                {errors.joining_date && <span className="error-text">{errors.joining_date}</span>}
               </div>
             </div>
 
             {/* Salary */}
             <div className="form-grid">
               <div>
-                <label>Salary (Monthly)</label>
+                <label>Salary (Monthly) <span className="helper-text">CTC must be ≥ Salary</span></label>
                 <input
+                  className={errors.salary ? "error-border" : ""}
                   type="number"
                   value={employeeForm.salary}
                   onChange={(e) =>
                     changeEmployee("salary", e.target.value)
                   }
+                  onBlur={() => handleBlurEmployee("salary")}
                 />
+                {errors.salary && <span className="error-text">{errors.salary}</span>}
               </div>
               <div>
                 <label>CTC (Annual)</label>
                 <input
+                  className={errors.ctc_annual ? "error-border" : ""}
                   type="number"
                   value={employeeForm.ctc_annual}
                   onChange={(e) =>
                     changeEmployee("ctc_annual", e.target.value)
                   }
+                  onBlur={() => handleBlurEmployee("ctc_annual")}
                 />
+                {errors.ctc_annual && <span className="error-text">{errors.ctc_annual}</span>}
               </div>
             </div>
 
@@ -639,13 +927,16 @@ for (let pair of formData.entries()) {
               <div>
                 <label>Experience (Years)</label>
                 <input
+                  className={errors.experience_years ? "error-border" : ""}
                   type="number"
                   step="0.1"
                   value={employeeForm.experience_years}
                   onChange={(e) =>
                     changeEmployee("experience_years", e.target.value)
                   }
+                  onBlur={() => handleBlurEmployee("experience_years")}
                 />
+                {errors.experience_years && <span className="error-text">{errors.experience_years}</span>}
               </div>
               <div>
                 <label>Notice Period (Days)</label>
@@ -685,7 +976,7 @@ for (let pair of formData.entries()) {
 
             <div className="form-grid">
               <div>
-                <label>Department</label>
+                <label>Department *</label>
                 <select
                   value={employeeForm.department_id}
                   onChange={(e) =>
@@ -702,7 +993,7 @@ for (let pair of formData.entries()) {
               </div>
 
               <div>
-                <label>Designation</label>
+                <label>Designation *</label>
                 <select
                   value={employeeForm.designation_id}
                   onChange={(e) =>
@@ -743,14 +1034,17 @@ for (let pair of formData.entries()) {
               </div>
 
               <div>
-                <label>Date of Birth</label>
+                <label>Date of Birth *</label>
                 <input
+                  className={errors.dob ? "error-border" : ""}
                   type="date"
                   value={profileForm.dob}
                   onChange={(e) =>
                     changeProfile("dob", e.target.value)
                   }
+                  onBlur={() => handleBlurProfile("dob")}
                 />
+                {errors.dob && <span className="error-text">{errors.dob}</span>}
               </div>
             </div>
 
@@ -817,37 +1111,60 @@ for (let pair of formData.entries()) {
               }
             />
 
-            <label>Permanent Address</label>
+            <div className="address-header">
+              <label>Permanent Address</label>
+              <div className="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  id="sameAddress"
+                  checked={sameAddress}
+                  onChange={(e) => toggleSameAddress(e.target.checked)}
+                />
+                <label htmlFor="sameAddress">Same as Current Address</label>
+              </div>
+            </div>
             <textarea
               placeholder="Full permanent address"
               value={profileForm.permanent_address}
               onChange={(e) =>
                 changeProfile("permanent_address", e.target.value)
               }
+              disabled={sameAddress}
             />
 
             <label>Profile Picture</label>
-            <div className="upload-inline">
-              <ImageIcon />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    changeProfile("profile_photo", file);
-                  }
-                }}
-              />
-              <div className="file-info">
+            <div className="upload-inline profile-upload-box">
+              <div className="preview-bubble">
                 {profileForm.profile_photo ? (
-                  <span className="new-file">{profileForm.profile_photo.name} (Ready to upload)</span>
+                  <img
+                    src={URL.createObjectURL(profileForm.profile_photo)}
+                    alt="Preview"
+                  />
                 ) : initial?.profile?.profile_photo ? (
-                  <a href={initial.profile.profile_photo} target="_blank" rel="noreferrer" className="existing-file">
-                    View Existing Photo
-                  </a>
+                  <img src={initial.profile.profile_photo} alt="Current" />
                 ) : (
-                  <span>Upload profile photo</span>
+                  <div className="no-photo">
+                    <ImageIcon size={32} />
+                  </div>
+                )}
+              </div>
+              <div className="upload-controls">
+                <input
+                  type="file"
+                  id="profile-photo-input"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      changeProfile("profile_photo", file);
+                    }
+                  }}
+                />
+                <label htmlFor="profile-photo-input" className="file-upload-label">
+                  <Upload size={16} /> {profileForm.profile_photo ? "Change Photo" : initial?.profile?.profile_photo ? "Replace Photo" : "Upload Photo"}
+                </label>
+                {profileForm.profile_photo && (
+                  <span className="file-ready-text">{profileForm.profile_photo.name}</span>
                 )}
               </div>
             </div>
@@ -870,12 +1187,16 @@ for (let pair of formData.entries()) {
                   onChange={(e) =>
                     changeProfile("account_number", e.target.value)
                   }
+                  onBlur={() => handleBlurProfile("account_number")}
                 />
+                {errors.account_number && <span className="error-text">{errors.account_number}</span>}
               </div>
 
               <div>
                 <label>IFSC Code</label>
                 <input
+                  className={errors.ifsc_code ? "error-border" : ""}
+                  placeholder="e.g., SBIN0123456"
                   value={profileForm.ifsc_code}
                   onChange={(e) =>
                     changeProfile(
@@ -883,7 +1204,9 @@ for (let pair of formData.entries()) {
                       e.target.value.toUpperCase()
                     )
                   }
+                  onBlur={() => handleBlurProfile("ifsc_code")}
                 />
+                {errors.ifsc_code && <span className="error-text">{errors.ifsc_code}</span>}
               </div>
             </div>
 
@@ -907,23 +1230,29 @@ for (let pair of formData.entries()) {
               <div>
                 <label>UAN Number</label>
                 <input
+                  className={errors.uan_number ? "error-border" : ""}
                   placeholder="Universal Account Number"
                   value={employeeForm.uan_number}
                   onChange={(e) =>
                     changeEmployee("uan_number", e.target.value.replace(/\D/g, ""))
                   }
+                  onBlur={() => handleBlurEmployee("uan_number")}
                 />
+                {errors.uan_number && <span className="error-text">{errors.uan_number}</span>}
               </div>
 
               <div>
                 <label>ESIC Number</label>
                 <input
+                  className={errors.esic_number ? "error-border" : ""}
                   placeholder="ESIC Insurance Number"
                   value={employeeForm.esic_number}
                   onChange={(e) =>
                     changeEmployee("esic_number", e.target.value)
                   }
+                  onBlur={() => handleBlurEmployee("esic_number")}
                 />
+                {errors.esic_number && <span className="error-text">{errors.esic_number}</span>}
               </div>
             </div>
 
@@ -931,48 +1260,42 @@ for (let pair of formData.entries()) {
               <div>
                 <label>PAN Number</label>
                 <input
-  value={employeeForm.pan_number || ""}
-  onChange={(e) =>
-    changeEmployee("pan_number", e.target.value.toUpperCase())
-  }
-/>
-
+                  className={errors.pan_number ? "error-border" : ""}
+                  placeholder="e.g., ABCDE1234F"
+                  value={employeeForm.pan_number || ""}
+                  onChange={(e) =>
+                    changeEmployee("pan_number", e.target.value.toUpperCase())
+                  }
+                  onBlur={() => handleBlurEmployee("pan_number")}
+                />
+                {errors.pan_number && <span className="error-text">{errors.pan_number}</span>}
               </div>
 
               <div>
                 <label>Aadhaar Number</label>
                 <input
-  maxLength={12}
-  value={employeeForm.aadhaar_number || ""}
-  onChange={(e) =>
-    changeEmployee("aadhaar_number", e.target.value.replace(/\D/g, ""))
-  }
-/>
-
+                  className={errors.aadhaar_number ? "error-border" : ""}
+                  maxLength={12}
+                  placeholder="12 digit number"
+                  value={employeeForm.aadhaar_number || ""}
+                  onChange={(e) =>
+                    changeEmployee("aadhaar_number", e.target.value.replace(/\D/g, ""))
+                  }
+                  onBlur={() => handleBlurEmployee("aadhaar_number")}
+                />
+                {errors.aadhaar_number && <span className="error-text">{errors.aadhaar_number}</span>}
               </div>
             </div>
 
             <h4>Upload Documents</h4>
 
             <div className="document-grid">
-              {[
-                ["PAN Card", "PAN"],
-                ["Aadhaar Card", "AADHAAR"],
-                ["ESIC Form-1", "ESIC_FORM_1"],
-                ["EPF Form-2", "EPF_FORM_2"],
-                ["EPF Form-11", "EPF_FORM_11"],
-                ["Form-16", "FORM_16"],
-                ["Form-F", "FORM_F"],
-                ["Appointment Letter", "APPOINTMENT_LETTER"],
-                ["Confirmation Letter", "CONFIRMATION_LETTER"],
-                ["Application Form", "APPLICATION_FORM"],
-                ["ID Card", "ID_CARD"],
-              ].map(([label, type]) => (
-                <div key={type}>
-                  <label>{label}</label>
+              {ALL_DOCUMENTS.map((doc) => (
+                <div key={doc.form_code}>
+                  <label>{doc.form_name}</label>
                   <FileField
-                    label={`Upload ${label}`}
-                    field={type}
+                    label={`Upload ${doc.form_name}`}
+                    field={doc.form_code}
                     accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls"
                   />
                 </div>
@@ -983,16 +1306,21 @@ for (let pair of formData.entries()) {
 
 
 
+
         <div className="emp-form-footer">
           {step > 1 && (
-            <button onClick={() => setStep(step - 1)} disabled={isSaving}>
+            <button
+              className="btn-back"
+              onClick={() => setStep(step - 1)}
+              disabled={isSaving}
+            >
               <ChevronLeft /> Back
             </button>
           )}
 
           {step < 3 && (
-            <button className="primary" onClick={() => setStep(step + 1)} disabled={isSaving}>
-              Save & Continue <ChevronRight />
+            <button className="primary" onClick={handleNext} disabled={isSaving}>
+              Next <ChevronRight />
             </button>
           )}
 

@@ -11,7 +11,7 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
   const initials = email ? email.slice(0, 2).toUpperCase() : "U";
   const companyName = user.company || "Company Portal";
   const unitName = user.unit || user.branch || "";
-  const displayTitle = unitName ? `${companyName} – ${unitName}` : companyName;
+  const displayTitle = unitName ? `${companyName} – ${unitName} ` : companyName;
 
   useEffect(() => {
     const close = (e) => {

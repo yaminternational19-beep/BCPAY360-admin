@@ -6,7 +6,9 @@ import { handleApiError } from "../utils/apiUtils";
 export const getEmployeeById = async (id) =>
   fetch(`${API_BASE}/api/employees/${id}`, {
     headers: authHeader(),
-  }).then(handleApiError);
+  })
+    .then(handleApiError)
+    .then((res) => res.data);
 
 export const createEmployee = async (formData) =>
   fetch(`${API_BASE}/api/employees`, {
@@ -24,16 +26,33 @@ export const updateEmployeeById = async (id, formData) =>
 
 export const listEmployees = async (params = {}) => {
   const query = new URLSearchParams();
-  if (params.page) query.append("page", params.page);
-  if (params.limit) query.append("limit", params.limit);
 
-  const queryString = query.toString();
-  const url = queryString ? `${API_BASE}/api/employees?${queryString}` : `${API_BASE}/api/employees`;
+  // Pagination
+  if (params.limit) query.append("limit", params.limit);
+  if (params.offset !== undefined) query.append("offset", params.offset);
+
+  // Filters (BACKEND-DRIVEN)
+  if (params.branch_id) query.append("branch_id", params.branch_id);
+  if (params.department_id) query.append("department_id", params.department_id);
+  if (params.designation_id) query.append("designation_id", params.designation_id);
+  if (params.shift_id) query.append("shift_id", params.shift_id);
+  if (params.employee_type_id) query.append("employee_type_id", params.employee_type_id);
+
+  // Search & status
+  if (params.search) query.append("search", params.search);
+  if (params.status) query.append("status", params.status);
+
+  // Sorting
+  if (params.sort_by) query.append("sort_by", params.sort_by);
+
+  const url = `${API_BASE}/api/employees?${query.toString()}`;
 
   return fetch(url, {
     headers: authHeader(),
   }).then(handleApiError);
 };
+
+
 
 export const deleteEmployeeById = async (id, force = false) => {
   const url = force
@@ -74,7 +93,24 @@ export const getEmployeeDocuments = async (employee_code) =>
   }).then(handleApiError);
 
 // 3. Specials
-export const getLastEmployeeCode = async () =>
-  fetch(`${API_BASE}/api/employees/last-code`, {
-    headers: authHeader(),
-  }).then(handleApiError);
+export const getLastEmployeeCode = async (branch_id) => {
+  if (!branch_id) {
+    throw new Error("branch_id is required to generate employee code");
+  }
+
+  return fetch(
+    `${API_BASE}/api/employees/last-code?branch_id=${branch_id}`,
+    {
+      headers: authHeader(),
+    }
+  ).then(handleApiError);
+};
+
+// Get available company document forms (dynamic)
+export const getAvailableCompanyForms = async () =>
+  fetch(
+    `${API_BASE}/api/employees/company/forms/available`,
+    {
+      headers: authHeader(),
+    }
+  ).then(handleApiError);

@@ -1,4 +1,5 @@
 import "../../../styles/Attendance.css";
+// import ProfileAvatar from "../../../components/common/ProfileAvatar";
 
 const statusLabelMap = {
   PRESENT: "Present",
@@ -41,8 +42,8 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
         <div className="employee-profile card">
           <img
             src={employee.photo || "/images/avatar-placeholder.png"}
-            alt="profile"
-            className="employee-avatar large"
+            alt={employee.name}
+            className="employee-photo"
           />
 
           <div className="employee-info">

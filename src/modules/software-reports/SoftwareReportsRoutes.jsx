@@ -4,24 +4,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Dashboard
 const Dashboard = lazy(() => import("./dashboard/Dashboard.jsx"));
 
-// PF Forms Table
-const PFFormsTable = lazy(() =>
-  import("./govt-docs/pf/PFFormsTable.jsx")
-);
-
-// ESI Forms Table
-const ESIFormsTable = lazy(() =>
-  import("./govt-docs/esi/ESIFormsTable.jsx")
-);
-
-// Factory Act Forms Table
-const FactoryActFormsTable = lazy(() =>
-  import("./govt-docs/factory-act/FactoryActFormsTable.jsx")
-);
-
-// Other Forms Table
-const OtherFormsTable = lazy(() =>
-  import("./govt-docs/other/OtherFormsTable.jsx")
+// Unified Government Forms
+const GovernmentForms = lazy(() =>
+  import("./pages/GovernmentForms.jsx")
 );
 
 // Reports
@@ -57,17 +42,8 @@ const SoftwareReportsRoutes = () => {
         {/* Dashboard */}
         <Route path="" element={<Dashboard />} />
 
-        {/* PF Forms */}
-        <Route path="govt-docs/pf/forms" element={<PFFormsTable />} />
-
-        {/* ESI Forms */}
-        <Route path="govt-docs/esi/forms" element={<ESIFormsTable />} />
-
-        {/* Factory Act Forms */}
-        <Route path="govt-docs/factory-act/forms" element={<FactoryActFormsTable />} />
-
-        {/* Other Forms */}
-        <Route path="govt-docs/other/forms" element={<OtherFormsTable />} />
+        {/* Unified Government Forms */}
+        <Route path="government-forms" element={<GovernmentForms />} />
 
         {/* Reports */}
         <Route path="reports/employee" element={<EmployeeReports />} />

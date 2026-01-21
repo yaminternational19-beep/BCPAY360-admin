@@ -1,5 +1,6 @@
 import { api, API_BASE } from "./api";
 
+
 export { API_BASE };
 
 /* ===================================================================================
@@ -183,7 +184,7 @@ export const fetchHistoryAttendance = ({
     }
   });
 
-  export const fetchMonthlyAttendance = ({
+export const fetchMonthlyAttendance = ({
   fromDate,
   toDate,
   page = 1,
@@ -295,7 +296,7 @@ export const generatePayrollBatch = (payload) =>
   });
 
 
-  export const getLatestPayrollBatch = () =>
+export const getLatestPayrollBatch = () =>
   api("/api/admin/payroll/batch/latest");
 /**
  * 🔹 Get payroll batch details (for confirm screen)
@@ -319,4 +320,42 @@ export const generateEmployeeCode = (data) =>
   api("/api/admin/employee/code", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+
+
+
+
+
+/* ===================================================================================
+ COMPANY GOVERNMENT FORMS
+ =================================================================================== */
+
+export const getGovernmentForms = (params = {}) =>
+  api("/api/admin/government-forms", {
+    params
+  });
+
+
+export const createGovernmentForm = (formData) =>
+  api("/api/admin/government-forms", {
+    method: "POST",
+    body: formData,
+    isFormData: true
+  });
+
+
+export const updateGovernmentForm = (id, data) =>
+  api(`/api/admin/government-forms/${id}`, {
+    method: "PATCH",
+    body: data,
+    isFormData: data instanceof FormData
+  });
+
+/**
+ * DELETE – permanently delete government form
+ * (only works if status = INACTIVE)
+ */
+export const deleteGovernmentForm = (id) =>
+  api(`/api/admin/government-forms/${id}`, {
+    method: "DELETE"
   });

@@ -141,12 +141,12 @@ const EmpCode = () => {
       </div>
 
       {/* Preview */}
-      {preview && (
+      {/* {preview && (
         <div className="preview-box">
           Next Employee Code
           <div className="preview-code">{preview}</div>
         </div>
-      )}
+      )} */}
 
       {/* Action Button */}
       <button className="btn" onClick={handleSave} disabled={loading}>

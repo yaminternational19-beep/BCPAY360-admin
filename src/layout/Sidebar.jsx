@@ -106,15 +106,14 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
     if (user?.role !== "HR") return false;
 
     return hasPermission(hrPermissions, moduleKey, action);
-  };  
+  };
 
 
 
   return (
     <aside
-      className={`sidebar ${collapsed ? "collapsed" : ""} ${
-        mobileOpen ? "mobile-open" : ""
-      }`}
+      className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""
+        }`}
     >
       <nav className="sidebar-menu">
         <button
@@ -243,18 +242,18 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
             {hrOpen && !collapsed && (
               <div className="submenu">
                 {canAccess("EMPLOYEE_MASTER") && (
-                    <button
-                      type="button"
-                      className="submenu-item"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        go("employees");
-                      }}
-                    >
-                      <FaUsers /> Employees
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go("employees");
+                    }}
+                  >
+                    <FaUsers /> Employees
+                  </button>
+                )}
 
 
                 {canAccess("ATTENDANCE") && (
@@ -390,137 +389,15 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 <div className="submenu-section">
                   <button
                     type="button"
-                    className="submenu-header"
+                    className="submenu-item"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      safeToggle(setGovtDocsOpen, !govtDocsOpen);
+                      go("softwarereports/government-forms");
                     }}
                   >
-                    <span>📄 Government Forms</span>
-                    {!collapsed &&
-                      (govtDocsOpen ? <FaChevronDown /> : <FaChevronRight />)}
+                    📄 Government Forms
                   </button>
-
-                  {govtDocsOpen && (
-                    <div className="submenu-nested">
-                      {/* PF */}
-                      <button
-                        type="button"
-                        className="submenu-header-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          safeToggle(setPfOpen, !pfOpen);
-                        }}
-                      >
-                        <span>PF Forms</span>
-                        {pfOpen ? <FaChevronDown /> : <FaChevronRight />}
-                      </button>
-                      {pfOpen && (
-                        <div className="submenu-nested-items">
-                          <button
-                            type="button"
-                            className="submenu-item-nested"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              go("softwarereports/govt-docs/pf/forms");
-                            }}
-                          >
-                            All Forms
-                          </button>
-                        </div>
-                      )}
-
-                      {/* ESI */}
-                      <button
-                        type="button"
-                        className="submenu-header-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          safeToggle(setEsiOpen, !esiOpen);
-                        }}
-                      >
-                        <span>ESI Forms</span>
-                        {esiOpen ? <FaChevronDown /> : <FaChevronRight />}
-                      </button>
-                      {esiOpen && (
-                        <div className="submenu-nested-items">
-                          <button
-                            type="button"
-                            className="submenu-item-nested"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              go("softwarereports/govt-docs/esi/forms");
-                            }}
-                          >
-                            All Forms
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Factory Act */}
-                      <button
-                        type="button"
-                        className="submenu-header-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          safeToggle(setFactoryOpen, !factoryOpen);
-                        }}
-                      >
-                        <span>Factory Act</span>
-                        {factoryOpen ? <FaChevronDown /> : <FaChevronRight />}
-                      </button>
-                      {factoryOpen && (
-                        <div className="submenu-nested-items">
-                          <button
-                            type="button"
-                            className="submenu-item-nested"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              go("softwarereports/govt-docs/factory-act/forms");
-                            }}
-                          >
-                            All Forms
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Other Forms */}
-                      <button
-                        type="button"
-                        className="submenu-header-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          safeToggle(setOtherGovtOpen, !otherGovtOpen);
-                        }}
-                      >
-                        <span>Other Forms</span>
-                        {otherGovtOpen ? <FaChevronDown /> : <FaChevronRight />}
-                      </button>
-                      {otherGovtOpen && (
-                        <div className="submenu-nested-items">
-                          <button
-                            type="button"
-                            className="submenu-item-nested"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              go("softwarereports/govt-docs/other/forms");
-                            }}
-                          >
-                            All Forms
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Reports */}

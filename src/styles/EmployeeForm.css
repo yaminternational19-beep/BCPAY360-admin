@@ -538,3 +538,44 @@
     align-self: flex-end;
   }
 }
+
+/* Validation & UX Styles */
+.error-border {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.error-border:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: -1.25rem;
+  margin-bottom: 1.25rem;
+  display: block;
+  font-weight: 500;
+}
+
+.helper-text {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.address-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}

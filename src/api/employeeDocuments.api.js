@@ -1,20 +1,16 @@
-import { API_BASE } from "../utils/apiBase";
-import { authHeader } from "../utils/authHeader";
+import { api } from "./api";
 
-export const uploadDocument = async formData =>
-  fetch(`${API_BASE}/api/employee-documents`, {
+export const uploadDocument = async (formData) =>
+  api("/api/employee-documents", {
     method: "POST",
-    headers: authHeader(),
     body: formData,
-  }).then(res => res.json());
+    isFormData: true,
+  });
 
-export const getDocuments = async employeeId =>
-  fetch(`${API_BASE}/api/employee-documents/${employeeId}`, {
-    headers: authHeader(),
-  }).then(res => res.json());
+export const getDocuments = async (employeeId) =>
+  api(`/api/employee-documents/${employeeId}`);
 
-export const deleteDocument = async id =>
-  fetch(`${API_BASE}/api/employee-documents/${id}`, {
+export const deleteDocument = async (id) =>
+  api(`/api/employee-documents/${id}`, {
     method: "DELETE",
-    headers: authHeader(),
   });
