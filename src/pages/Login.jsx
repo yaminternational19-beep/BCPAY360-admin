@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Login.css";
+
 import { API_BASE } from "../utils/apiBase";
 
 export default function Login({ onLogin }) {
@@ -55,22 +56,22 @@ export default function Login({ onLogin }) {
      FETCH COMPANIES (COMPANY ADMIN)
   ============================= */
   useEffect(() => {
-  let ignore = false;
+    let ignore = false;
 
-  const loadCompanies = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/companies/public`);
-      const data = await res.json();
-      if (!ignore) setCompanies(data);
-    } catch (e) {
-      console.error("Company load failed");
-    }
-  };
+    const loadCompanies = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/companies/public`);
+        const data = await res.json();
+        if (!ignore) setCompanies(data);
+      } catch (e) {
+        console.error("Company load failed");
+      }
+    };
 
-  loadCompanies();
+    loadCompanies();
 
-  return () => { ignore = true };
-}, []);
+    return () => { ignore = true };
+  }, []);
 
 
   /* =============================
@@ -106,40 +107,40 @@ export default function Login({ onLogin }) {
      COMPANY ADMIN LOGIN
   ============================= */
   const submitAdminLogin = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!form.companyId || !form.email || !form.password) {
-    alert("All fields required");
-    return;
-  }
+    if (!form.companyId || !form.email || !form.password) {
+      alert("All fields required");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch(`${API_BASE}/api/company-admins/pre-login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        company_id: Number(form.companyId),
-        email: form.email,
-        password: form.password,
-      }),
+      const res = await fetch(`${API_BASE}/api/company-admins/pre-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_id: Number(form.companyId),
+          email: form.email,
+          password: form.password,
+        }),
 
-    });
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
 
-    setTempLoginId(data.tempLoginId);
-    setUserEmail(form.email);
-    setOtpResendCooldown(45);
-    setStep("OTP");
-  } catch (err) {
-    alert(err.message || "Login failed");
-  } finally {
-    setLoading(false);
-  }
-};
+      setTempLoginId(data.tempLoginId);
+      setUserEmail(form.email);
+      setOtpResendCooldown(45);
+      setStep("OTP");
+    } catch (err) {
+      alert(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   /* =============================
@@ -212,19 +213,19 @@ export default function Login({ onLogin }) {
       if (!res.ok) throw new Error(data.message);
 
       const user =
-            role === "HR"
-              ? {
-                  role: "HR",
-                  verified: true,
-                  emp_id: data.emp_id,
-                  department: data.department,
-                  company_id: data.company_id,
-                }
-              : {
-                  role: "COMPANY_ADMIN",
-                  verified: true,
-                  company_id: data.company_id,
-                };
+        role === "HR"
+          ? {
+            role: "HR",
+            verified: true,
+            emp_id: data.emp_id,
+            department: data.department,
+            company_id: data.company_id,
+          }
+          : {
+            role: "COMPANY_ADMIN",
+            verified: true,
+            company_id: data.company_id,
+          };
 
       if (data.token) {
         localStorage.setItem("token", data.token);
@@ -253,8 +254,6 @@ export default function Login({ onLogin }) {
     if (!tempLoginId || otpResendCooldown > 0) {
       return;
     }
-    console.log("Resend clicked", { tempLoginId, role });
-
 
     try {
       setLoading(true);
@@ -295,30 +294,39 @@ export default function Login({ onLogin }) {
 
   if (step === "ROLE") {
     return (
-      <div className="login-page">
-        <div className="login-card">
-          <h2>Select Role</h2>
-          <button 
-            type="button"
-            className="primary-btn"
-            onClick={() => selectRole("SUPER_ADMIN")}
-          >
-            Super Admin
-          </button>
-          <button 
-            type="button"
-            className="primary-btn"
-            onClick={() => selectRole("COMPANY_ADMIN")}
-          >
-            Company Admin
-          </button>
-          <button 
-            type="button"
-            className="primary-btn"
-            onClick={() => selectRole("HR")}
-          >
-            HR
-          </button>
+      <div className="login-root">
+        <div className="bg-orb orb-indigo"></div>
+        <div className="bg-orb orb-purple"></div>
+
+        <div className="glass-card">
+          <div className="card-header">
+            <h2>Welcome</h2>
+            <p>Select your role to continue</p>
+          </div>
+
+          <div className="form-group">
+            <button
+              type="button"
+              className="btn-primary animate-fade-in-up stagger-1"
+              onClick={() => selectRole("SUPER_ADMIN")}
+            >
+              Super Admin
+            </button>
+            <button
+              type="button"
+              className="btn-primary animate-fade-in-up stagger-2"
+              onClick={() => selectRole("COMPANY_ADMIN")}
+            >
+              Company Admin
+            </button>
+            <button
+              type="button"
+              className="btn-primary animate-fade-in-up stagger-3"
+              onClick={() => selectRole("HR")}
+            >
+              HR
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -331,131 +339,153 @@ export default function Login({ onLogin }) {
     const isAdminFormValid = form.companyId && form.email && form.password;
 
     return (
-      <div className="login-page">
-        <form className="login-card" onSubmit={submitAdminLogin}>
+      <div className="login-root">
+        <div className="bg-orb orb-indigo"></div>
+        <div className="bg-orb orb-purple"></div>
+
+        <div className="glass-card">
           <button
             type="button"
-            className="change-role-btn"
+            className="btn-ghost back-btn"
             onClick={handleBackToRole}
           >
-            <span className="arrow">←</span>
-            Change Role
+            ← Back
           </button>
 
-          <h2>Admin Login</h2>
-
-          <select
-            disabled={companiesLoading}
-            value={form.companyId}
-            onChange={(e) =>
-              setForm({ ...form, companyId: e.target.value })
-            }
-          >
-            <option value="">
-              {companiesLoading ? "Loading companies..." : "Select Company"}
-            </option>
-
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-
-          <input
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
-          />
-
-          <div className="password-input-wrapper">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={form.password}
-              onChange={(e) =>
-                setForm({ ...form, password: e.target.value })
-              }
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowPassword(!showPassword)}
-              title={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? "👁️" : "👁️‍🗨️"}
-            </button>
+          <div className="card-header">
+            <h2>Admin Login</h2>
+            <p>Manage your company</p>
           </div>
 
-          <button 
-            type="submit"
-            disabled={loading || !isAdminFormValid}
-            className="primary-btn"
-          >
-            {loading ? "Checking..." : "Continue"}
-          </button>
-        </form>
+          <form className="form-group" onSubmit={submitAdminLogin}>
+            <select
+              className="input-field animate-fade-in-up stagger-1"
+              disabled={companiesLoading}
+              value={form.companyId}
+              onChange={(e) =>
+                setForm({ ...form, companyId: e.target.value })
+              }
+              required
+            >
+              <option value="" style={{ background: '#1e293b' }}>
+                {companiesLoading ? "Loading companies..." : "Select Company"}
+              </option>
+
+              {companies.map((c) => (
+                <option key={c.id} value={c.id} style={{ background: '#1e293b' }}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              className="input-field animate-fade-in-up stagger-2"
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+              required
+            />
+
+            <div className="password-wrapper animate-fade-in-up stagger-3">
+              <input
+                className="input-field"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
+                required
+              />
+              <span
+                className="eye-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !isAdminFormValid}
+              className="btn-primary animate-fade-in-up stagger-4"
+            >
+              {loading ? "Checking..." : "Continue"}
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
 
   /* =============================
-     UI - HR LOGIN
+     UI - HR LOGIN (FALLBACK/IN-PAGE)
   ============================= */
   if (step === "HR_LOGIN") {
     const isHRFormValid = form.emp_id && form.password;
 
     return (
-      <div className="login-page">
-        <form className="login-card" onSubmit={submitHRLogin}>
+      <div className="login-root">
+        <div className="bg-orb orb-indigo"></div>
+        <div className="bg-orb orb-purple"></div>
+
+        <div className="glass-card">
           <button
             type="button"
-            className="change-role-btn"
+            className="btn-ghost back-btn"
             onClick={handleBackToRole}
           >
-            <span className="arrow">←</span>
-            Change Role
+            ← Change Role
           </button>
 
-          <h2>HR Login</h2>
-
-          <input
-            placeholder="Emp ID"
-            value={form.emp_id}
-            onChange={(e) =>
-              setForm({ ...form, emp_id: e.target.value })
-            }
-          />
-
-          <div className="password-input-wrapper">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={form.password}
-              onChange={(e) =>
-                setForm({ ...form, password: e.target.value })
-              }
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowPassword(!showPassword)}
-              title={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? "👁️" : "👁️‍🗨️"}
-            </button>
+          <div className="card-header">
+            <h2>HR Login</h2>
+            <p>Access your dashboard</p>
           </div>
 
-          <button 
-            type="submit"
-            disabled={loading || !isHRFormValid}
-            className="primary-btn"
-          >
-            {loading ? "Checking..." : "Continue"}
-          </button>
-        </form>
+          <form className="form-group" onSubmit={submitHRLogin}>
+            <input
+              className="input-field animate-fade-in-up stagger-1"
+              placeholder="Emp ID"
+              value={form.emp_id}
+              onChange={(e) =>
+                setForm({ ...form, emp_id: e.target.value })
+              }
+              required
+            />
+
+            <div className="password-wrapper animate-fade-in-up stagger-2">
+              <input
+                className="input-field"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
+                required
+              />
+              <span
+                className="eye-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !isHRFormValid}
+              className="btn-primary animate-fade-in-up stagger-3"
+            >
+              {loading ? "Checking..." : "Continue"}
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
@@ -468,44 +498,50 @@ export default function Login({ onLogin }) {
     const canResend = otpResendCooldown === 0 && !loading;
 
     return (
-      <div className="login-page">
-        <form className="login-card otp-card" onSubmit={submitOTP}>
-          <h2>OTP Verification</h2>
+      <div className="login-root">
+        <div className="bg-orb orb-indigo"></div>
+        <div className="bg-orb orb-purple"></div>
 
-          <p className="otp-helper">
-            OTP sent to <strong>{userEmail}</strong>
-          </p>
+        <div className="glass-card">
+          <div className="card-header">
+            <h2>OTP Verification</h2>
+            <p>Code sent to <strong>{userEmail}</strong></p>
+          </div>
 
-          <input
-            placeholder="Enter OTP"
-            maxLength="6"
-            value={form.otp}
-            onChange={(e) =>
-              setForm({ ...form, otp: e.target.value })
-            }
-          />
+          <form className="form-group" onSubmit={submitOTP}>
+            <input
+              className="input-field animate-fade-in-up stagger-1"
+              style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px' }}
+              placeholder="Enter OTP"
+              maxLength="6"
+              value={form.otp}
+              onChange={(e) =>
+                setForm({ ...form, otp: e.target.value })
+              }
+              required
+            />
 
-          <div className="otp-buttons">
-            <button 
+            <button
               type="submit"
               disabled={loading || !isOTPFormValid}
-              className="primary-btn"
+              className="btn-primary animate-fade-in-up stagger-2"
             >
               {loading ? "Verifying..." : "Verify OTP"}
             </button>
 
-            <button 
+            <button
               type="button"
               onClick={handleResendOTP}
               disabled={loading || !canResend}
-              className="secondary-btn"
+              className="resend-otp-btn"
+              style={{ justifyContent: 'center', marginTop: '10px' }}
             >
               {otpResendCooldown > 0
                 ? `Resend OTP (${otpResendCooldown}s)`
                 : "Resend OTP"}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     );
   }

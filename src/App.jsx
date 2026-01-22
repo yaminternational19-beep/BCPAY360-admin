@@ -29,6 +29,7 @@ import PayrollManagement from "./modules/payroll/PayrollManagement";
 import Sidebar from "./layout/Sidebar";
 import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
+import "./styles/theme.css";
 import "./modules/software-reports/styles/softwareReports.css";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
@@ -295,7 +296,7 @@ export default function App() {
     setUser(user);
   };
 
-   return (
+  return (
     <ToastProvider>
       <BrowserRouter basename="/admin">
         <Routes>

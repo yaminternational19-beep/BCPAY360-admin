@@ -52,9 +52,17 @@ const DEFAULT_DOCUMENTS = [
   { form_code: "PAN", form_name: "PAN Card" },
   { form_code: "AADHAAR", form_name: "Aadhaar Card" },
   { form_code: "APPLICATION_FORM", form_name: "Application Form" },
-  { form_code: "APPOINTMENT_LETTER", form_name: "Appointment Letter" },
+  { form_code: "APPOINTMENT_LETTER_HINDI", form_name: "Appointment Letter ( Hindi )" },
+  { form_code: "APPOINTMENT_LETTER_ENGLISH", form_name: "Appointment Letter ( English )" },
+  { form_code: "JOINING_LETTER", form_name: "Joining Letter" },
   { form_code: "CONFIRMATION_LETTER", form_name: "Confirmation Letter" },
-  { form_code: "ID", form_name: "ID Card" }
+  { form_code: "OFFER_LETTER", form_name: "Offer Letter" },
+  { form_code: "History Confirmation Letter", form_name: "History Confirmation Letter" },
+  { form_code: "ID", form_name: "ID Card" },
+  { form_code: "ESIC FORM 1", form_name: "ESIC FORM 1" },
+  { form_code: "EPF FORM 2", form_name: "EPF Form 2" },
+  { form_code: "FORM 11", form_name: "Form 11" },
+  { form_code: "FORM 16", form_name: "Form 16" },
 ];
 
 
@@ -606,7 +614,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 </a>
               </div>
             ) : (
-              <span className="file-placeholder">Click to upload</span>
+              <span className="file-placeholder"> Click to upload</span>
             )}
           </div>
 
