@@ -18,17 +18,20 @@ import {
   XCircle,
   Clock,
   ExternalLink,
-  Pencil
+  Pencil,
+  Ban
 } from "lucide-react";
-import "../../../styles/EmployeeView.css";
+import "../styles/EmployeeView.css";
 import {
   getEmployeeById,
   deleteEmployeeById,
   activateEmployeeById,
-  updateEmployeeById
+  updateEmployeeById,
+  getAvailableCompanyForms
 } from "../../../api/employees.api";
 import { useToast } from "../../../context/ToastContext";
 import EmployeeForm from "../components/EmployeeForm";
+import EmployeeDocumentCard from "../components/EmployeeDocumentCard";
 
 const EmployeeProfile = () => {
   const { id } = useParams();
@@ -50,7 +53,10 @@ const EmployeeProfile = () => {
   const fetchEmployeeData = async () => {
     setLoading(true);
     try {
-      const res = await getEmployeeById(id);
+      const [res, companyFormsRes] = await Promise.all([
+        getEmployeeById(id),
+        getAvailableCompanyForms()
+      ]);
 
       if (!res) {
         setError("Employee not found");
@@ -62,7 +68,13 @@ const EmployeeProfile = () => {
         organization: res.organization || null,
         profile: res.profile || null,
         auth: res.auth || null,
-        documents: Array.isArray(res.documents) ? res.documents : []
+        documents: Array.isArray(res.documents) ? res.documents : [],
+        companyForms: Array.isArray(companyFormsRes?.data) ? companyFormsRes.data : (Array.isArray(companyFormsRes) ? companyFormsRes : []),
+        // Create a map of generated forms for easy lookup
+        generatedMap: (Array.isArray(res.documents) ? res.documents : []).reduce((acc, doc) => {
+          if (doc.form_code) acc[doc.form_code] = doc;
+          return acc;
+        }, {})
       });
     } catch (err) {
       setError(err.message || "Unable to load employee details");
@@ -147,7 +159,7 @@ const EmployeeProfile = () => {
         <XCircle size={48} color="#ef4444" />
         <h2>{error || "Not Found"}</h2>
         <button className="back-link" onClick={() => navigate(-1)}>
-          <ArrowLeft size={16} /> Back to List
+          <ArrowLeft size={16} /> Back
         </button>
       </div>
     );
@@ -186,7 +198,7 @@ const EmployeeProfile = () => {
       {/* Top Navigation */}
       <div className="view-nav">
         <button className="back-link" onClick={() => navigate(-1)}>
-          <ArrowLeft size={18} /> Back to Employee List
+          <ArrowLeft size={18} /> Back
         </button>
       </div>
 
@@ -237,20 +249,20 @@ const EmployeeProfile = () => {
             </div>
           </div>
           <div className="hero-actions">
-            <button className="btn-dark edit-btn" onClick={() => setShowEditForm(true)}>
-              <Pencil size={16} /> Edit
+            <button className="btn-edit" onClick={() => setShowEditForm(true)}>
+              <Pencil size={18} /> Edit Profile
             </button>
             {isActive ? (
-              <button className="btn-dark warning-btn" onClick={handleDeactivate} disabled={toggling}>
-                <XCircle size={16} /> Deactivate
+              <button className="btn-warning-outline" onClick={handleDeactivate} disabled={toggling}>
+                <Ban size={18} /> Deactivate
               </button>
             ) : (
-              <button className="btn-dark success-btn" onClick={handleActivate} disabled={toggling}>
-                <CheckCircle2 size={16} /> Activate
+              <button className="btn-primary" onClick={handleActivate} disabled={toggling}>
+                <CheckCircle2 size={18} /> Activate
               </button>
             )}
-            <button className="btn-dark danger-btn" onClick={handleDeleteEmployee}>
-              <Trash2 size={16} /> Delete
+            <button className="btn-danger" onClick={handleDeleteEmployee}>
+              <Trash2 size={18} /> Delete
             </button>
           </div>
         </div>
@@ -431,37 +443,112 @@ const EmployeeProfile = () => {
         <div className="sidebar-column">
 
           {/* Documents Section */}
+          {/* Documents Section */}
           <div className="details-card sticky-card">
             <div className="details-card-header">
-              <FileText size={20} />
-              <h2>Documents</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={20} />
+                <h2>Documents</h2>
+              </div>
             </div>
-            <div className="sidebar-body">
-              {documents.length > 0 ? (
-                <div className="document-stack">
-                  {documents.map((doc, idx) => (
-                    <div key={idx} className="doc-tile">
-                      <div className="doc-tile-info">
-                        <strong>{doc.type}</strong>
-                        <span>{doc.document_number || doc.documentNumber || "UPLOADED"}</span>
-                      </div>
-                      <div className="doc-tile-actions">
-                        <a href={doc.view_url || doc.viewUrl} target="_blank" rel="noreferrer" className="doc-action-btn view">
-                          <Eye size={16} />
-                        </a>
-                        <a href={doc.download_url || doc.downloadUrl} className="doc-action-btn download">
-                          <Download size={16} />
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <FileText size={32} />
-                  <p>No documents found</p>
-                </div>
-              )}
+
+            <div className="sidebar-body" style={{ padding: '12px' }}>
+              <h5 style={{
+                margin: '0 0 8px 0',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                color: 'var(--text-secondary)'
+              }}>
+                Uploaded Documents
+              </h5>
+
+              <div className="document-stack" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+                {documents.length > 0 ? (
+                  documents.filter(d => !d.form_code).map((doc, idx) => (
+                    <EmployeeDocumentCard
+                      key={`uploaded-${idx}`}
+                      document={{
+                        form_name: doc.type || doc.name || "Uploaded Document",
+                        generated: true, // It's uploaded, so it exists
+                        view_url: doc.view_url || doc.viewUrl
+                      }}
+                      type="UPLOADED"
+                      onAction={(d) => window.open(d.view_url, '_blank')}
+                    />
+                  ))
+                ) : (
+                  <div className="empty-state" style={{ padding: '12px', minHeight: 'auto' }}>
+                    <p style={{ margin: 0, fontSize: '13px' }}>No uploaded documents</p>
+                  </div>
+                )}
+              </div>
+
+              <h5 style={{
+                margin: '0 0 8px 0',
+                fontSize: '11px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                color: 'var(--text-secondary)'
+              }}>
+                Company Documents
+              </h5>
+
+              <div
+                className="document-stack"
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              >
+                {Array.isArray(data.companyForms) && data.companyForms.length > 0 ? (
+                  data.companyForms.map((form) => {
+                    const formCode = form.form_code || form.id;
+                    const formName = form.form_name || form.title || form.name || "Document";
+
+                    const existingDoc =
+                      data.generatedMap && formCode
+                        ? data.generatedMap[formCode]
+                        : null;
+
+                    const isGenerated = Boolean(existingDoc);
+
+                    return (
+                      <EmployeeDocumentCard
+                        key={`company-form-${formCode}`}
+                        type="COMPANY"
+                        document={{
+                          form_code: formCode,
+                          form_name: formName,
+                          generated: isGenerated
+                        }}
+                        onAction={() => {
+                          if (isGenerated && existingDoc?.view_url) {
+                            // VIEW existing generated document
+                            window.open(
+                              existingDoc.view_url || existingDoc.viewUrl,
+                              "_blank",
+                              "noopener,noreferrer"
+                            );
+                          } else {
+                            // GENERATE new document
+                            navigate(`/employees/${id}/generate-document/${formCode}`)
+
+                          }
+                        }}
+                      />
+                    );
+                  })
+                ) : (
+                  <div
+                    className="empty-state"
+                    style={{ padding: "12px", minHeight: "auto" }}
+                  >
+                    <p style={{ margin: 0, fontSize: "13px" }}>
+                      No company forms available
+                    </p>
+                  </div>
+                )}
+              </div>
+
+
             </div>
           </div>
 

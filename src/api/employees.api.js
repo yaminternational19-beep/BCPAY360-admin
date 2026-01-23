@@ -114,3 +114,39 @@ export const getAvailableCompanyForms = async () =>
       headers: authHeader(),
     }
   ).then(handleApiError);
+
+
+
+// 4. Company Government Forms (FORM-CODE based)
+export const getCompanyGovernmentForm = async (formCode) => {
+  if (!formCode) {
+    throw new Error("formCode is required");
+  }
+
+  return fetch(
+    `${API_BASE}/api/admin/generate-docs/company/${formCode}`,
+    {
+      headers: authHeader(),
+    }
+  )
+    .then(handleApiError)
+};
+
+
+// 5. Employee Summary (LIFETIME or MONTHLY)
+export const getEmployeeSummary = async (employeeId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+
+  const url = query
+    ? `${API_BASE}/api/admin/generate-docs/employees/${employeeId}/summary?${query}`
+    : `${API_BASE}/api/admin/generate-docs/employees/${employeeId}/summary`;
+
+  return fetch(url, {
+    headers: authHeader(),
+  })
+    .then(handleApiError)
+};
+
+
+
+

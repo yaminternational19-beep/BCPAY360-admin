@@ -8,7 +8,7 @@ import {
   CheckCircle,
   Trash2,
 } from "lucide-react";
-import "../../../styles/EmployeeList.css";
+import "../styles/EmployeeList.css";
 
 /* ===================================================================================
    PAGINATION UI

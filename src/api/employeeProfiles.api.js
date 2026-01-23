@@ -8,3 +8,4 @@ export const saveEmployeeProfile = async (payload) =>
 
 export const getEmployeeProfile = async (employeeId) =>
   api(`/api/employee-profiles/${employeeId}`);
+

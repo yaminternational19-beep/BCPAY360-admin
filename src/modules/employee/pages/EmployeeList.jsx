@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import "../../../styles/EmployeePanel.css";
+import "../styles/EmployeePanel.css";
 import EmployeeListComponent from "../components/EmployeeList";
 import EmployeeForm from "../components/EmployeeForm";
 import { useToast } from "../../../context/ToastContext";
@@ -281,7 +281,7 @@ const EmployeeListPage = () => {
       <div className="employee-header">
         <h2>Employee Management</h2>
         <div className="header-actions">
-          <button className="btn" onClick={() => { setSelected(null); setShowForm(true); }}>
+          <button className="btn-primary" onClick={() => { setSelected(null); setShowForm(true); }}>
             Add Employee
           </button>
           <div className="stat-mini"><span>Total</span><strong>{stats.total}</strong></div>
@@ -351,7 +351,7 @@ const EmployeeListPage = () => {
               <button className="btn-reset" onClick={handleClearFilters} title="Reset All Filters">
                 <RotateCcw size={14} /> Clear
               </button>
-              <button className="btn-export-new">
+              <button className="btn-export-new" onClick={handleClearFilters} title="Export Employees">
                 <Download size={14} /> Export
               </button>
             </div>

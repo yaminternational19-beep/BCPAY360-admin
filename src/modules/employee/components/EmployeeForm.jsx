@@ -11,7 +11,7 @@ import {
   Image as ImageIcon,
   AlertCircle,
 } from "lucide-react";
-import "../../../styles/EmployeeForm.css";
+import "../styles/EmployeeForm.css";
 import { getDepartments, getDesignations, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
 import { getLastEmployeeCode, getAvailableCompanyForms } from "../../../api/employees.api";
 import { useToast } from "../../../context/ToastContext";
@@ -731,8 +731,12 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
             {/* Employee Code + Status */}
             <div className="form-grid">
               <div>
-                <label>Employee Code</label>
-                <input readOnly value={employeeForm.employee_code} />
+                <label>Employee Code *</label>
+                <input
+                  placeholder="Auto-generated or enter manually"
+                  value={employeeForm.employee_code}
+                  onChange={(e) => changeEmployee("employee_code", e.target.value.toUpperCase())}
+                />
               </div>
               <div>
                 <label>Employee Status</label>
@@ -1318,7 +1322,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         <div className="emp-form-footer">
           {step > 1 && (
             <button
-              className="btn-back"
+              className="btn-secondary"
               onClick={() => setStep(step - 1)}
               disabled={isSaving}
             >
@@ -1327,13 +1331,13 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
           )}
 
           {step < 3 && (
-            <button className="primary" onClick={handleNext} disabled={isSaving}>
+            <button className="btn-primary" onClick={handleNext} disabled={isSaving}>
               Next <ChevronRight />
             </button>
           )}
 
           {step === 3 && (
-            <button className="primary" onClick={submit} disabled={isSaving}>
+            <button className="btn-primary" onClick={submit} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Employee"}
             </button>
           )}

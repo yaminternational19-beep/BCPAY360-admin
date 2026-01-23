@@ -1,5 +1,5 @@
 import React from "react";
-import "../../../styles/EmployeeFilters.css";
+import "../styles/EmployeeFilters.css";
 
 const EmployeeFilters = () => {
   return (

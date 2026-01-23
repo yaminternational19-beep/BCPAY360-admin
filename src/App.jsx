@@ -25,6 +25,8 @@ import SoftwareReportsRoutes from "./modules/software-reports";
 import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode } from "./modules/organization";
 import EmployeeList from "./modules/employee/pages/EmployeeList";
 import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
+import EmployeeDocumentUpload from "./modules/employee/pages/EmployeeDocumentUpload";
+import EmployeeDocumentGenerate from "./modules/employee/pages/EmployeeDocumentGenerate/EmployeeDocumentGenerate.jsx";
 import PayrollManagement from "./modules/payroll/PayrollManagement";
 import Sidebar from "./layout/Sidebar";
 import Navbar from "./layout/Navbar";
@@ -277,6 +279,8 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route path="employees/:id" element={<EmployeeProfile />} />
+            <Route path="employees/:id/upload-document" element={<EmployeeDocumentUpload />} />
+            <Route path="employees/:id/generate-document/:formCode" element={<EmployeeDocumentGenerate />} />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Routes>
         </main>
