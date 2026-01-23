@@ -1,79 +1,114 @@
+/* =====================================================
+   HRIS ADMIN - DASHBOARD STYLES
+   Uses theme.css variables for all colors
+   ===================================================== */
+
 .dashboard {
-  padding: 24px;
-  background: #f8fafc;
+  padding: var(--space-lg);
+  background: var(--bg-page);
   min-height: 100vh;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-primary);
 }
 
 .dash-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 }
 
-.dash-header h1 {
-  font-size: 26px;
+.dash-header h2 {
+  font-size: var(--text-2xl);
   margin: 0;
-  color: #0f172a;
+  color: var(--text-primary);
+  font-weight: var(--weight-bold);
 }
 
-.dash-header p {
-  color: #64748b;
+.dash-sub {
+  color: var(--text-muted);
   margin-top: 4px;
+  font-size: var(--text-sm);
 }
 
-/* KPI GRID */
-.kpi-grid {
+/* KPI STRIP */
+.kpi-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+  gap: var(--space-md);
   margin-bottom: 28px;
 }
 
 .kpi-card {
-  background: #ffffff;
-  border-radius: 10px;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
   padding: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
+  border: 1px solid var(--border-default);
+  transition: all var(--transition-normal);
+}
+
+.kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .kpi-card h4 {
-  font-size: 14px;
-  color: #475569;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: var(--weight-medium);
 }
 
 .kpi-value {
   font-size: 34px;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
 }
 
 .kpi-value.small {
-  font-size: 20px;
+  font-size: var(--text-xl);
 }
 
-.kpi-card span {
-  font-size: 13px;
-  color: #64748b;
+.kpi-meta {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: 0;
 }
 
-.kpi-card button {
+.kpi-card .btn {
   margin-top: auto;
-  padding: 8px;
-  border-radius: 6px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
   border: none;
-  background: #2563eb;
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   cursor: pointer;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
 }
 
-.kpi-card.warn button {
-  background: #f97316;
+.kpi-card .btn:hover {
+  background: var(--btn-primary-hover);
 }
 
-.kpi-card.success button {
-  background: #22c55e;
+.kpi-card.warning .btn {
+  background: var(--warning);
+}
+
+.kpi-card.warning .btn:hover {
+  background: var(--warning-hover);
+}
+
+.kpi-card.success .btn {
+  background: var(--success);
+}
+
+.kpi-card.success .btn:hover {
+  background: var(--success-hover);
 }
 
 /* ANALYTICS */
@@ -85,74 +120,114 @@
 }
 
 .card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-default);
 }
 
 .card h3 {
-  font-size: 16px;
-  margin-bottom: 12px;
-  color: #0f172a;
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-md);
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
 }
 
-/* COMPLIANCE */
-.compliance {
+/* COMPLIANCE STATUS LIST */
+.status-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.compliance li {
-  padding: 8px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  font-size: 14px;
+.status-list li {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
 }
 
-.compliance .ok {
-  background: #dcfce7;
-  color: #166534;
+.status-list .ok {
+  background: var(--success-bg);
+  color: var(--success);
 }
 
-.compliance .warn {
-  background: #fff7ed;
-  color: #9a3412;
+.status-list .warn {
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
-.compliance .info {
-  background: #eff6ff;
-  color: #1e40af;
+.status-list .info {
+  background: var(--info-bg);
+  color: var(--info);
 }
 
 /* ACTION BAR */
 .dash-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-md);
 }
 
-.dash-actions button {
+.dash-actions .btn {
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #0f172a;
-  color: #fff;
+  background: var(--text-primary);
+  color: var(--text-inverse);
   cursor: pointer;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-sm);
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  display: inline-block;
 }
 
+.dash-actions .btn:hover {
+  background: var(--text-secondary);
+}
+
+/* LOADING STATE */
 .dash-loading {
   padding: 40px;
   text-align: center;
-  color: #475569;
+  color: var(--text-secondary);
+  font-size: var(--text-base);
 }
+
 .dash-loading .spinner {
-  border: 4px solid #e0e0e0;
-  border-top: 4px solid #2563eb;
-  border-radius: 50%;
+  border: 4px solid var(--border-default);
+  border-top: 4px solid var(--primary);
+  border-radius: var(--radius-full);
   width: 36px;
   height: 36px;
   animation: spin 1s linear infinite;
-  margin: 0 auto 12px auto;
+  margin: 0 auto var(--space-md) auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: var(--space-md);
+  }
+
+  .kpi-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-analytics {
+    grid-template-columns: 1fr;
+  }
 }

@@ -59,10 +59,10 @@ const DEFAULT_DOCUMENTS = [
   { form_code: "OFFER_LETTER", form_name: "Offer Letter" },
   { form_code: "History Confirmation Letter", form_name: "History Confirmation Letter" },
   { form_code: "ID", form_name: "ID Card" },
-  { form_code: "ESIC FORM 1", form_name: "ESIC FORM 1" },
-  { form_code: "EPF FORM 2", form_name: "EPF Form 2" },
-  { form_code: "FORM 11", form_name: "Form 11" },
-  { form_code: "FORM 16", form_name: "Form 16" },
+  // { form_code: "ESIC FORM 1", form_name: "ESIC FORM 1" },
+  // { form_code: "EPF FORM 2", form_name: "EPF Form 2" },
+  // { form_code: "FORM 11", form_name: "Form 11" },
+  // { form_code: "FORM 16", form_name: "Form 16" },
 ];
 
 
