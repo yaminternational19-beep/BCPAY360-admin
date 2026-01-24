@@ -3,7 +3,7 @@ import PageHeader from "../../../../components/ui/PageHeader";
 import SummaryCards from "../../../../components/ui/SummaryCards";
 import FiltersBar from "../../../../components/ui/FiltersBar";
 import DataTable from "../../../../components/ui/DataTable";
-import { FaFileShield, FaPiggyBank, FaShieldAlt, FaHandHoldingHeart, FaSearch } from "react-icons/fa";
+import { FaShieldAlt, FaPiggyBank, FaHandHoldingHeart, FaSearch } from "react-icons/fa";
 import "../../../../styles/shared/modern-ui.css";
 
 const StatutoryReports = () => {
@@ -165,7 +165,7 @@ const StatutoryReports = () => {
           emptyState={{
             title: "Compliance data unavailable",
             subtitle: "Select a report type and period to view statutory summaries.",
-            icon: <FaFileShield />
+            icon: <FaShieldAlt />
           }}
         />
       </div>

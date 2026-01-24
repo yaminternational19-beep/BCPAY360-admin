@@ -47,7 +47,7 @@ const DailyAttendanceTable = ({ rows = [], loading, onViewHistory }) => {
               {/* Profile */}
               <td className="col-profile">
                 <img
-                  src={row.photo || "/images/avatar-placeholder.png"}
+                  src={row.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}&background=eff6ff&color=2563eb`}
                   alt={row.name}
                   className="attendance-avatar-sm"
                 />

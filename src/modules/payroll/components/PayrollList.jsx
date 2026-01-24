@@ -4,10 +4,18 @@ import {
   getPayrollEmployees,
   generatePayrollBatch
 } from "../../../api/master.api.js";
+import PageHeader from "../../../components/ui/PageHeader";
+import SummaryCards from "../../../components/ui/SummaryCards";
+import FiltersBar from "../../../components/ui/FiltersBar";
+import DataTable from "../../../components/ui/DataTable";
+import StatusBadge from "../../../components/ui/StatusBadge";
+import { FaUsers, FaCheckCircle, FaHourglassHalf, FaExclamationCircle, FaWallet, FaCalendarAlt, FaMoneyBillWave, FaSync } from "react-icons/fa";
 import "./payroll.css";
+import "../../../styles/shared/modern-ui.css";
 
 const PayrollList = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const month = 1;
   const year = 2026;
@@ -21,69 +29,17 @@ const PayrollList = () => {
 
   const [employees, setEmployees] = useState([]);
   const [selected, setSelected] = useState([]);
-  
+
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterBranch, setFilterBranch] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
   const [filterDesignation, setFilterDesignation] = useState("");
 
-  useEffect(() => {
-    loadEmployees();
-  }, []);
-
-  // Derive unique filter options
-  const branches = useMemo(
-    () => [...new Set(employees.map(e => e.branch).filter(Boolean))],
-    [employees]
-  );
-
-  const departments = useMemo(
-    () => [...new Set(employees.map(e => e.department).filter(Boolean))],
-    [employees]
-  );
-
-  const designations = useMemo(
-    () => [...new Set(employees.map(e => e.designation).filter(Boolean))],
-    [employees]
-  );
-
-  // Filter employees based on all criteria
-  const filteredEmployees = useMemo(() => {
-    return employees.filter(e => {
-      const matchesSearch =
-        e.emp_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.name?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesBranch = !filterBranch || e.branch === filterBranch;
-      const matchesDept = !filterDepartment || e.department === filterDepartment;
-      const matchesDesg = !filterDesignation || e.designation === filterDesignation;
-
-      return matchesSearch && matchesBranch && matchesDept && matchesDesg;
-    });
-  }, [employees, searchQuery, filterBranch, filterDepartment, filterDesignation]);
-
-  // Calculate summary metrics from filtered employees
-  const summaryMetrics = useMemo(() => {
-    const filtered = filteredEmployees;
-    const paidCount = filtered.filter(e => e.payment_status === "SUCCESS").length;
-    const unpaidCount = filtered.filter(e => e.payment_status === "PENDING").length;
-    const totalSalaryPaid = filtered
-      .filter(e => e.payment_status === "SUCCESS")
-      .reduce((sum, e) => sum + (e.net_salary || 0), 0);
-
-    return {
-      totalEmployees: filtered.length,
-      paid: paidCount,
-      unpaid: unpaidCount,
-      totalSalaryPaid: totalSalaryPaid
-    };
-  }, [filteredEmployees]);
-
   const loadEmployees = async () => {
+    setLoading(true);
     try {
       const res = await getPayrollEmployees({ month, year });
-
       setSummary(res.summary);
 
       const normalized = res.employees
@@ -124,9 +80,93 @@ const PayrollList = () => {
       setEmployees(normalized);
     } catch (err) {
       console.error(err);
-      alert("Failed to load payroll employees");
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  // Derive unique filter options
+  const branches = useMemo(
+    () => [...new Set(employees.map(e => e.branch).filter(Boolean))],
+    [employees]
+  );
+
+  const departments = useMemo(
+    () => [...new Set(employees.map(e => e.department).filter(Boolean))],
+    [employees]
+  );
+
+  const designations = useMemo(
+    () => [...new Set(employees.map(e => e.designation).filter(Boolean))],
+    [employees]
+  );
+
+  // Filter employees based on all criteria
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(e => {
+      const matchesSearch =
+        e.emp_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.name?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesBranch = !filterBranch || e.branch === filterBranch;
+      const matchesDept = !filterDepartment || e.department === filterDepartment;
+      const matchesDesg = !filterDesignation || e.designation === filterDesignation;
+
+      return matchesSearch && matchesBranch && matchesDept && matchesDesg;
+    });
+  }, [employees, searchQuery, filterBranch, filterDepartment, filterDesignation]);
+
+  // Summary mapping for SummaryCards
+  const summaryCards = useMemo(() => {
+    const paidCount = filteredEmployees.filter(e => e.payment_status === "SUCCESS").length;
+    const pendingCount = filteredEmployees.filter(e => e.payment_status === "PENDING").length;
+    const totalSalaryPaid = filteredEmployees
+      .filter(e => e.payment_status === "SUCCESS")
+      .reduce((sum, e) => sum + (e.net_salary || 0), 0);
+
+    return [
+      {
+        label: "Total Employees",
+        value: filteredEmployees.length,
+        icon: <FaUsers />,
+        color: "blue"
+      },
+      {
+        label: "Paid Staff",
+        value: paidCount,
+        icon: <FaCheckCircle />,
+        color: "green"
+      },
+      {
+        label: "Pending Pay",
+        value: pendingCount,
+        icon: <FaHourglassHalf />,
+        color: "orange"
+      },
+      {
+        label: "Not Generated",
+        value: summary.not_generated,
+        icon: <FaExclamationCircle />,
+        color: "orange"
+      },
+      {
+        label: "Total Disbursed",
+        value: `₹${totalSalaryPaid.toLocaleString('en-IN')}`,
+        icon: <FaWallet />,
+        color: "blue"
+      },
+      {
+        label: "Period",
+        value: `${month}/${year}`,
+        icon: <FaCalendarAlt />,
+        color: "blue"
+      }
+    ];
+  }, [filteredEmployees, summary.not_generated]);
 
   const toggleAll = (checked) => {
     if (!checked) {
@@ -157,18 +197,8 @@ const PayrollList = () => {
     );
   };
 
-  const clearFilters = () => {
-    setSearchQuery("");
-    setFilterBranch("");
-    setFilterDepartment("");
-    setFilterDesignation("");
-  };
-
   const generatePay = async () => {
-    if (!selected.length) {
-      alert("Select at least one pending employee");
-      return;
-    }
+    if (!selected.length) return;
 
     const payload = {
       pay_month: month,
@@ -202,52 +232,92 @@ const PayrollList = () => {
     }
   };
 
-  return (
-    <div className="payroll-container">
-      <h2>Payroll Processing</h2>
-
-      {/* 6 SUMMARY PANELS */}
-      <div className="payroll-summary-grid">
-        <div className="summary-card">
-          <h4>Total Employees</h4>
-          <p className="summary-value">{summaryMetrics.totalEmployees}</p>
-        </div>
-        <div className="summary-card">
-          <h4>Paid Employees</h4>
-          <p className="summary-value success">{summaryMetrics.paid}</p>
-        </div>
-        <div className="summary-card">
-          <h4>Unpaid / Pending</h4>
-          <p className="summary-value pending">{summaryMetrics.unpaid}</p>
-        </div>
-        <div className="summary-card">
-          <h4>Not Generated</h4>
-          <p className="summary-value">{summary.not_generated}</p>
-        </div>
-        <div className="summary-card">
-          <h4>Total Salary Paid</h4>
-          <p className="summary-value">₹{summaryMetrics.totalSalaryPaid.toLocaleString('en-IN')}</p>
-        </div>
-        <div className="summary-card">
-          <h4>Selected Period</h4>
-          <p className="summary-value">{month}/{year}</p>
-        </div>
-      </div>
-
-      {/* UNIFIED FILTER BAR */}
-      <div className="payroll-filter-bar">
+  const columns = [
+    {
+      header: (
         <input
-          type="text"
-          placeholder="Search by employee code or name"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="filter-input"
+          type="checkbox"
+          onChange={(e) => toggleAll(e.target.checked)}
+          checked={selected.length > 0 && selected.length === filteredEmployees.filter(e => e.payment_status !== "SUCCESS").length}
         />
+      ),
+      render: (e) => (
+        <input
+          type="checkbox"
+          disabled={e.payment_status === "SUCCESS"}
+          checked={selected.includes(e.id)}
+          onChange={() => toggleOne(e.id)}
+        />
+      ),
+      className: "sticky-col"
+    },
+    { header: "Emp Code", render: (e) => <span className="emp-code-cell">{e.emp_code}</span>, className: "sticky-col-2" },
+    { header: "Name", key: "name", className: "name-cell" },
+    { header: "Dept", key: "department" },
+    { header: "UAN", render: (e) => e.uan_number || "-", className: "muted-cell" },
+    { header: "Base Salary", render: (e) => `₹${Number(e.base_salary).toLocaleString()}`, className: "weight-semibold" },
+    { header: "Working", key: "working_days" },
+    { header: "Present", key: "present_days" },
+    { header: "Absent", key: "absent_days" },
+    { header: "OT (hrs)", key: "ot_hours" },
+    {
+      header: "Incentive",
+      render: (e) => (
+        <input
+          type="number"
+          className="table-input"
+          disabled={e.payment_status === "SUCCESS"}
+          value={e.incentive}
+          onChange={(ev) => updateEditable(e.id, "incentive", ev.target.value)}
+        />
+      )
+    },
+    {
+      header: "Deductions",
+      render: (e) => (
+        <input
+          type="number"
+          className="table-input"
+          disabled={e.payment_status === "SUCCESS"}
+          value={e.deductions}
+          onChange={(ev) => updateEditable(e.id, "deductions", ev.target.value)}
+        />
+      )
+    },
+    {
+      header: "Status",
+      render: (e) => (
+        <StatusBadge
+          type={e.payment_status === "SUCCESS" ? "success" : "warning"}
+          label={e.payment_status}
+        />
+      )
+    }
+  ];
 
+  return (
+    <div className="page-container fade-in">
+      <PageHeader
+        title="Payroll Processing"
+        subtitle="Review attendance data, apply incentives/deductions and generate monthly disbursements."
+        actions={
+          <button className="btn-primary" onClick={loadEmployees}>
+            <FaSync className={loading ? "animate-spin" : ""} /> Refresh Data
+          </button>
+        }
+      />
+
+      <SummaryCards cards={summaryCards} />
+
+      <FiltersBar
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        placeholder="Search by code or name..."
+      >
         <select
           value={filterBranch}
           onChange={(e) => setFilterBranch(e.target.value)}
-          className="filter-select"
+          className="filter-select-modern"
         >
           <option value="">All Branches</option>
           {branches.map(b => (
@@ -258,7 +328,7 @@ const PayrollList = () => {
         <select
           value={filterDepartment}
           onChange={(e) => setFilterDepartment(e.target.value)}
-          className="filter-select"
+          className="filter-select-modern"
         >
           <option value="">All Departments</option>
           {departments.map(d => (
@@ -269,7 +339,7 @@ const PayrollList = () => {
         <select
           value={filterDesignation}
           onChange={(e) => setFilterDesignation(e.target.value)}
-          className="filter-select"
+          className="filter-select-modern"
         >
           <option value="">All Designations</option>
           {designations.map(dsg => (
@@ -277,134 +347,33 @@ const PayrollList = () => {
           ))}
         </select>
 
-        <button onClick={clearFilters} className="secondary">
+        <button onClick={() => { setSearchQuery(""); setFilterBranch(""); setFilterDepartment(""); setFilterDesignation(""); }} className="btn-export">
           Clear Filters
         </button>
+      </FiltersBar>
+
+      <div className="payroll-table-section">
+        <DataTable
+          columns={columns}
+          data={filteredEmployees}
+          emptyState={{
+            title: "No employees found",
+            subtitle: "Try adjusting your search or filters to find specific records.",
+            icon: <FaMoneyBillWave />
+          }}
+        />
       </div>
 
-      {/* TABLE */}
-      <div className="table-wrapper">
-        <table className="payroll-table">
-          <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  onChange={(e) => toggleAll(e.target.checked)}
-                />
-              </th>
-              <th>Emp Code</th>
-              <th>Name</th>
-              <th>Dept</th>
-              <th>Desg</th>
-              <th>UAN</th>
-              <th>Base Salary</th>
-              <th>Working</th>
-              <th>Present</th>
-              <th>Late</th>
-              <th>Leaves</th>
-              <th>Absent</th>
-              <th>OT</th>
-              <th>Incentive</th>
-              <th>Deductions</th>
-              <th>PF</th>
-              <th>Bank</th>
-              <th>Account</th>
-              <th>IFSC</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredEmployees.length === 0 ? (
-              <tr>
-                <td colSpan="20" style={{ textAlign: "center", padding: "20px" }}>
-                  No employees found matching the filters
-                </td>
-              </tr>
-            ) : (
-              filteredEmployees.map((e) => (
-                <tr
-                  key={e.id}
-                  className={e.payment_status === "SUCCESS" ? "row-paid" : ""}
-                >
-                  <td>
-                    <input
-                      type="checkbox"
-                      disabled={e.payment_status === "SUCCESS"}
-                      checked={selected.includes(e.id)}
-                      onChange={() => toggleOne(e.id)}
-                    />
-                  </td>
-
-                  <td>{e.emp_code}</td>
-                  <td>{e.name}</td>
-                  <td>{e.department}</td>
-                  <td>{e.designation}</td>
-                  <td>{e.uan_number || "-"}</td>
-                  <td>{e.base_salary}</td>
-                  <td>{e.working_days}</td>
-                  <td>{e.present_days}</td>
-                  <td>{e.late_days}</td>
-                  <td>{e.leave_days}</td>
-                  <td>{e.absent_days}</td>
-                  <td>{e.ot_hours}</td>
-
-                  <td>
-                    <input
-                      type="number"
-                      disabled={e.payment_status === "SUCCESS"}
-                      value={e.incentive}
-                      onChange={(ev) =>
-                        updateEditable(e.id, "incentive", ev.target.value)
-                      }
-                    />
-                  </td>
-
-                  <td>
-                    <input
-                      type="number"
-                      disabled={e.payment_status === "SUCCESS"}
-                      value={e.deductions}
-                      onChange={(ev) =>
-                        updateEditable(e.id, "deductions", ev.target.value)
-                      }
-                    />
-                  </td>
-
-                  <td>
-                    {e.uan_number && e.uan_number !== "-" ? "Yes" : "No"}
-                  </td>
-
-                  <td>{e.bank_name || "-"}</td>
-                  <td>{e.account_number || "-"}</td>
-                  <td>{e.ifsc_code || "-"}</td>
-
-                  <td>
-                    <span
-                      className={`status ${
-                        e.payment_status === "SUCCESS" ? "paid" : "pending"
-                      }`}
-                    >
-                      {e.payment_status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="payroll-footer">
-        <button 
-          className="primary" 
-          onClick={generatePay}
-          disabled={selected.length === 0}
-        >
-          Generate Payroll ({selected.length} selected)
-        </button>
-      </div>
+      {selected.length > 0 && (
+        <div className="payroll-footer-action slide-up">
+          <div className="footer-info">
+            <span><strong>{selected.length}</strong> employees selected for processing</span>
+          </div>
+          <button className="btn-primary btn-large" onClick={generatePay}>
+            Generate Payroll Batch
+          </button>
+        </div>
+      )}
     </div>
   );
 };

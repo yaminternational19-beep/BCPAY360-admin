@@ -116,8 +116,10 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
             go("dashboard");
           }}
         >
-          <FaHome />
-          {!collapsed && <span>Dashboard</span>}
+          <div className="menu-left">
+            <FaHome />
+            {!collapsed && <span>Dashboard</span>}
+          </div>
         </button>
 
         {isAdmin && (
@@ -135,7 +137,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 <FaBuilding />
                 {!collapsed && <span>Organization</span>}
               </div>
-              {!collapsed && (orgOpen ? <FaChevronDown /> : <FaChevronRight />)}
+              {!collapsed && (orgOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
             </button>
 
             {orgOpen && !collapsed && (
@@ -238,7 +240,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 <FaUsers />
                 {!collapsed && <span>HR Module</span>}
               </div>
-              {!collapsed && (hrOpen ? <FaChevronDown /> : <FaChevronRight />)}
+              {!collapsed && (hrOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
             </button>
 
             {hrOpen && !collapsed && (
@@ -325,7 +327,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 {!collapsed && <span>Software Reports</span>}
               </div>
               {!collapsed &&
-                (reportsOpen ? <FaChevronDown /> : <FaChevronRight />)}
+                (reportsOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
             </button>
 
             {reportsOpen && !collapsed && (
@@ -356,7 +358,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   >
                     <span>📜 Forms</span>
                     {!collapsed &&
-                      (formsSubOpen ? <FaChevronDown /> : <FaChevronRight />)}
+                      (formsSubOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
                   </button>
 
                   {formsSubOpen && (
@@ -455,7 +457,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   >
                     <span>📊 Reports</span>
                     {!collapsed &&
-                      (reportsSubOpen ? <FaChevronDown /> : <FaChevronRight />)}
+                      (reportsSubOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
                   </button>
 
                   {reportsSubOpen && (

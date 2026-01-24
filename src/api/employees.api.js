@@ -115,6 +115,50 @@ export const getAvailableCompanyForms = async () =>
     }
   ).then(handleApiError);
 
+// Upload new company government form
+export const uploadCompanyGovernmentForm = async (formData) => {
+  const data = new FormData();
+  data.append('form_name', formData.formName);
+  data.append('form_code', formData.formCode);
+  data.append('version', formData.version);
+  data.append('file', formData.file);
+
+  return fetch(`${API_BASE}/api/employees/company/forms/upload`, {
+    method: "POST",
+    headers: authHeader(),
+    body: data,
+  }).then(handleApiError);
+};
+
+// Replace existing company government form
+export const replaceCompanyGovernmentForm = async (formId, formData) => {
+  const data = new FormData();
+  data.append('form_name', formData.formName);
+  data.append('form_code', formData.formCode);
+  data.append('version', formData.version);
+  data.append('file', formData.file);
+
+  return fetch(`${API_BASE}/api/employees/company/forms/${formId}/replace`, {
+    method: "POST",
+    headers: authHeader(),
+    body: data,
+  }).then(handleApiError);
+};
+
+// Delete company government form
+export const deleteCompanyGovernmentForm = async (formId) =>
+  fetch(`${API_BASE}/api/employees/company/forms/${formId}`, {
+    method: "DELETE",
+    headers: authHeader(),
+  }).then(handleApiError);
+
+// Toggle company government form status
+export const toggleCompanyGovernmentFormStatus = async (formId) =>
+  fetch(`${API_BASE}/api/employees/company/forms/${formId}/status`, {
+    method: "PATCH",
+    headers: authHeader(),
+  }).then(handleApiError);
+
 
 
 // 4. Company Government Forms (FORM-CODE based)

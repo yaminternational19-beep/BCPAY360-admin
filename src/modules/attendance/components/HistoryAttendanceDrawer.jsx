@@ -41,7 +41,7 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
 
         <div className="employee-profile card">
           <img
-            src={employee.photo || "/images/avatar-placeholder.png"}
+            src={employee.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=eff6ff&color=2563eb`}
             alt={employee.name}
             className="employee-photo"
           />
