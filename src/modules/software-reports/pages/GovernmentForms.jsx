@@ -1,218 +1,235 @@
-import React, { useState, useEffect } from "react";
-import GovernmentFormsTable from "../components/GovernmentFormsTable";
-import PDFPreviewModal from "../components/PDFPreviewModal";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-    getGovernmentForms,
-    createGovernmentForm,
-    updateGovernmentForm,
-    deleteGovernmentForm
-} from "../../../api/master.api";
+    getAvailableCompanyForms,
+    uploadCompanyGovernmentForm,
+    replaceCompanyGovernmentForm,
+    deleteCompanyGovernmentForm,
+    toggleCompanyGovernmentFormStatus
+} from "../../../api/employees.api";
+import PageHeader from "../../../components/ui/PageHeader";
+import SummaryCards from "../../../components/ui/SummaryCards";
+import FiltersBar from "../../../components/ui/FiltersBar";
+import DataTable from "../../../components/ui/DataTable";
+import StatusBadge from "../../../components/ui/StatusBadge";
+import ActionButtons from "../../../components/ui/ActionButtons";
+import GovernmentFormModal from "../components/GovernmentFormModal";
+import { FaFilePdf, FaCheckCircle, FaExclamationCircle, FaSearch, FaEye, FaDownload, FaEdit, FaTrash, FaSync, FaToggleOn, FaToggleOff } from "react-icons/fa";
+import { useToast } from "../../../context/ToastContext";
+import "../../../styles/shared/modern-ui.css";
 
 const GovernmentForms = () => {
     const [data, setData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Preview Modal State
-    const [previewModalOpen, setPreviewModalOpen] = useState(false);
-    const [previewingItem, setPreviewingItem] = useState(null);
-    const [previewLoading, setPreviewLoading] = useState(false);
-
-    // Fetch forms on component mount
-    useEffect(() => {
-        fetchForms();
-    }, []);
+    const [loading, setLoading] = useState(false);
+    const [search, setSearch] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+    const [modalLoading, setModalLoading] = useState(false);
+    const toast = useToast();
 
     const fetchForms = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            setError(null);
-            // Fetch all forms - no category
-            const response = await getGovernmentForms();
-            // Response logic: array or { data: [] }
-            setData(Array.isArray(response) ? response : response?.data || []);
+            const res = await getAvailableCompanyForms();
+            setData(res.data || res || []);
         } catch (err) {
-            setError(err.message || "Failed to fetch forms");
-            setData([]);
+            console.error("Failed to fetch government forms:", err);
+            toast.error("Error loading government forms");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleUpload = async (formData) => {
-        try {
-            const submitData = new FormData();
-            submitData.append("form_name", formData.formName);
-            submitData.append("form_code", formData.formCode);
-            // Append category as required by backend
-            if (formData.category) {
-                submitData.append("category", formData.category);
-            }
+    useEffect(() => {
+        fetchForms();
+    }, []);
 
-            if (formData.file) {
-                submitData.append("file", formData.file);
-            }
-            if (formData.version) {
-                submitData.append("version", formData.version);
-            }
+    const filteredData = useMemo(() => {
+        return data.filter(item => {
+            const documentName = item.form_name || item.documentName || "";
+            return documentName.toLowerCase().includes(search.toLowerCase());
+        });
+    }, [data, search]);
 
-            const response = await createGovernmentForm(submitData);
-            console.log("Upload response:", response);
-            alert("Form uploaded successfully!");
-            await fetchForms();
-            return true;
-        } catch (err) {
-            console.error("Upload error:", err);
-            alert("Failed to upload form: " + err.message);
-            return false;
+    const stats = useMemo(() => [
+        {
+            label: "Total Documents",
+            value: data.length,
+            icon: <FaFilePdf />,
+            color: "blue"
+        },
+        {
+            label: "Active Forms",
+            value: data.filter(d => d.status === "ACTIVE" || d.status === "Active").length,
+            icon: <FaCheckCircle />,
+            color: "green"
+        },
+        {
+            label: "Total Versions",
+            value: data.length > 0 ? (data.reduce((acc, curr) => acc + (parseFloat(curr.version) || 1), 0)).toFixed(1) : "0.0",
+            icon: <FaSync />,
+            color: "orange"
+        }
+    ], [data]);
+
+    const handleView = (item) => {
+        if (item?.view_url) {
+            window.open(item.view_url, "_blank");
+        } else {
+            toast.warn("View URL not available");
         }
     };
 
-    const handleReplace = async (id, formData) => {
-        try {
-            const submitData = new FormData();
-            // For replace/update, typically we might just send file + version
-            // But updateGovernmentForm might handle metadata too.
-            // Adjust payload based on what backend expects for "update" vs "replace"
-            // User said: Replace / Toggle: updateGovernmentForm(id, data)
-            // I'll assume standard FormData approach.
-
-            if (formData.formName) submitData.append("form_name", formData.formName);
-            if (formData.formCode) submitData.append("form_code", formData.formCode);
-            if (formData.file) submitData.append("file", formData.file);
-            if (formData.version) submitData.append("version", formData.version);
-
-            const response = await updateGovernmentForm(id, submitData);
-            console.log("Replace response:", response);
-            alert("Form updated/replaced successfully!");
-            await fetchForms();
-            return true;
-        } catch (err) {
-            console.error("Replace error:", err);
-            alert("Failed to replace form: " + err.message);
-            return false;
+    const handleDownload = (item) => {
+        if (item?.download_url) {
+            window.open(item.download_url, "_blank");
+        } else {
+            toast.warn("Download URL not available");
         }
     };
 
-    // Toggle Status
-    const handleToggle = async (id) => {
+    const handleToggleStatus = async (item) => {
         try {
-            // User confirmed strict controller logic:
-            // if (req.body.action === "TOGGLE_STATUS") ...
-
-            // updateGovernmentForm in master.api.js uses isFormData: data instanceof FormData.
-            // So passing a plain object is fine, it will be JSON stringified by the api wrapper (or handled as JSON).
-            // We'll pass the exact object expected by the backend.
-
-            const payload = { action: "TOGGLE_STATUS" };
-
-            // NOTE: master.api.js implementation:
-            // export const updateGovernmentForm = (id, data) =>
-            //   api(/ api / admin / government - forms / ${ id } , {
-            //     method: "PATCH",
-            //     body: data,
-            //     isFormData: data instanceof FormData
-            //   });
-            // If body is object and isFormData is false, api usually handles JSON.stringify.
-            // If not, we might need JSON.stringify(payload).
-            // Safest to let the API wrapper handle it if it supports objects, or stringify if we're unsure.
-            // But typical api wrappers expect object for JSON.
-            // Let's assume the API wrapper handles object -> JSON.
-
-            await updateGovernmentForm(id, payload);
-            await fetchForms();
-            return true;
+            await toggleCompanyGovernmentFormStatus(item.id);
+            toast.success("Status updated");
+            fetchForms();
         } catch (err) {
-            console.error("Toggle error:", err);
-            alert("Failed to toggle status: " + err.message);
-            return false;
+            toast.error("Failed to update status");
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (item) => {
+        if (!window.confirm("Delete this form permanently?")) return;
         try {
-            await deleteGovernmentForm(id);
-            alert("Form deleted permanently!");
-            await fetchForms();
-            return true;
+            await deleteCompanyGovernmentForm(item.id);
+            toast.success("Form deleted");
+            fetchForms();
         } catch (err) {
-            console.error("Delete error:", err);
-            alert("Failed to delete form: " + err.message);
-            return false;
+            toast.error("Failed to delete form");
         }
     };
 
-    // --- SMART PREVIEW / DOWNLOAD LOGIC ---
-
-    const handleView = async (id) => {
+    const handleSave = async (formData) => {
+        setModalLoading(true);
         try {
-            setPreviewLoading(true);
-            // Fetch fresh details (checks backend, gets fresh signedUrl)
-            const form = await getGovernmentForms({ id });
-
-            if (form && (form.signedUrl || form.storage_url)) {
-                setPreviewingItem({
-                    ...form,
-                    fileUrl: form.signedUrl || form.storage_url // Prioritize signedUrl
-                });
-                setPreviewModalOpen(true);
+            if (editingItem) {
+                await replaceCompanyGovernmentForm(editingItem.id, formData);
+                toast.success("Form replaced successfully");
             } else {
-                alert("Could not retrieve document URL.");
+                await uploadCompanyGovernmentForm(formData);
+                toast.success("Form uploaded successfully");
             }
+            setIsModalOpen(false);
+            fetchForms();
         } catch (err) {
-            console.error("View error:", err);
-            alert("Failed to view document: " + err.message);
+            toast.error(err.message || "Failed to save form");
         } finally {
-            setPreviewLoading(false);
+            setModalLoading(false);
         }
     };
 
-    const handleDownload = async (id) => {
-        try {
-            // Fetch fresh details for download
-            const form = await getGovernmentForms({ id });
-            const url = form.signedUrl || form.storage_url;
-
-            if (url) {
-                window.open(url, "_blank");
-            } else {
-                alert("Could not retrieve download URL.");
-            }
-        } catch (err) {
-            console.error("Download error:", err);
-            alert("Failed to download document: " + err.message);
+    const columns = [
+        { header: "SL No", render: (_, idx) => idx + 1 },
+        { header: "Document Name", render: (item) => item.form_name || item.documentName },
+        {
+            header: "PDF File Name",
+            className: "filename",
+            render: (item) => item.original_file_name || item.file_name || "N/A"
+        },
+        { header: "Version", key: "version" },
+        {
+            header: "Status",
+            render: (item) => (
+                <StatusBadge
+                    type={item.status === "ACTIVE" || item.status === "Active" ? "success" : "neutral"}
+                    label={item.status || "Active"}
+                />
+            )
+        },
+        {
+            header: "Actions",
+            className: "text-right",
+            render: (item) => (
+                <ActionButtons
+                    actions={[
+                        {
+                            icon: <FaEye />,
+                            onClick: () => handleView(item),
+                            title: "View"
+                        },
+                        {
+                            icon: <FaDownload />,
+                            onClick: () => handleDownload(item),
+                            title: "Download"
+                        },
+                        {
+                            icon: <FaEdit />,
+                            onClick: () => { setEditingItem(item); setIsModalOpen(true); },
+                            title: "Replace/Edit"
+                        },
+                        {
+                            icon: (item.status === "ACTIVE" || item.status === "Active") ? <FaToggleOn /> : <FaToggleOff />,
+                            onClick: () => handleToggleStatus(item),
+                            title: "Toggle Status"
+                        },
+                        {
+                            icon: <FaTrash />,
+                            disabled: item.status === "ACTIVE" || item.status === "Active",
+                            onClick: () => handleDelete(item),
+                            title: "Delete"
+                        }
+                    ]}
+                />
+            )
         }
-    };
+    ];
 
     return (
-        <>
-            <GovernmentFormsTable
-                data={data}
-                loading={loading}
-                error={error}
-                onRefresh={fetchForms}
-                onView={handleView}
-                onDownload={handleDownload}
-                onUpload={handleUpload}
-                onReplace={handleReplace}
-                onToggle={handleToggle}
-                onDelete={handleDelete}
+        <div className="page-container fade-in">
+            <PageHeader
+                title="Government Forms"
+                subtitle="Manage statutory compliance documents and government-mandated registration forms."
+                actions={
+                    <button className="btn-primary" onClick={fetchForms}>
+                        <FaSync className={loading ? "animate-spin" : ""} /> Refresh
+                    </button>
+                }
             />
 
-            {/* Preview Modal Hosted Here */}
-            {previewingItem && (
-                <PDFPreviewModal
-                    isOpen={previewModalOpen}
-                    onClose={() => {
-                        setPreviewModalOpen(false);
-                        setPreviewingItem(null);
+            <SummaryCards cards={stats} />
+
+            <FiltersBar
+                search={search}
+                onSearchChange={setSearch}
+            >
+                <button
+                    className="btn-primary"
+                    style={{ height: '40px' }}
+                    onClick={() => { setEditingItem(null); setIsModalOpen(true); }}
+                >
+                    + Upload New Form
+                </button>
+            </FiltersBar>
+
+            <div className="table-section">
+                <DataTable
+                    columns={columns}
+                    data={filteredData}
+                    emptyState={{
+                        title: "No government forms found",
+                        subtitle: "Start by uploading your company's registration or compliance documents.",
+                        icon: <FaFilePdf />
                     }}
-                    formId={previewingItem.id}
-                    formName={previewingItem.form_name || "Document"}
-                    fileUrl={previewingItem.fileUrl}
                 />
-            )}
-        </>
+            </div>
+
+            <GovernmentFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSave}
+                editData={editingItem}
+                loading={modalLoading}
+            />
+        </div>
     );
 };
 

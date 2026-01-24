@@ -1,26 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import PageHeader from "../../../../components/ui/PageHeader";
+import SummaryCards from "../../../../components/ui/SummaryCards";
+import FiltersBar from "../../../../components/ui/FiltersBar";
+import DataTable from "../../../../components/ui/DataTable";
+import StatusBadge from "../../../../components/ui/StatusBadge";
+import { FaClock, FaCheckCircle, FaTimesCircle, FaChartPie, FaCalendarAlt, FaSearch } from "react-icons/fa";
+import "../../../../styles/shared/modern-ui.css";
 
 const AttendanceReports = () => {
   const [filters, setFilters] = useState({
+    search: "",
     branch: "",
     department: "",
-    month: "",
+    month: "January",
     year: new Date().getFullYear().toString(),
   });
 
   const [showTable, setShowTable] = useState(false);
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleApplyFilters = () => {
     setShowTable(true);
-  };
-
-  const handleExport = (format) => {
-    alert(`Exported Attendance Report as ${format}`);
   };
 
   const mockReports = [
@@ -56,146 +59,133 @@ const AttendanceReports = () => {
     },
   ];
 
+  const filteredReports = useMemo(() => {
+    return mockReports.filter(r =>
+      r.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      r.empCode.toLowerCase().includes(filters.search.toLowerCase())
+    );
+  }, [filters.search]);
+
+  const stats = useMemo(() => {
+    const avg = Math.round(mockReports.reduce((a, b) => a + b.percentage, 0) / mockReports.length);
+    return [
+      {
+        label: "Average Attendance",
+        value: `${avg}%`,
+        icon: <FaChartPie />,
+        color: "blue"
+      },
+      {
+        label: "Total Present Days",
+        value: mockReports.reduce((a, b) => a + b.present, 0),
+        icon: <FaCheckCircle />,
+        color: "green"
+      },
+      {
+        label: "Total Absences",
+        value: mockReports.reduce((a, b) => a + b.absent, 0),
+        icon: <FaTimesCircle />,
+        color: "orange"
+      }
+    ];
+  }, []);
+
+  const columns = [
+    {
+      header: "Emp Code",
+      render: (r) => <span className="emp-code">{r.empCode}</span>
+    },
+    { header: "Name", key: "name" },
+    { header: "Branch", key: "branch" },
+    { header: "Present", key: "present" },
+    { header: "Absent", key: "absent" },
+    { header: "Half Day", key: "halfDay" },
+    { header: "Leaves", key: "leaves" },
+    {
+      header: "Attendance %",
+      render: (r) => (
+        <StatusBadge
+          type={r.percentage > 90 ? "success" : r.percentage > 80 ? "info" : "warning"}
+          label={`${r.percentage}%`}
+        />
+      )
+    }
+  ];
+
   return (
-    <div className="sr-page">
-      <div className="sr-header">
-        <h1>Attendance Reports</h1>
-        <p>Track employee attendance and statistics</p>
-      </div>
-
-      <div className="sr-content">
-        <div className="sr-filters">
-          <div className="filter-group">
-            <label>Branch</label>
-            <select
-              name="branch"
-              value={filters.branch}
-              onChange={handleFilterChange}
-            >
-              <option value="">Select Branch</option>
-              <option value="Head Office">Head Office</option>
-              <option value="Branch A">Branch A</option>
-              <option value="Branch B">Branch B</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Department</label>
-            <select
-              name="department"
-              value={filters.department}
-              onChange={handleFilterChange}
-            >
-              <option value="">Select Department</option>
-              <option value="HR">HR</option>
-              <option value="Finance">Finance</option>
-              <option value="Operations">Operations</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Month</label>
-            <select
-              name="month"
-              value={filters.month}
-              onChange={handleFilterChange}
-            >
-              <option value="">Select Month</option>
-              {[
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December",
-              ].map((month) => (
-                <option key={month} value={month}>
-                  {month}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Year</label>
-            <select
-              name="year"
-              value={filters.year}
-              onChange={handleFilterChange}
-            >
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-            </select>
-          </div>
-
+    <div className="page-container fade-in">
+      <PageHeader
+        title="Attendance Reports"
+        subtitle="Track employee attendance statistics, present days, and leave balances."
+        actions={
           <button className="btn-primary" onClick={handleApplyFilters}>
-            🔍 Apply Filters
+            Apply Filters
           </button>
-        </div>
+        }
+      />
 
-        {showTable && (
-          <div className="sr-table-container">
-            <div className="sr-export-buttons">
-              <button
-                className="btn-secondary"
-                onClick={() => handleExport("Excel")}
-              >
-                📊 Export Excel
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => handleExport("PDF")}
-              >
-                📄 Export PDF
-              </button>
-            </div>
+      {showTable && <SummaryCards cards={stats} />}
 
-            <table className="sr-table">
-              <thead>
-                <tr>
-                  <th>Emp Code</th>
-                  <th>Name</th>
-                  <th>Branch</th>
-                  <th>Present</th>
-                  <th>Absent</th>
-                  <th>Half Day</th>
-                  <th>Leaves</th>
-                  <th>Attendance %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockReports.map((report, idx) => (
-                  <tr key={idx}>
-                    <td>{report.empCode}</td>
-                    <td>{report.name}</td>
-                    <td>{report.branch}</td>
-                    <td>{report.present}</td>
-                    <td>{report.absent}</td>
-                    <td>{report.halfDay}</td>
-                    <td>{report.leaves}</td>
-                    <td>
-                      <span className="percentage-badge">
-                        {report.percentage}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <FiltersBar
+        search={filters.search}
+        onSearchChange={(val) => handleFilterChange("search", val)}
+      >
+        <select
+          name="branch"
+          value={filters.branch}
+          onChange={(e) => handleFilterChange("branch", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="">All Branches</option>
+          <option value="Head Office">Head Office</option>
+          <option value="Branch A">Branch A</option>
+          <option value="Branch B">Branch B</option>
+        </select>
 
-            <div className="sr-summary">
-              <p>Total Records: <strong>{mockReports.length}</strong></p>
-              <p>Average Attendance: <strong>{Math.round(mockReports.reduce((a, b) => a + b.percentage, 0) / mockReports.length)}%</strong></p>
-            </div>
-          </div>
-        )}
+        <select
+          name="department"
+          value={filters.department}
+          onChange={(e) => handleFilterChange("department", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="">All Departments</option>
+          <option value="HR">HR</option>
+          <option value="Finance">Finance</option>
+          <option value="Operations">Operations</option>
+        </select>
+
+        <select
+          name="month"
+          value={filters.month}
+          onChange={(e) => handleFilterChange("month", e.target.value)}
+          className="filter-select-modern"
+        >
+          {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+
+        <select
+          name="year"
+          value={filters.year}
+          onChange={(e) => handleFilterChange("year", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+        </select>
+      </FiltersBar>
+
+      <div className="table-section">
+        <DataTable
+          columns={columns}
+          data={showTable ? filteredReports : []}
+          emptyState={{
+            title: "Performance data not loaded",
+            subtitle: "Select filters and apply to view attendance analysis.",
+            icon: <FaCalendarAlt />
+          }}
+        />
       </div>
     </div>
   );

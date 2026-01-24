@@ -1,40 +1,41 @@
 import React from "react";
+import PageHeader from "../../../components/ui/PageHeader";
+import SummaryCards from "../../../components/ui/SummaryCards";
+import { FaFileContract, FaChartBar, FaFolderOpen, FaHistory, FaListAlt, FaFileSignature } from "react-icons/fa";
+import "../../../styles/shared/modern-ui.css";
 
 const Dashboard = () => {
   const stats = [
-    { label: "Total Forms", value: "24", icon: "📋" },
-    { label: "Active Reports", value: "12", icon: "📊" },
-    { label: "Generated Files", value: "0", icon: "📁" },
-    { label: "Pending Tasks", value: "0", icon: "⏳" },
+    { label: "Total Forms", value: "24", icon: <FaFileContract />, color: "blue" },
+    { label: "Active Reports", value: "12", icon: <FaChartBar />, color: "green" },
+    { label: "Generated Files", value: "0", icon: <FaFolderOpen />, color: "orange" },
+    { label: "Pending Tasks", value: "0", icon: <FaHistory />, color: "blue" },
   ];
 
   return (
-    <div className="sr-page">
-      <div className="sr-header">
-        <h1>Software Reports Dashboard</h1>
-        <p>Government compliance forms and reporting system</p>
-      </div>
+    <div className="page-container fade-in">
+      <PageHeader
+        title="Software Reports Dashboard"
+        subtitle="Central management system for government compliance forms and statutory reporting."
+      />
 
-      <div className="sr-stats-grid">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="sr-stat-card">
-            <div className="stat-icon">{stat.icon}</div>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-label">{stat.label}</div>
-          </div>
-        ))}
-      </div>
+      <SummaryCards cards={stats} />
 
-      <div className="sr-section">
-        <h2>Quick Access</h2>
-        <div className="sr-quick-links">
-          <div className="quick-link">
-            <span>📋 Government Forms</span>
-            <p>PF, ESI, Factory Act & other compliance forms</p>
+      <div className="summary-grid" style={{ marginTop: '24px' }}>
+        <div className="stats-card" style={{ flex: 1, cursor: 'default' }}>
+          <div className="stats-card-icon blue"><FaListAlt /></div>
+          <div className="card-info">
+            <span className="stats-label">Quick Access</span>
+            <h3 className="stats-value" style={{ fontSize: '18px' }}>Government Forms</h3>
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>PF, ESI, Factory Act & other compliance forms</p>
           </div>
-          <div className="quick-link">
-            <span>📊 Reports</span>
-            <p>Employee, attendance, salary & statutory reports</p>
+        </div>
+        <div className="stats-card" style={{ flex: 1, cursor: 'default' }}>
+          <div className="stats-card-icon green"><FaFileSignature /></div>
+          <div className="card-info">
+            <span className="stats-label">Quick Access</span>
+            <h3 className="stats-value" style={{ fontSize: '18px' }}>Analytical Reports</h3>
+            <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Employee, attendance, salary & statutory reports</p>
           </div>
         </div>
       </div>

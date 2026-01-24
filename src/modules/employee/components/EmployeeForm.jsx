@@ -59,10 +59,10 @@ const DEFAULT_DOCUMENTS = [
   { form_code: "OFFER_LETTER", form_name: "Offer Letter" },
   { form_code: "History Confirmation Letter", form_name: "History Confirmation Letter" },
   { form_code: "ID", form_name: "ID Card" },
-  // { form_code: "ESIC FORM 1", form_name: "ESIC FORM 1" },
-  // { form_code: "EPF FORM 2", form_name: "EPF Form 2" },
-  // { form_code: "FORM 11", form_name: "Form 11" },
-  // { form_code: "FORM 16", form_name: "Form 16" },
+  { form_code: "ESIC FORM 1", form_name: "ESIC FORM 1" },
+  { form_code: "EPF FORM 2", form_name: "EPF Form 2" },
+  { form_code: "FORM 11", form_name: "Form 11" },
+  { form_code: "FORM 16", form_name: "Form 16" },
 ];
 
 
@@ -270,12 +270,14 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     let mounted = true;
 
     getBranches()
-      .then((data) => {
+      .then((res) => {
         if (mounted) {
-          setBranches(Array.isArray(data) ? data : []);
+          const list = Array.isArray(res) ? res : (res?.data || []);
+          setBranches(list);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Failed to load branches", err);
         if (mounted) setBranches([]);
       });
 
@@ -294,8 +296,14 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     }
 
     getDepartments(employeeForm.branch_id)
-      .then(setDepartments)
-      .catch(() => setDepartments([]));
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        setDepartments(list);
+      })
+      .catch((err) => {
+        console.error("Failed to load departments", err);
+        setDepartments([]);
+      });
   }, [employeeForm.branch_id]);
 
 
@@ -310,8 +318,14 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       employeeForm.branch_id,
       employeeForm.department_id
     )
-      .then(setDesignations)
-      .catch(() => setDesignations([]));
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        setDesignations(list);
+      })
+      .catch((err) => {
+        console.error("Failed to load designations", err);
+        setDesignations([]);
+      });
   }, [employeeForm.branch_id, employeeForm.department_id]);
 
 
@@ -324,16 +338,24 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     }
 
     getEmployeeTypes(employeeForm.branch_id)
-      .then((data) => {
-        setEmployeeTypes(Array.isArray(data) ? data : []);
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        setEmployeeTypes(list);
       })
-      .catch(() => setEmployeeTypes([]));
+      .catch((err) => {
+        console.error("Failed to load employee types", err);
+        setEmployeeTypes([]);
+      });
 
     getShifts(employeeForm.branch_id)
-      .then((data) => {
-        setShifts(Array.isArray(data) ? data : []);
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        setShifts(list);
       })
-      .catch(() => setShifts([]));
+      .catch((err) => {
+        console.error("Failed to load shifts", err);
+        setShifts([]);
+      });
   }, [employeeForm.branch_id]);
 
 

@@ -25,11 +25,6 @@ const VALID_ROUTES = [
   "attendance",
   "leavemanagement",
   "payroll",
-  "asset",
-  "announce",
-  "recruit",
-  "holidays",
-  "settings",
   "companies",
   "departments",
   "employee-types",
@@ -68,12 +63,8 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
   const [hrOpen, setHrOpen] = useState(true);
   const [accountOpen, setAccountOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
-  const [govtDocsOpen, setGovtDocsOpen] = useState(false);
-  const [pfOpen, setPfOpen] = useState(false);
-  const [esiOpen, setEsiOpen] = useState(false);
-  const [factoryOpen, setFactoryOpen] = useState(false);
-  const [otherGovtOpen, setOtherGovtOpen] = useState(false);
   const [reportsSubOpen, setReportsSubOpen] = useState(false);
+  const [formsSubOpen, setFormsSubOpen] = useState(false);
 
   const isValidRoute = (path) => {
     const clean = path.replace(/^\/admin\//, "").split("/")[0];
@@ -215,6 +206,17 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 >
                   <FaIdCard /> Employee Code
                 </button>
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("softwarereports/government-forms");
+                  }}
+                >
+                  📄 Government Forms
+                </button>
                 {/* HR Permissions route requires hrId parameter - access via HR management page */}
               </div>
             )}
@@ -298,19 +300,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   </button>
                 )}
 
-                {canAccess("RECRUITMENT") && (
-                  <button
-                    type="button"
-                    className="submenu-item"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      go("recruit");
-                    }}
-                  >
-                    <FaUserTie /> Recruitment
-                  </button>
-                )}
+
 
 
               </div>
@@ -320,38 +310,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
         {isAdmin && (
           <>
-            <button
-              type="button"
-              className="menu-item expandable"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                safeToggle(setAccountOpen, !accountOpen);
-              }}
-            >
-              <div className="menu-left">
-                <FaFileInvoiceDollar />
-                {!collapsed && <span>Accounts</span>}
-              </div>
-              {!collapsed &&
-                (accountOpen ? <FaChevronDown /> : <FaChevronRight />)}
-            </button>
-
-            {accountOpen && !collapsed && (
-              <div className="submenu">
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("accounting");
-                  }}
-                >
-                  <FaFileInvoiceDollar /> Accounting
-                </button>
-              </div>
-            )}
 
             <button
               type="button"
@@ -385,19 +343,103 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   📊 Dashboard
                 </button>
 
-                {/* Govt Docs */}
+                {/* Statutory Forms Module */}
                 <div className="submenu-section">
                   <button
                     type="button"
-                    className="submenu-item"
+                    className="submenu-header"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      go("softwarereports/government-forms");
+                      safeToggle(setFormsSubOpen, !formsSubOpen);
                     }}
                   >
-                    📄 Government Forms
+                    <span>📜 Forms</span>
+                    {!collapsed &&
+                      (formsSubOpen ? <FaChevronDown /> : <FaChevronRight />)}
                   </button>
+
+                  {formsSubOpen && (
+                    <div className="submenu-nested">
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/pf");
+                        }}
+                      >
+                        EPF (Provident Fund)
+                      </button>
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/esic");
+                        }}
+                      >
+                        ESIC
+                      </button>
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/labour");
+                        }}
+                      >
+                        Attendance / Labour Law
+                      </button>
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/factories");
+                        }}
+                      >
+                        Factories Act
+                      </button>
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/bonus");
+                        }}
+                      >
+                        Bonus Act
+                      </button>
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/income-tax");
+                        }}
+                      >
+                        Income Tax
+                      </button>
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          go("softwarereports/forms/gratuity");
+                        }}
+                      >
+                        Gratuity Act
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Reports */}

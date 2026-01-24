@@ -8,16 +8,11 @@ import CodeVerify from "./pages/CodeVerify";
 import SuperAdmin from "./pages/SuperAdmin";
 import Dashboard from "./pages/Dashboard";
 import Attendance from "./modules/attendance/pages/Attendance";
-import AssetManagement from "./pages/AssetManagement.jsx";
 import LeaveManagement from "./modules/leave/LeaveManagementPage";
-import AnnouncementModule from "./pages/AnnouncementModule";
-import RecruitmentModule from "./pages/RecruitmentModule";
-import HolidaysModule from "./pages/HolidaysModule";
-import SettingsModule from "./pages/SettingsModule";
 import Companies from "./pages/Companies";
 import Accounts from "./pages/Accounts";
-import Softwarereports from "./pages/Softwarereports";
 import HRLogin from "./pages/HRLogin";
+
 
 // New module imports
 import SuperAdminRoutes from "./modules/super-admin";
@@ -25,14 +20,11 @@ import SoftwareReportsRoutes from "./modules/software-reports";
 import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode } from "./modules/organization";
 import EmployeeList from "./modules/employee/pages/EmployeeList";
 import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
-import EmployeeDocumentUpload from "./modules/employee/pages/EmployeeDocumentUpload";
-import EmployeeDocumentGenerate from "./modules/employee/pages/EmployeeDocumentGenerate/EmployeeDocumentGenerate.jsx";
 import PayrollManagement from "./modules/payroll/PayrollManagement";
 import Sidebar from "./layout/Sidebar";
 import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
 import "./styles/theme.css";
-import "./modules/software-reports/styles/softwareReports.css";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
 
 
@@ -133,18 +125,7 @@ const AdminLayout = ({ user, setUser }) => {
 
 
 
-            <Route
-              path="recruit"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="RECRUITMENT"
-                >
-                  <RecruitmentModule />
-                </PermissionProtectedRoute>
-              }
-            />
+
 
             <Route
               path="departments"
@@ -204,56 +185,13 @@ const AdminLayout = ({ user, setUser }) => {
                 </RoleProtectedRoute>
               }
             />
-            <Route
-              path="asset"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="ASSET"
-                  adminOverride
-                >
-                  <AssetManagement />
-                </PermissionProtectedRoute>
-              }
-            />
 
-            <Route
-              path="announce"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="ANNOUNCE"
-                  adminOverride
-                >
-                  <AnnouncementModule />
-                </PermissionProtectedRoute>
-              }
-            />
 
-            <Route
-              path="holidays"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="HOLIDAYS"
-                  adminOverride
-                >
-                  <HolidaysModule />
-                </PermissionProtectedRoute>
-              }
-            />
 
-            <Route
-              path="settings"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <SettingsModule />
-                </RoleProtectedRoute>
-              }
-            />
+
+
+
+
             <Route
               path="accounting"
               element={
@@ -279,8 +217,6 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route path="employees/:id" element={<EmployeeProfile />} />
-            <Route path="employees/:id/upload-document" element={<EmployeeDocumentUpload />} />
-            <Route path="employees/:id/generate-document/:formCode" element={<EmployeeDocumentGenerate />} />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Routes>
         </main>

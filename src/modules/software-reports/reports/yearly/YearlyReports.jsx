@@ -1,24 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import PageHeader from "../../../../components/ui/PageHeader";
+import SummaryCards from "../../../../components/ui/SummaryCards";
+import FiltersBar from "../../../../components/ui/FiltersBar";
+import DataTable from "../../../../components/ui/DataTable";
+import StatusBadge from "../../../../components/ui/StatusBadge";
+import { FaCalendarCheck, FaLayerGroup, FaCoins, FaSearch, FaHistory } from "react-icons/fa";
+import "../../../../styles/shared/modern-ui.css";
 
 const YearlyReports = () => {
   const [filters, setFilters] = useState({
+    search: "",
     year: new Date().getFullYear().toString(),
     reportType: "Annual Summary",
   });
 
   const [showTable, setShowTable] = useState(false);
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleApplyFilters = () => {
     setShowTable(true);
-  };
-
-  const handleExport = (format) => {
-    alert(`Exported Yearly Report as ${format}`);
   };
 
   const mockReports = [
@@ -51,101 +54,118 @@ const YearlyReports = () => {
     },
   ];
 
+  const filteredReports = useMemo(() => {
+    return mockReports.filter(r =>
+      r.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      r.empCode.toLowerCase().includes(filters.search.toLowerCase())
+    );
+  }, [filters.search]);
+
+  const stats = useMemo(() => {
+    const totalPayroll = mockReports.reduce((a, b) => a + b.totalSalary, 0);
+    const avgAttendance = Math.round(mockReports.reduce((a, b) => a + b.totalAttendance, 0) / mockReports.length);
+    return [
+      {
+        label: "Annual Payroll",
+        value: `₹${totalPayroll.toLocaleString()}`,
+        icon: <FaCoins />,
+        color: "green"
+      },
+      {
+        label: "Avg Attendance",
+        value: `${avgAttendance} Days`,
+        icon: <FaCalendarCheck />,
+        color: "blue"
+      },
+      {
+        label: "Total Employees",
+        value: mockReports.length,
+        icon: <FaLayerGroup />,
+        color: "orange"
+      }
+    ];
+  }, []);
+
+  const columns = [
+    {
+      header: "Emp Code",
+      render: (r) => <span className="emp-code">{r.empCode}</span>
+    },
+    { header: "Name", key: "name" },
+    {
+      header: "Total Salary",
+      className: "font-semibold",
+      render: (r) => `₹${r.totalSalary.toLocaleString()}`
+    },
+    { header: "Attendance Days", key: "totalAttendance" },
+    { header: "Total Leaves", key: "totalLeaves" },
+    {
+      header: "Deductions",
+      render: (r) => `₹${r.totalDeduction.toLocaleString()}`
+    },
+    {
+      header: "Status",
+      render: (r) => (
+        <StatusBadge
+          type="success"
+          label={r.yearlySummary}
+        />
+      )
+    }
+  ];
+
   return (
-    <div className="sr-page">
-      <div className="sr-header">
-        <h1>Yearly Reports</h1>
-        <p>View annual summaries and statistics</p>
-      </div>
-
-      <div className="sr-content">
-        <div className="sr-filters">
-          <div className="filter-group">
-            <label>Report Type</label>
-            <select
-              name="reportType"
-              value={filters.reportType}
-              onChange={handleFilterChange}
-            >
-              <option value="Annual Summary">Annual Summary</option>
-              <option value="Employee Summary">Employee Summary</option>
-              <option value="Department Summary">Department Summary</option>
-              <option value="Financial Summary">Financial Summary</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Year</label>
-            <select
-              name="year"
-              value={filters.year}
-              onChange={handleFilterChange}
-            >
-              <option value="2022">2022</option>
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-            </select>
-          </div>
-
+    <div className="page-container fade-in">
+      <PageHeader
+        title="Yearly Reports"
+        subtitle="Annual performance summaries, salary increments, and attendance reviews."
+        actions={
           <button className="btn-primary" onClick={handleApplyFilters}>
-            🔍 Apply Filters
+            Apply Filters
           </button>
-        </div>
+        }
+      />
 
-        {showTable && (
-          <div className="sr-table-container">
-            <div className="sr-export-buttons">
-              <button
-                className="btn-secondary"
-                onClick={() => handleExport("Excel")}
-              >
-                📊 Export Excel
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => handleExport("PDF")}
-              >
-                📄 Export PDF
-              </button>
-            </div>
+      {showTable && <SummaryCards cards={stats} />}
 
-            <table className="sr-table">
-              <thead>
-                <tr>
-                  <th>Emp Code</th>
-                  <th>Name</th>
-                  <th>Total Salary (₹)</th>
-                  <th>Attendance Days</th>
-                  <th>Total Leaves</th>
-                  <th>Total Deductions (₹)</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockReports.map((report, idx) => (
-                  <tr key={idx}>
-                    <td>{report.empCode}</td>
-                    <td>{report.name}</td>
-                    <td className="highlight">₹{report.totalSalary.toLocaleString()}</td>
-                    <td>{report.totalAttendance}</td>
-                    <td>{report.totalLeaves}</td>
-                    <td>₹{report.totalDeduction.toLocaleString()}</td>
-                    <td>
-                      <span className="status-badge">{report.yearlySummary}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <FiltersBar
+        search={filters.search}
+        onSearchChange={(val) => handleFilterChange("search", val)}
+      >
+        <select
+          name="reportType"
+          value={filters.reportType}
+          onChange={(e) => handleFilterChange("reportType", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="Annual Summary">Annual Summary</option>
+          <option value="Employee Summary">Employee Summary</option>
+          <option value="Department Summary">Department Summary</option>
+          <option value="Financial Summary">Financial Summary</option>
+        </select>
 
-            <div className="sr-summary">
-              <p>Total Employees: <strong>{mockReports.length}</strong></p>
-              <p>Total Annual Payroll: <strong>₹{mockReports.reduce((a, b) => a + b.totalSalary, 0).toLocaleString()}</strong></p>
-              <p>Average Attendance: <strong>{Math.round(mockReports.reduce((a, b) => a + b.totalAttendance, 0) / mockReports.length)} Days</strong></p>
-            </div>
-          </div>
-        )}
+        <select
+          name="year"
+          value={filters.year}
+          onChange={(e) => handleFilterChange("year", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+        </select>
+      </FiltersBar>
+
+      <div className="table-section">
+        <DataTable
+          columns={columns}
+          data={showTable ? filteredReports : []}
+          emptyState={{
+            title: "Yearly data not aggregated",
+            subtitle: "Select a fiscal year to view consolidated employee reports.",
+            icon: <FaHistory />
+          }}
+        />
       </div>
     </div>
   );

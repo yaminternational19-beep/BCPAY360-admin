@@ -1,26 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import PageHeader from "../../../../components/ui/PageHeader";
+import SummaryCards from "../../../../components/ui/SummaryCards";
+import FiltersBar from "../../../../components/ui/FiltersBar";
+import DataTable from "../../../../components/ui/DataTable";
+import { FaFileShield, FaPiggyBank, FaShieldAlt, FaHandHoldingHeart, FaSearch } from "react-icons/fa";
+import "../../../../styles/shared/modern-ui.css";
 
 const StatutoryReports = () => {
   const [filters, setFilters] = useState({
+    search: "",
     reportType: "PF",
-    month: "",
+    month: "January",
     year: new Date().getFullYear().toString(),
     branch: "",
   });
 
   const [showTable, setShowTable] = useState(false);
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleApplyFilters = () => {
     setShowTable(true);
-  };
-
-  const handleExport = (format) => {
-    alert(`Exported Statutory Report as ${format}`);
   };
 
   const mockReports = [
@@ -29,7 +31,6 @@ const StatutoryReports = () => {
       name: "John Doe",
       reportType: "PF",
       empContribution: 1800,
-      empContribution_pf: 1800,
       companyContribution: 1800,
       totalContribution: 3600,
     },
@@ -45,144 +46,128 @@ const StatutoryReports = () => {
       empCode: "EMP-003",
       name: "Mike Johnson",
       reportType: "Gratuity",
-      yearsOfService: 2,
-      gratuityAmount: 45000,
-      gratuityValue: 45000,
+      empContribution: 0,
+      companyContribution: 45000,
+      totalContribution: 45000,
     },
   ];
 
+  const filteredReports = useMemo(() => {
+    return mockReports.filter(r =>
+      (r.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        r.empCode.toLowerCase().includes(filters.search.toLowerCase())) &&
+      (filters.reportType === "All" || r.reportType === filters.reportType)
+    );
+  }, [filters.search, filters.reportType]);
+
+  const stats = useMemo(() => {
+    return [
+      {
+        label: "Total Contributions",
+        value: `₹${mockReports.reduce((a, b) => a + (b.totalContribution || 0), 0).toLocaleString()}`,
+        icon: <FaPiggyBank />,
+        color: "blue"
+      },
+      {
+        label: "Company Share",
+        value: `₹${mockReports.reduce((a, b) => a + (b.companyContribution || 0), 0).toLocaleString()}`,
+        icon: <FaShieldAlt />,
+        color: "green"
+      },
+      {
+        label: "Active Policies",
+        value: mockReports.length,
+        icon: <FaHandHoldingHeart />,
+        color: "orange"
+      }
+    ];
+  }, []);
+
+  const columns = [
+    {
+      header: "Emp Code",
+      render: (r) => <span className="emp-code">{r.empCode}</span>
+    },
+    { header: "Name", key: "name" },
+    { header: "Type", key: "reportType" },
+    {
+      header: "Emp Contribution",
+      render: (r) => `₹${(r.empContribution || 0).toLocaleString()}`
+    },
+    {
+      header: "Company Contribution",
+      render: (r) => `₹${(r.companyContribution || 0).toLocaleString()}`
+    },
+    {
+      header: "Total",
+      className: "font-bold text-green-600",
+      render: (r) => `₹${(r.totalContribution || 0).toLocaleString()}`
+    }
+  ];
+
   return (
-    <div className="sr-page">
-      <div className="sr-header">
-        <h1>Statutory Reports</h1>
-        <p>View PF, ESI, Gratuity, and Full & Final Settlements</p>
-      </div>
-
-      <div className="sr-content">
-        <div className="sr-filters">
-          <div className="filter-group">
-            <label>Report Type</label>
-            <select
-              name="reportType"
-              value={filters.reportType}
-              onChange={handleFilterChange}
-            >
-              <option value="PF">PF Contribution Register</option>
-              <option value="ESI">ESI Contribution Register</option>
-              <option value="Gratuity">Gratuity Statement</option>
-              <option value="FullFinal">Full & Final Settlement</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Branch</label>
-            <select
-              name="branch"
-              value={filters.branch}
-              onChange={handleFilterChange}
-            >
-              <option value="">All Branches</option>
-              <option value="Head Office">Head Office</option>
-              <option value="Branch A">Branch A</option>
-              <option value="Branch B">Branch B</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Month</label>
-            <select
-              name="month"
-              value={filters.month}
-              onChange={handleFilterChange}
-            >
-              <option value="">Select Month</option>
-              {[
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December",
-              ].map((month) => (
-                <option key={month} value={month}>
-                  {month}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Year</label>
-            <select
-              name="year"
-              value={filters.year}
-              onChange={handleFilterChange}
-            >
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-            </select>
-          </div>
-
+    <div className="page-container fade-in">
+      <PageHeader
+        title="Statutory Reports"
+        subtitle="Compliance reporting for PF, ESI, TDS, and other statutory requirements."
+        actions={
           <button className="btn-primary" onClick={handleApplyFilters}>
-            🔍 Apply Filters
+            Apply Filters
           </button>
-        </div>
+        }
+      />
 
-        {showTable && (
-          <div className="sr-table-container">
-            <div className="sr-export-buttons">
-              <button
-                className="btn-secondary"
-                onClick={() => handleExport("Excel")}
-              >
-                📊 Export Excel
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => handleExport("PDF")}
-              >
-                📄 Export PDF
-              </button>
-            </div>
+      {showTable && <SummaryCards cards={stats} />}
 
-            <table className="sr-table">
-              <thead>
-                <tr>
-                  <th>Emp Code</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Emp Contribution</th>
-                  <th>Company Contribution</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockReports.map((report, idx) => (
-                  <tr key={idx}>
-                    <td>{report.empCode}</td>
-                    <td>{report.name}</td>
-                    <td>{report.reportType}</td>
-                    <td>₹{report.empContribution}</td>
-                    <td>₹{report.companyContribution}</td>
-                    <td className="highlight">₹{report.totalContribution}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <FiltersBar
+        search={filters.search}
+        onSearchChange={(val) => handleFilterChange("search", val)}
+      >
+        <select
+          name="reportType"
+          value={filters.reportType}
+          onChange={(e) => handleFilterChange("reportType", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="All">All Types</option>
+          <option value="PF">PF Contribution</option>
+          <option value="ESI">ESI Contribution</option>
+          <option value="Gratuity">Gratuity</option>
+          <option value="FullFinal">Full & Final</option>
+        </select>
 
-            <div className="sr-summary">
-              <p>Total Records: <strong>{mockReports.length}</strong></p>
-              <p>Total Company Contribution: <strong>₹{mockReports.reduce((a, b) => a + b.companyContribution, 0).toLocaleString()}</strong></p>
-            </div>
-          </div>
-        )}
+        <select
+          name="month"
+          value={filters.month}
+          onChange={(e) => handleFilterChange("month", e.target.value)}
+          className="filter-select-modern"
+        >
+          {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+
+        <select
+          name="year"
+          value={filters.year}
+          onChange={(e) => handleFilterChange("year", e.target.value)}
+          className="filter-select-modern"
+        >
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+        </select>
+      </FiltersBar>
+
+      <div className="table-section">
+        <DataTable
+          columns={columns}
+          data={showTable ? filteredReports : []}
+          emptyState={{
+            title: "Compliance data unavailable",
+            subtitle: "Select a report type and period to view statutory summaries.",
+            icon: <FaFileShield />
+          }}
+        />
       </div>
     </div>
   );

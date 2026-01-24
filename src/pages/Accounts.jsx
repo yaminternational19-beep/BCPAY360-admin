@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
-import { makeEmployees } from "../utils/mockData";
+// import { makeEmployees } from "../utils/mockData"; // REMOVED
 import "../styles/Accounts.css";
 
 const Accounts = () => {
   const user = JSON.parse(localStorage.getItem("auth_user"));
 
-  const [employees] = useState(() => makeEmployees(100));
+  const [employees] = useState(() => []);
   const [query, setQuery] = useState("");
   const [preview, setPreview] = useState(null);
 

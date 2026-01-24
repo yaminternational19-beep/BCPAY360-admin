@@ -29,6 +29,9 @@ const YearlyReports = lazy(() =>
   import("./reports/yearly/YearlyReports.jsx")
 );
 
+// Statutory Forms Module
+const FormsRoutes = lazy(() => import("../forms/FormsRouter"));
+
 const LoadingFallback = () => (
   <div className="sr-loading">Loading...</div>
 );
@@ -37,10 +40,8 @@ const SoftwareReportsRoutes = () => {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route index element={<Navigate to="" replace />} />
-
         {/* Dashboard */}
-        <Route path="" element={<Dashboard />} />
+        <Route index element={<Dashboard />} />
 
         {/* Unified Government Forms */}
         <Route path="government-forms" element={<GovernmentForms />} />
@@ -53,8 +54,11 @@ const SoftwareReportsRoutes = () => {
         <Route path="reports/statutory" element={<StatutoryReports />} />
         <Route path="reports/yearly" element={<YearlyReports />} />
 
+        {/* Reorganized Statutory Forms */}
+        <Route path="forms/*" element={<FormsRoutes />} />
+
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="" replace />} />
+        <Route path="*" element={<Navigate to="/softwarereports" replace />} />
       </Routes>
     </Suspense>
   );

@@ -26,12 +26,10 @@ import {
   getEmployeeById,
   deleteEmployeeById,
   activateEmployeeById,
-  updateEmployeeById,
-  getAvailableCompanyForms
+  updateEmployeeById
 } from "../../../api/employees.api";
 import { useToast } from "../../../context/ToastContext";
 import EmployeeForm from "../components/EmployeeForm";
-import EmployeeDocumentCard from "../components/EmployeeDocumentCard";
 
 const EmployeeProfile = () => {
   const { id } = useParams();
@@ -53,10 +51,7 @@ const EmployeeProfile = () => {
   const fetchEmployeeData = async () => {
     setLoading(true);
     try {
-      const [res, companyFormsRes] = await Promise.all([
-        getEmployeeById(id),
-        getAvailableCompanyForms()
-      ]);
+      const res = await getEmployeeById(id);
 
       if (!res) {
         setError("Employee not found");
@@ -69,16 +64,15 @@ const EmployeeProfile = () => {
         profile: res.profile || null,
         auth: res.auth || null,
         documents: Array.isArray(res.documents) ? res.documents : [],
-        companyForms: Array.isArray(companyFormsRes?.data) ? companyFormsRes.data : (Array.isArray(companyFormsRes) ? companyFormsRes : []),
-        // Create a map of generated forms for easy lookup
+        companyForms: [], // No longer using dynamic forms here
         generatedMap: (Array.isArray(res.documents) ? res.documents : []).reduce((acc, doc) => {
           if (doc.form_code) acc[doc.form_code] = doc;
           return acc;
         }, {})
       });
     } catch (err) {
+      console.error("Profile load error:", err);
       setError(err.message || "Unable to load employee details");
-      toast.error(err.message || "Unable to load employee details");
     } finally {
       setLoading(false);
     }
@@ -465,17 +459,36 @@ const EmployeeProfile = () => {
 
               <div className="document-stack" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
                 {documents.length > 0 ? (
-                  documents.filter(d => !d.form_code).map((doc, idx) => (
-                    <EmployeeDocumentCard
-                      key={`uploaded-${idx}`}
-                      document={{
-                        form_name: doc.type || doc.name || "Uploaded Document",
-                        generated: true, // It's uploaded, so it exists
-                        view_url: doc.view_url || doc.viewUrl
+                  documents.filter(doc => doc.type !== 'profile_photo').map((doc, idx) => (
+                    <div
+                      key={idx}
+                      className="doc-card-simple"
+                      style={{
+                        padding: '10px',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
                       }}
-                      type="UPLOADED"
-                      onAction={(d) => window.open(d.view_url, '_blank')}
-                    />
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                        <FileText size={16} className="text-muted" />
+                        <span style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {doc.type ? doc.type.replace(/_/g, " ") : (doc.file_name || "Document")}
+                        </span>
+                      </div>
+                      <a
+                        href={doc.view_url || doc.download_url || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-icon-sm"
+                        style={{ color: '#3b82f6' }}
+                      >
+                        <Eye size={14} />
+                      </a>
+                    </div>
                   ))
                 ) : (
                   <div className="empty-state" style={{ padding: '12px', minHeight: 'auto' }}>
@@ -483,72 +496,6 @@ const EmployeeProfile = () => {
                   </div>
                 )}
               </div>
-
-              <h5 style={{
-                margin: '0 0 8px 0',
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                color: 'var(--text-secondary)'
-              }}>
-                Company Documents
-              </h5>
-
-              <div
-                className="document-stack"
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-              >
-                {Array.isArray(data.companyForms) && data.companyForms.length > 0 ? (
-                  data.companyForms.map((form) => {
-                    const formCode = form.form_code || form.id;
-                    const formName = form.form_name || form.title || form.name || "Document";
-
-                    const existingDoc =
-                      data.generatedMap && formCode
-                        ? data.generatedMap[formCode]
-                        : null;
-
-                    const isGenerated = Boolean(existingDoc);
-
-                    return (
-                      <EmployeeDocumentCard
-                        key={`company-form-${formCode}`}
-                        type="COMPANY"
-                        document={{
-                          form_code: formCode,
-                          form_name: formName,
-                          generated: isGenerated
-                        }}
-                        onAction={() => {
-                          if (isGenerated && existingDoc?.view_url) {
-                            // VIEW existing generated document
-                            window.open(
-                              existingDoc.view_url || existingDoc.viewUrl,
-                              "_blank",
-                              "noopener,noreferrer"
-                            );
-                          } else {
-                            // GENERATE new document
-                            navigate(`/employees/${id}/generate-document/${formCode}`)
-
-                          }
-                        }}
-                      />
-                    );
-                  })
-                ) : (
-                  <div
-                    className="empty-state"
-                    style={{ padding: "12px", minHeight: "auto" }}
-                  >
-                    <p style={{ margin: 0, fontSize: "13px" }}>
-                      No company forms available
-                    </p>
-                  </div>
-                )}
-              </div>
-
-
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { makeEmployees } from "../utils/mockData";
+// import { makeEmployees } from "../utils/mockData"; // REMOVED
 import "../styles/Companies.css";
 
 const COMPANY_NAMES = [
@@ -13,7 +13,8 @@ const COMPANY_NAMES = [
 
 export default function Companies({ user }) {
   const navigate = useNavigate();
-  const employees = useMemo(() => makeEmployees(1000), []);
+  // const employees = useMemo(() => makeEmployees(1000), []);
+  const employees = useMemo(() => [], []);
 
   const companies = useMemo(() => {
     return COMPANY_NAMES.map((name, i) => {
