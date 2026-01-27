@@ -11,9 +11,6 @@ const PageHeader = ({ title, subtitle, actions }) => {
 
             <div className="header-actions">
                 {actions}
-                <button className="btn-export" disabled>
-                    <FaDownload /> Export CSV
-                </button>
             </div>
         </header>
     );

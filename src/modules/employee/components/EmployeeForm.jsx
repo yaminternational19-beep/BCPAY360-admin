@@ -172,8 +172,8 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
       employee_status: ef.employee_status || "ACTIVE",
 
-      employee_type_id: ef.employee_type_id || "",
-      shift_id: ef.shift_id || "",
+      employee_type_id: ef.employee_type_id || ef.employee_type?.id || "",
+      shift_id: ef.shift_id || ef.shift?.id || "",
 
       joining_date: ef.joining_date ? ef.joining_date.split("T")[0] : "",
       confirmation_date: ef.confirmation_date ? ef.confirmation_date.split("T")[0] : "",
@@ -186,12 +186,14 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       job_location: ef.job_location || "",
       site_location: ef.site_location || "",
 
-      branch_id: ef.branch_id || "",
-      department_id: ef.department_id || "",
-      designation_id: ef.designation_id || "",
+      branch_id: ef.branch_id || ef.branch?.id || "",
+      department_id: ef.department_id || ef.department?.id || "",
+      designation_id: ef.designation_id || ef.designation?.id || "",
 
-      uan_number: docs.find(d => d.document_type === "UAN")?.document_number || "",
-      esic_number: docs.find(d => d.document_type === "ESIC")?.document_number || "",
+      uan_number: docs.find(d => d.document_type === "UAN" || d.type === "UAN")?.document_number || "",
+      esic_number: docs.find(d => d.document_type === "ESIC" || d.type === "ESIC")?.document_number || "",
+      pan_number: docs.find(d => d.document_type === "PAN" || d.type === "PAN")?.document_number || "",
+      aadhaar_number: docs.find(d => d.document_type === "AADHAAR" || d.type === "AADHAAR")?.document_number || "",
     });
 
     if (pf) {
@@ -605,7 +607,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
 
   const FileField = ({ label, field, accept }) => {
-    const existing = documentsForm.existing?.find(d => d.document_type === field);
+    const existing = documentsForm.existing?.find(d => (d.document_type || d.type) === field);
     const uploadedFile = documentsForm.files?.[field];
 
     return (

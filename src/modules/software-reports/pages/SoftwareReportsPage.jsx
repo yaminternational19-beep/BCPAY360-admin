@@ -1,57 +1,65 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { FORMS_CONFIG } from "../config/forms.config";
 import PageHeader from "../../../components/ui/PageHeader";
 import SummaryCards from "../../../components/ui/SummaryCards";
 import FiltersBar from "../../../components/ui/FiltersBar";
 import DataTable from "../../../components/ui/DataTable";
 import StatusBadge from "../../../components/ui/StatusBadge";
-import ActionButtons from "../../../components/ui/ActionButtons";
 import { FaCheckCircle, FaExclamationCircle, FaUsers, FaEye, FaUpload, FaDownload, FaFileExport } from "react-icons/fa";
 import { getEmployeesByForm, uploadEmployeeForm, replaceEmployeeForm, deleteEmployeeForm } from "../../../api/employees.api";
-import { getBranches, getDepartments } from "../../../api/master.api";
+import { getBranches, getDepartments, getGovernmentForms } from "../../../api/master.api";
+import { REPORTS_CONFIG } from "../config/reports.config";
 import "../../../styles/shared/modern-ui.css";
-import "../Forms.css";
+import "../styles/SoftwareReports.css";
 
 const MONTH_MAP = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
     July: 7, August: 8, September: 9, October: 10, November: 11, December: 12
 };
 
-const EmployeeFormsPage = () => {
-    const { formType } = useParams();
-    const config = useMemo(() => {
-        const baseConfig = FORMS_CONFIG[formType];
-        if (baseConfig) return baseConfig;
+const SoftwareReportsPage = () => {
+    const { reportType } = useParams();
 
-        // Fallback for unknown form types
-        return {
-            title: formType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + " Forms",
-            subtitle: `Compliance documents for ${formType}.`,
-            emptyStateText: `No records found for ${formType}.`,
-            forms: []
-        };
-    }, [formType]);
+    // Metadata State
+    const [reportMetadata, setReportMetadata] = useState(null);
+    const [fetchingMetadata, setFetchingMetadata] = useState(true);
 
-    // Selected form from nested forms array
-    const [selectedFormCode, setSelectedFormCode] = useState("");
-
-    // Determine the actual form to use
-    const selectedForm = useMemo(() => {
-        if (!config.forms || config.forms.length === 0) {
-            return { code: formType, name: config.title, periodType: "MONTH" };
-        }
-
-        const form = config.forms.find(f => f.code === selectedFormCode) || config.forms[0];
-        return form;
-    }, [config, selectedFormCode, formType]);
-
-    // Initialize selectedFormCode when config changes
+    // Metadata Fetching
     useEffect(() => {
-        if (config.forms && config.forms.length > 0 && !selectedFormCode) {
-            setSelectedFormCode(config.forms[0].code);
-        }
-    }, [config, selectedFormCode]);
+        const fetchMetadata = async () => {
+            setFetchingMetadata(true);
+            try {
+                const res = await getGovernmentForms();
+                const forms = res?.data || [];
+                const currentForm = forms.find(f => f.formCode === reportType || f.form_code === reportType);
+
+                if (currentForm) {
+                    setReportMetadata({
+                        title: currentForm.formName,
+                        subtitle: `Compliance and analytical data for ${currentForm.formName}.`,
+                        code: currentForm.formCode || currentForm.form_code,
+                        periodType: currentForm.periodType,
+                        emptyStateText: `No records found for ${currentForm.formName}.`
+                    });
+                } else {
+                    // Fallback to config if available
+                    const configFallback = REPORTS_CONFIG[reportType];
+                    setReportMetadata({
+                        title: configFallback?.title || reportType.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') + " Report",
+                        subtitle: `Report data for ${reportType}.`,
+                        code: configFallback?.id || reportType,
+                        periodType: configFallback?.periodType || "MONTH",
+                        emptyStateText: `No records found for ${reportType}.`
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching report metadata:", error);
+            } finally {
+                setFetchingMetadata(false);
+            }
+        };
+        fetchMetadata();
+    }, [reportType]);
 
     // API Data State
     const [availableList, setAvailableList] = useState([]);
@@ -81,7 +89,7 @@ const EmployeeFormsPage = () => {
     // Clear selection on tab or filter change
     useEffect(() => {
         setSelectedIds(new Set());
-    }, [activeTab, filters.branchId, filters.departmentId, filters.month, filters.year, filters.financialYear, selectedFormCode]);
+    }, [activeTab, filters.branchId, filters.departmentId, filters.month, filters.year, filters.financialYear, reportType]);
 
     const fetchMasterData = async () => {
         try {
@@ -101,21 +109,21 @@ const EmployeeFormsPage = () => {
     };
 
     const fetchData = useCallback(async () => {
-        if (!selectedForm.code) return;
+        if (!reportMetadata?.code) return;
 
         setLoading(true);
         try {
             const params = {
-                formCode: selectedForm.code,
-                periodType: selectedForm.periodType,
+                formCode: reportMetadata.code,
+                periodType: reportMetadata.periodType,
                 branchId: filters.branchId,
                 departmentId: filters.departmentId
             };
 
             // Add period parameters based on periodType
-            if (selectedForm.periodType === "FY") {
+            if (reportMetadata.periodType === "FY") {
                 params.financialYear = filters.financialYear;
-            } else if (selectedForm.periodType === "MONTH") {
+            } else if (reportMetadata.periodType === "MONTH") {
                 params.year = parseInt(filters.year);
                 const monthVal = filters.month;
                 params.month = MONTH_MAP[monthVal] || parseInt(monthVal);
@@ -124,30 +132,30 @@ const EmployeeFormsPage = () => {
                     console.error("Invalid month:", monthVal);
                     return;
                 }
-            } else if (selectedForm.periodType === "HALF_YEAR") {
+            } else if (reportMetadata.periodType === "HALF_YEAR") {
                 params.year = parseInt(filters.year);
             }
-            // LIFETIME forms don't need period parameters
 
             const response = await getEmployeesByForm(params);
             setAvailableList(response.available || []);
             setMissingList(response.missing || []);
             setSummary(response.summary || null);
-            setSelectedIds(new Set());
         } catch (error) {
-            console.error("Error fetching form data:", error);
+            console.error("Error fetching report data:", error);
         } finally {
             setLoading(false);
         }
-    }, [selectedForm, filters]);
+    }, [reportMetadata, filters]);
 
     useEffect(() => {
         fetchMasterData();
     }, [filters.branchId]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if (reportMetadata) {
+            fetchData();
+        }
+    }, [fetchData, reportMetadata]);
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -157,8 +165,8 @@ const EmployeeFormsPage = () => {
     const stats = useMemo(() => {
         if (!summary) return [
             { label: "Total Employees", value: 0, icon: <FaUsers />, color: "blue" },
-            { label: "Documents Available", value: 0, icon: <FaCheckCircle />, color: "green" },
-            { label: "Documents Missing", value: 0, icon: <FaExclamationCircle />, color: "orange" }
+            { label: "Reports Available", value: 0, icon: <FaCheckCircle />, color: "green" },
+            { label: "Reports Missing", value: 0, icon: <FaExclamationCircle />, color: "orange" }
         ];
 
         return [
@@ -169,13 +177,13 @@ const EmployeeFormsPage = () => {
                 color: "blue"
             },
             {
-                label: "Documents Available",
+                label: "Reports Available",
                 value: summary.available || 0,
                 icon: <FaCheckCircle />,
                 color: "green"
             },
             {
-                label: "Documents Missing",
+                label: "Reports Missing",
                 value: summary.missing || 0,
                 icon: <FaExclamationCircle />,
                 color: "orange"
@@ -201,23 +209,18 @@ const EmployeeFormsPage = () => {
         try {
             const uploadData = {
                 employeeId: emp.employee_id || emp.id,
-                formCode: selectedForm.code,
-                periodType: selectedForm.periodType,
+                formCode: reportMetadata.code,
+                periodType: reportMetadata.periodType,
                 file: file
             };
 
-            if (selectedForm.periodType === "FY") {
+            if (reportMetadata.periodType === "FY") {
                 uploadData.financialYear = filters.financialYear;
-            } else if (selectedForm.periodType === "MONTH") {
+            } else if (reportMetadata.periodType === "MONTH") {
                 uploadData.year = parseInt(filters.year);
                 const monthVal = filters.month;
                 uploadData.month = MONTH_MAP[monthVal] || parseInt(monthVal);
-
-                if (!uploadData.month || isNaN(uploadData.month)) {
-                    alert(`Invalid month selected: ${monthVal}`);
-                    return;
-                }
-            } else if (selectedForm.periodType === "HALF_YEAR") {
+            } else if (reportMetadata.periodType === "HALF_YEAR") {
                 uploadData.year = parseInt(filters.year);
             }
 
@@ -239,23 +242,23 @@ const EmployeeFormsPage = () => {
         try {
             const replaceData = {
                 employeeId: emp.employee_id || emp.id,
-                formCode: selectedForm.code,
-                periodType: selectedForm.periodType,
+                formCode: reportMetadata.code,
+                periodType: reportMetadata.periodType,
                 file: file
             };
 
-            if (selectedForm.periodType === "FY") {
+            if (reportMetadata.periodType === "FY") {
                 replaceData.financialYear = filters.financialYear;
-            } else if (selectedForm.periodType === "MONTH") {
+            } else if (reportMetadata.periodType === "MONTH") {
                 replaceData.year = parseInt(filters.year);
                 const monthVal = filters.month;
                 replaceData.month = MONTH_MAP[monthVal] || parseInt(monthVal);
-            } else if (selectedForm.periodType === "HALF_YEAR") {
+            } else if (reportMetadata.periodType === "HALF_YEAR") {
                 replaceData.year = parseInt(filters.year);
             }
 
             await replaceEmployeeForm(replaceData);
-            fetchData(); // Refresh list
+            fetchData();
         } catch (error) {
             console.error("Replace failed:", error);
             alert("Replace failed. Please try again.");
@@ -267,26 +270,26 @@ const EmployeeFormsPage = () => {
     const handleDelete = async (emp) => {
         if (!window.confirm("Permanently delete this document?")) return;
 
-        setUploading(true); // Re-use uploading state for loading indicator
+        setUploading(true);
         try {
             const deleteData = {
                 employeeId: emp.employee_id || emp.id,
-                formCode: selectedForm.code,
-                periodType: selectedForm.periodType
+                formCode: reportMetadata.code,
+                periodType: reportMetadata.periodType
             };
 
-            if (selectedForm.periodType === "FY") {
+            if (reportMetadata.periodType === "FY") {
                 deleteData.financialYear = filters.financialYear;
-            } else if (selectedForm.periodType === "MONTH") {
+            } else if (reportMetadata.periodType === "MONTH") {
                 deleteData.year = parseInt(filters.year);
                 const monthVal = filters.month;
                 deleteData.month = MONTH_MAP[monthVal] || parseInt(monthVal);
-            } else if (selectedForm.periodType === "HALF_YEAR") {
+            } else if (reportMetadata.periodType === "HALF_YEAR") {
                 deleteData.year = parseInt(filters.year);
             }
 
             await deleteEmployeeForm(deleteData);
-            fetchData(); // Refresh list
+            fetchData();
         } catch (error) {
             console.error("Delete failed:", error);
             alert("Delete failed. Please try again.");
@@ -331,7 +334,7 @@ const EmployeeFormsPage = () => {
         const selectedData = filteredData.filter(emp => selectedIds.has(emp.id || emp.employee_id));
         if (selectedData.length === 0) return;
 
-        const headers = ["Employee Code", "Employee Name", "Phone", "Joining Date", "Branch", "Department", "Form Name", "Period", "Status"];
+        const headers = ["Employee Code", "Employee Name", "Phone", "Joining Date", "Branch", "Department", "Report Name", "Period", "Status"];
         const rows = selectedData.map(emp => [
             `"${emp.employee_code || ''}"`,
             `"${emp.full_name || ''}"`,
@@ -339,8 +342,8 @@ const EmployeeFormsPage = () => {
             `"${emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB').replace(/\//g, '-') : '-'}"`,
             `"${emp.branch_name || ''}"`,
             `"${emp.department_name || ''}"`,
-            `"${selectedForm.name || selectedForm.code}"`,
-            `"${selectedForm.periodType === "FY" ? filters.financialYear : selectedForm.periodType === "MONTH" ? `${filters.month} ${filters.year}` : selectedForm.periodType === "LIFETIME" ? "N/A" : filters.year}"`,
+            `"${reportMetadata.title || reportMetadata.code}"`,
+            `"${reportMetadata.periodType === "FY" ? filters.financialYear : reportMetadata.periodType === "MONTH" ? `${filters.month} ${filters.year}` : reportMetadata.periodType === "LIFETIME" ? "N/A" : filters.year}"`,
             `"${activeTab}"`
         ]);
 
@@ -349,12 +352,11 @@ const EmployeeFormsPage = () => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `Forms_${selectedForm.code}_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.setAttribute("download", `Report_${reportMetadata.code}_${activeTab}_${new Date().toISOString().slice(0, 10)}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
         setSelectedIds(new Set());
     };
 
@@ -391,18 +393,6 @@ const EmployeeFormsPage = () => {
             )
         },
         {
-            header: "Phone",
-            render: (emp) => <span className="text-sm text-gray-600 font-mono">{emp.phone || "—"}</span>
-        },
-        {
-            header: "Joining Date",
-            render: (emp) => (
-                <span className="text-sm text-gray-600">
-                    {emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB').replace(/\//g, '-') : "—"}
-                </span>
-            )
-        },
-        {
             header: "Branch",
             render: (emp) => <span className="text-sm text-gray-600">{emp.branch_name || "—"}</span>
         },
@@ -411,7 +401,7 @@ const EmployeeFormsPage = () => {
             render: (emp) => <span className="text-sm text-gray-600">{emp.department_name || "—"}</span>
         },
         {
-            header: "Document Status",
+            header: "Status",
             render: (emp) => (
                 <StatusBadge
                     type={activeTab === "Available" ? "success" : "warning"}
@@ -427,65 +417,18 @@ const EmployeeFormsPage = () => {
                 <div className="actions-group">
                     {activeTab === "Available" ? (
                         <>
-                            <button
-                                className="action-btn view"
-                                onClick={() => handleView(emp)}
-                                title="View Document"
-                            >
-                                <FaEye />
-                            </button>
-                            <button
-                                className="action-btn download"
-                                onClick={() => handleDownload(emp)}
-                                title="Download"
-                            >
-                                <FaDownload />
-                            </button>
-
-                            {/* Replace */}
+                            <button className="action-btn view" onClick={() => handleView(emp)} title="View"><FaEye /></button>
+                            <button className="action-btn download" onClick={() => handleDownload(emp)} title="Download"><FaDownload /></button>
                             <div className="relative">
-                                <input
-                                    type="file"
-                                    style={{ display: "none" }}
-                                    id={`replace-${emp.id || emp.employee_id}`}
-                                    onChange={(e) => handleReplace(emp, e.target.files[0])}
-                                    disabled={uploading}
-                                />
-                                <label
-                                    htmlFor={`replace-${emp.id || emp.employee_id}`}
-                                    className={`action-btn replace ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                    title="Replace Document"
-                                >
-                                    <FaUpload />
-                                </label>
+                                <input type="file" style={{ display: "none" }} id={`replace-${emp.id || emp.employee_id}`} onChange={(e) => handleReplace(emp, e.target.files[0])} disabled={uploading} />
+                                <label htmlFor={`replace-${emp.id || emp.employee_id}`} className={`action-btn replace ${uploading ? 'opacity-50' : 'cursor-pointer'}`} title="Replace"><FaUpload /></label>
                             </div>
-
-                            {/* Delete */}
-                            <button
-                                className="action-btn delete"
-                                onClick={() => handleDelete(emp)}
-                                disabled={uploading}
-                                title="Delete Document"
-                            >
-                                <FaExclamationCircle />
-                            </button>
+                            <button className="action-btn delete" onClick={() => handleDelete(emp)} disabled={uploading} title="Delete"><FaExclamationCircle /></button>
                         </>
                     ) : (
                         <div className="relative">
-                            <input
-                                type="file"
-                                style={{ display: "none" }}
-                                id={`upload-${emp.id || emp.employee_id}`}
-                                onChange={(e) => handleUpload(emp, e.target.files[0])}
-                                disabled={uploading}
-                            />
-                            <label
-                                htmlFor={`upload-${emp.id || emp.employee_id}`}
-                                className={`action-btn upload ${uploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                title="Upload Document"
-                            >
-                                <FaUpload />
-                            </label>
+                            <input type="file" style={{ display: "none" }} id={`upload-${emp.id || emp.employee_id}`} onChange={(e) => handleUpload(emp, e.target.files[0])} disabled={uploading} />
+                            <label htmlFor={`upload-${emp.id || emp.employee_id}`} className={`action-btn upload ${uploading ? 'opacity-50' : 'cursor-pointer'}`} title="Upload"><FaUpload /></label>
                         </div>
                     )}
                 </div>
@@ -493,74 +436,35 @@ const EmployeeFormsPage = () => {
         }
     ], [activeTab, uploading, filteredData, selectedIds]);
 
+    if (fetchingMetadata) return <div className="p-8 text-center">Loading Report Configuration...</div>;
+
     return (
         <div className="page-container fade-in">
             <PageHeader
-                title={config.title}
-                subtitle={config.subtitle}
+                title={reportMetadata?.title}
+                subtitle={reportMetadata?.subtitle}
                 actions={
                     <div className="flex items-center gap-4">
-                        <button
-                            className="btn-export"
-                            disabled={selectedIds.size === 0}
-                            onClick={handleExport}
-                        >
+                        <button className="btn-export" disabled={selectedIds.size === 0} onClick={handleExport}>
                             <FaFileExport /> Export Selected ({selectedIds.size})
                         </button>
                         <div className="selector-group">
-                            {config.forms && config.forms.length > 0 && (
-                                <select
-                                    value={selectedFormCode}
-                                    onChange={(e) => setSelectedFormCode(e.target.value)}
-                                    className="form-select"
-                                >
-                                    {config.forms.map(form => (
-                                        <option key={form.code} value={form.code}>{form.name}</option>
-                                    ))}
-                                </select>
-                            )}
-                            {selectedForm.periodType === "FY" && (
-                                <select
-                                    value={filters.financialYear}
-                                    onChange={(e) => handleFilterChange("financialYear", e.target.value)}
-                                >
+                            {reportMetadata?.periodType === "FY" && (
+                                <select value={filters.financialYear} onChange={(e) => handleFilterChange("financialYear", e.target.value)}>
                                     <option value="2023-24">FY 2023-24</option>
                                     <option value="2024-25">FY 2024-25</option>
                                     <option value="2025-26">FY 2025-26</option>
                                 </select>
                             )}
-                            {selectedForm.periodType === "MONTH" && (
+                            {reportMetadata?.periodType === "MONTH" && (
                                 <>
-                                    <select
-                                        value={filters.month}
-                                        onChange={(e) => handleFilterChange("month", e.target.value)}
-                                    >
-                                        {[
-                                            "January", "February", "March", "April", "May", "June",
-                                            "July", "August", "September", "October", "November", "December"
-                                        ].map(m => (
-                                            <option key={m} value={m}>{m}</option>
-                                        ))}
+                                    <select value={filters.month} onChange={(e) => handleFilterChange("month", e.target.value)}>
+                                        {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
-                                    <select
-                                        value={filters.year}
-                                        onChange={(e) => handleFilterChange("year", e.target.value)}
-                                    >
-                                        {[2024, 2025, 2026].map(y => (
-                                            <option key={y} value={y.toString()}>{y}</option>
-                                        ))}
+                                    <select value={filters.year} onChange={(e) => handleFilterChange("year", e.target.value)}>
+                                        {[2024, 2025, 2026].map(y => <option key={y} value={y.toString()}>{y}</option>)}
                                     </select>
                                 </>
-                            )}
-                            {(selectedForm.periodType === "HALF_YEAR" || selectedForm.periodType === "LIFETIME") && selectedForm.periodType !== "LIFETIME" && (
-                                <select
-                                    value={filters.year}
-                                    onChange={(e) => handleFilterChange("year", e.target.value)}
-                                >
-                                    {[2024, 2025, 2026].map(y => (
-                                        <option key={y} value={y.toString()}>{y}</option>
-                                    ))}
-                                </select>
                             )}
                         </div>
                     </div>
@@ -569,58 +473,28 @@ const EmployeeFormsPage = () => {
 
             <SummaryCards cards={stats} />
 
-            <FiltersBar
-                search={filters.search}
-                onSearchChange={(val) => handleFilterChange("search", val)}
-            >
-                <select
-                    value={filters.branchId}
-                    onChange={(e) => handleFilterChange("branchId", e.target.value)}
-                    className="filter-select-modern"
-                >
+            <FiltersBar search={filters.search} onSearchChange={(val) => handleFilterChange("search", val)}>
+                <select value={filters.branchId} onChange={(e) => handleFilterChange("branchId", e.target.value)} className="filter-select-modern">
                     <option value="">All Branches</option>
                     {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
                 </select>
 
-                <select
-                    value={filters.departmentId}
-                    onChange={(e) => handleFilterChange("departmentId", e.target.value)}
-                    className="filter-select-modern"
-                    disabled={!filters.branchId}
-                >
+                <select value={filters.departmentId} onChange={(e) => handleFilterChange("departmentId", e.target.value)} className="filter-select-modern" disabled={!filters.branchId}>
                     <option value="">All Departments</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
                 </select>
 
                 <div className="tab-toggle-container ml-auto">
-                    <button
-                        className={`tab-btn ${activeTab === 'Available' ? 'active' : 'inactive'}`}
-                        onClick={() => setActiveTab('Available')}
-                    >
-                        Available
-                    </button>
-                    <button
-                        className={`tab-btn ${activeTab === 'Missing' ? 'active' : 'inactive'}`}
-                        onClick={() => setActiveTab('Missing')}
-                    >
-                        Missing
-                    </button>
+                    <button className={`tab-btn ${activeTab === 'Available' ? 'active' : 'inactive'}`} onClick={() => setActiveTab('Available')}>Available</button>
+                    <button className={`tab-btn ${activeTab === 'Missing' ? 'active' : 'inactive'}`} onClick={() => setActiveTab('Missing')}>Missing</button>
                 </div>
             </FiltersBar>
 
             <div className="table-section mt-6">
-                <DataTable
-                    columns={columns}
-                    data={filteredData}
-                    isLoading={loading}
-                    emptyState={{
-                        title: activeTab === "Available" ? "No available documents" : (config.emptyStateText || "No missing documents"),
-                        icon: "📄"
-                    }}
-                />
+                <DataTable columns={columns} data={filteredData} isLoading={loading} emptyState={{ title: activeTab === "Available" ? "No available reports" : (reportMetadata?.emptyStateText || "No missing reports"), icon: "📄" }} />
             </div>
         </div>
     );
 };
 
-export default EmployeeFormsPage;
+export default SoftwareReportsPage;

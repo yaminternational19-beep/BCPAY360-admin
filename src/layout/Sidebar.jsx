@@ -18,6 +18,8 @@ import {
   FaBusinessTime,
 } from "react-icons/fa";
 import "../styles/Sidebar.css";
+import { FORMS_CONFIG } from "../modules/forms/config/forms.config";
+import { REPORTS_CONFIG } from "../modules/software-reports/config/reports.config";
 
 const VALID_ROUTES = [
   "dashboard",
@@ -214,7 +216,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    go("softwarereports/government-forms");
+                    go("organization/government-forms");
                   }}
                 >
                   📄 Government Forms
@@ -345,7 +347,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   📊 Dashboard
                 </button>
 
-                {/* Statutory Forms Module */}
+                {/* Statutory Forms Module - Dynamic */}
                 <div className="submenu-section">
                   <button
                     type="button"
@@ -363,88 +365,25 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
                   {formsSubOpen && (
                     <div className="submenu-nested">
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/pf");
-                        }}
-                      >
-                        EPF (Provident Fund)
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/esic");
-                        }}
-                      >
-                        ESIC
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/labour");
-                        }}
-                      >
-                        Attendance / Labour Law
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/factories");
-                        }}
-                      >
-                        Factories Act
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/bonus");
-                        }}
-                      >
-                        Bonus Act
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/income-tax");
-                        }}
-                      >
-                        Income Tax
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/forms/gratuity");
-                        }}
-                      >
-                        Gratuity Act
-                      </button>
+                      {Object.values(FORMS_CONFIG).map((form) => (
+                        <button
+                          key={form.id}
+                          type="button"
+                          className="submenu-item-nested"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            go(`softwarereports/forms/${form.id}`);
+                          }}
+                        >
+                          {form.title}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* Reports */}
+                {/* Reports - Dynamic */}
                 <div className="submenu-section">
                   <button
                     type="button"
@@ -462,72 +401,20 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
                   {reportsSubOpen && (
                     <div className="submenu-nested">
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/reports/employee");
-                        }}
-                      >
-                        Employee Reports
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/reports/attendance");
-                        }}
-                      >
-                        Attendance Reports
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/reports/leave");
-                        }}
-                      >
-                        Leave Reports
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/reports/salary");
-                        }}
-                      >
-                        Salary Reports
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/reports/statutory");
-                        }}
-                      >
-                        Statutory Reports
-                      </button>
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          go("softwarereports/reports/yearly");
-                        }}
-                      >
-                        Yearly Reports
-                      </button>
+                      {Object.values(REPORTS_CONFIG).map((report) => (
+                        <button
+                          key={report.id}
+                          type="button"
+                          className="submenu-item-nested"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            go(`softwarereports/reports/${report.id}`);
+                          }}
+                        >
+                          {report.title}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>

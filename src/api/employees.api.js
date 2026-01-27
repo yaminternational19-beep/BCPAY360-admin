@@ -194,3 +194,115 @@ export const getEmployeeSummary = async (employeeId, params = {}) => {
 
 
 
+// 6. Employee Forms (FORM + PERIOD based)
+
+/**
+ * Get employees by form (available / missing)
+ * Supports FY and MONTH based forms
+ */
+export const getEmployeesByForm = async (params = {}) => {
+  const query = new URLSearchParams();
+
+  if (params.formCode) query.append("formCode", params.formCode);
+  if (params.periodType) query.append("periodType", params.periodType);
+
+  // FY based
+  if (params.financialYear) query.append("financialYear", params.financialYear);
+
+  // MONTH based
+  if (params.year) query.append("year", params.year);
+  if (params.month) query.append("month", params.month);
+
+  // Optional filters
+  if (params.branchId) query.append("branchId", params.branchId);
+  if (params.departmentId) query.append("departmentId", params.departmentId);
+
+  const url = `${API_BASE}/api/admin/forms?${query.toString()}`;
+
+  return fetch(url, {
+    headers: authHeader(),
+  }).then(handleApiError);
+};
+
+/**
+ * Upload employee form (FY or MONTH based)
+ */
+export const uploadEmployeeForm = async (data) => {
+  const formData = new FormData();
+
+  formData.append("employeeId", data.employeeId);
+  formData.append("formCode", data.formCode);
+  formData.append("periodType", data.periodType);
+
+  // FY based
+  if (data.financialYear) {
+    formData.append("financialYear", data.financialYear);
+  }
+
+  // MONTH based
+  if (data.year) formData.append("year", data.year);
+  if (data.month) formData.append("month", data.month);
+
+  // IMPORTANT: backend expects "document"
+  formData.append("document", data.file);
+
+  return fetch(`${API_BASE}/api/admin/forms/upload`, {
+    method: "POST",
+    headers: authHeader(), // ❌ do NOT set Content-Type
+    body: formData,
+  }).then(handleApiError);
+};
+/**
+ * Replace existing employee form (FY or MONTH based)
+ */
+export const replaceEmployeeForm = async (data) => {
+  const formData = new FormData();
+
+  formData.append("employeeId", data.employeeId);
+  formData.append("formCode", data.formCode);
+  formData.append("periodType", data.periodType);
+
+  // FY based
+  if (data.financialYear) {
+    formData.append("financialYear", data.financialYear);
+  }
+
+  // MONTH based
+  if (data.year) formData.append("year", data.year);
+  if (data.month) formData.append("month", data.month);
+
+  // IMPORTANT: backend expects "document"
+  formData.append("document", data.file);
+
+  return fetch(`${API_BASE}/api/admin/forms/replace`, {
+    method: "PUT",
+    headers: authHeader(), // ❌ do NOT set Content-Type
+    body: formData,
+  }).then(handleApiError);
+};
+/**
+ * Delete existing employee form (FY or MONTH based)
+ */
+export const deleteEmployeeForm = async (data) => {
+  return fetch(`${API_BASE}/api/admin/forms/delete`, {
+    method: "DELETE",
+    headers: {
+      ...authHeader(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      employeeId: data.employeeId,
+      formCode: data.formCode,
+      periodType: data.periodType,
+
+      // FY based
+      financialYear: data.financialYear || null,
+
+      // MONTH based
+      year: data.year || null,
+      month: data.month || null,
+    }),
+  }).then(handleApiError);
+};
+
+

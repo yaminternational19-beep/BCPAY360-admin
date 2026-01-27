@@ -336,19 +336,17 @@ export const getGovernmentForms = (params = {}) =>
   });
 
 
-export const createGovernmentForm = (formData) =>
+export const createGovernmentForm = (data) =>
   api("/api/admin/government-forms", {
     method: "POST",
-    body: formData,
-    isFormData: true
+    body: JSON.stringify(data)
   });
 
 
 export const updateGovernmentForm = (id, data) =>
   api(`/api/admin/government-forms/${id}`, {
     method: "PATCH",
-    body: data,
-    isFormData: data instanceof FormData
+    body: JSON.stringify(data)
   });
 
 /**

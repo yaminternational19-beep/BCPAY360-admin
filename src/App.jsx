@@ -16,8 +16,9 @@ import HRLogin from "./pages/HRLogin";
 
 // New module imports
 import SuperAdminRoutes from "./modules/super-admin";
-import SoftwareReportsRoutes from "./modules/software-reports";
-import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode } from "./modules/organization";
+import { SoftwareReportsDashboard, SoftwareReportsPage } from "./modules/software-reports";
+import FormsRouter from "./modules/forms/FormsRouter";
+import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode, GovernmentForms } from "./modules/organization";
 import EmployeeList from "./modules/employee/pages/EmployeeList";
 import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
 import PayrollManagement from "./modules/payroll/PayrollManagement";
@@ -168,6 +169,14 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route
+              path="organization/government-forms"
+              element={
+                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                  <GovernmentForms />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
               path="hr/:hrId/permissions"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
@@ -200,11 +209,28 @@ const AdminLayout = ({ user, setUser }) => {
                 </RoleProtectedRoute>
               }
             />
+            {/* Software Reports - Flattened for stability and consistency with Employee module */}
             <Route
-              path="softwarereports/*"
+              path="softwarereports"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <SoftwareReportsRoutes />
+                  <SoftwareReportsDashboard />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="softwarereports/reports/:reportType"
+              element={
+                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                  <SoftwareReportsPage />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="softwarereports/forms/*"
+              element={
+                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                  <FormsRouter />
                 </RoleProtectedRoute>
               }
             />
