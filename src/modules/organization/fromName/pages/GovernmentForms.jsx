@@ -20,7 +20,6 @@ const normalizeForm = (f) => ({
   formName: f.formName || f.form_name || "",
   category: f.category || "",
   periodType: f.periodType || f.period_type || "",
-  isEmployeeSpecific: !!(f.isEmployeeSpecific ?? f.is_employee_specific),
   description: f.description || "",
   status: f.status || "INACTIVE"
 });
@@ -72,7 +71,6 @@ const GovernmentForms = () => {
         form_name: payload.formName,
         category: payload.category,
         period_type: payload.periodType,
-        is_employee_specific: payload.isEmployeeSpecific ? 1 : 0,
         description: payload.description || ""
       };
 

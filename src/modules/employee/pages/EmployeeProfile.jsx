@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -31,6 +31,42 @@ import {
 import { useToast } from "../../../context/ToastContext";
 import EmployeeForm from "../components/EmployeeForm";
 
+const MONTHS = [
+  { label: "January", value: 1 },
+  { label: "February", value: 2 },
+  { label: "March", value: 3 },
+  { label: "April", value: 4 },
+  { label: "May", value: 5 },
+  { label: "June", value: 6 },
+  { label: "July", value: 7 },
+  { label: "August", value: 8 },
+  { label: "September", value: 9 },
+  { label: "October", value: 10 },
+  { label: "November", value: 11 },
+  { label: "December", value: 12 }
+];
+
+
+const FormDocCard = ({ doc }) => {
+  const period = doc.period_type === "MONTH" ? `${doc.doc_month} ${doc.doc_year}` : (doc.financial_year || "N/A");
+
+  return (
+    <div className="form-doc-card">
+      <div className="doc-info-main">
+        <div className="doc-title-row">
+          <FileText size={14} className="text-muted" />
+          <span className="doc-form-code">{doc.form_code}</span>
+          <span className="doc-period-badge">{period}</span>
+        </div>
+      </div>
+      <div className="doc-actions">
+        <a href={doc.view_url} target="_blank" rel="noreferrer" className="action-link view" title="View"><Eye size={14} /></a>
+        <a href={doc.download_url} target="_blank" rel="noreferrer" className="action-link download" title="Download"><Download size={14} /></a>
+      </div>
+    </div>
+  );
+};
+
 const EmployeeProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,7 +77,13 @@ const EmployeeProfile = () => {
     organization: null,
     profile: null,
     auth: null,
-    documents: []
+    documents: [],
+    form_documents: []
+  });
+
+  const [docFilters, setDocFilters] = useState({
+    month: "All",
+    year: "All"
   });
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
@@ -64,6 +106,7 @@ const EmployeeProfile = () => {
         profile: res.profile || null,
         auth: res.auth || null,
         documents: Array.isArray(res.documents) ? res.documents : [],
+        form_documents: Array.isArray(res.form_documents) ? res.form_documents : [],
         companyForms: [], // No longer using dynamic forms here
         generatedMap: (Array.isArray(res.documents) ? res.documents : []).reduce((acc, doc) => {
           if (doc.form_code) acc[doc.form_code] = doc;
@@ -81,6 +124,32 @@ const EmployeeProfile = () => {
   useEffect(() => {
     fetchEmployeeData();
   }, [id]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    data.form_documents.forEach((doc) => {
+      if (doc.doc_year) years.add(doc.doc_year.toString());
+    });
+    return ["All", ...Array.from(years).sort((a, b) => b - a)];
+  }, [data.form_documents]);
+
+  const filteredFormDocs = useMemo(() => {
+    return data.form_documents.filter((doc) => {
+      const matchMonth =
+        docFilters.month === "All" || doc.doc_month == docFilters.month;
+      const matchYear =
+        docFilters.year === "All" ||
+        (doc.doc_year && doc.doc_year.toString() === docFilters.year);
+      return matchMonth && matchYear;
+    });
+  }, [data.form_documents, docFilters]);
+
+  const groupedFormDocs = useMemo(() => {
+    return {
+      monthly: filteredFormDocs.filter((doc) => doc.period_type === "MONTH"),
+      financial: filteredFormDocs.filter((doc) => doc.period_type === "FY"),
+    };
+  }, [filteredFormDocs]);
 
   const handleDeactivate = async () => {
     if (!window.confirm("Deactivate employee account?")) return;
@@ -495,6 +564,53 @@ const EmployeeProfile = () => {
                     <p style={{ margin: 0, fontSize: '13px' }}>No uploaded documents</p>
                   </div>
                 )}
+              </div>
+
+              {/* Form Documents Upgrade */}
+              <h5 className="doc-section-title" style={{ marginTop: '32px' }}>
+                Form / Compliance Documents
+              </h5>
+
+              <div className="doc-filters" style={{ display: 'flex', gap: '8px', marginBottom: '16px', marginTop: '12px' }}>
+                <select
+                  value={docFilters.month}
+                  onChange={e => setDocFilters(prev => ({ ...prev, month: e.target.value }))}
+                  className="filter-select-sm"
+                >
+                  <option value="All">All Months</option>
+                  {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+                <select
+                  value={docFilters.year}
+                  onChange={e => setDocFilters(prev => ({ ...prev, year: e.target.value }))}
+                  className="filter-select-sm"
+                >
+                  {availableYears.map(y => <option key={y} value={y}>{y === "All" ? "All Years" : y}</option>)}
+                </select>
+              </div>
+
+              <div className="form-docs-container">
+                <h6 className="doc-sub-section-title">Monthly Documents</h6>
+                <div className="document-stack" style={{ marginBottom: '24px' }}>
+                  {groupedFormDocs.monthly.length > 0 ? (
+                    groupedFormDocs.monthly.map((doc, idx) => (
+                      <FormDocCard key={idx} doc={doc} />
+                    ))
+                  ) : (
+                    <p className="empty-text-sm">No monthly documents match the filters</p>
+                  )}
+                </div>
+
+                <h6 className="doc-sub-section-title">Financial Year Documents</h6>
+                <div className="document-stack">
+                  {groupedFormDocs.financial.length > 0 ? (
+                    groupedFormDocs.financial.map((doc, idx) => (
+                      <FormDocCard key={idx} doc={doc} />
+                    ))
+                  ) : (
+                    <p className="empty-text-sm">No financial year documents match the filters</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

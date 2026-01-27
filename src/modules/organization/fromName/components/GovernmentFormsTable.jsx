@@ -14,7 +14,6 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete }) => {
             <th>Code</th>
             <th>Category</th>
             <th>Period</th>
-            <th>Employee Specific</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -27,7 +26,6 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete }) => {
               <td><span className="gov-badge code">{f.formCode}</span></td>
               <td><span className="gov-badge category">{f.category}</span></td>
               <td>{f.periodType}</td>
-              <td>{f.isEmployeeSpecific ? "Yes" : "No"}</td>
               <td>
                 <span className={`gov-status ${f.status === "ACTIVE" ? "active" : "inactive"}`}>
                   {f.status}
@@ -35,11 +33,15 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete }) => {
               </td>
               <td>
                 <div className="gov-actions">
-                  <button className="btn-icon edit" onClick={() => onEdit(f)} title="Edit">
+                  <button
+                    className="btn-action edit"
+                    onClick={() => onEdit(f)}
+                    title="Edit"
+                  >
                     ✎
                   </button>
                   <button
-                    className="btn-icon delete"
+                    className="btn-action delete"
                     disabled={f.status === "ACTIVE"}
                     onClick={() => onDelete(f)}
                     title="Delete"

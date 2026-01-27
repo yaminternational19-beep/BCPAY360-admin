@@ -13,7 +13,6 @@ const GovernmentFormModal = ({
     formCode: "",
     category: "",
     periodType: "FY",
-    isEmployeeSpecific: false,
     description: ""
   });
 
@@ -26,7 +25,6 @@ const GovernmentFormModal = ({
         formCode: editData.formCode || "",
         category: editData.category || "",
         periodType: editData.periodType || "FY",
-        isEmployeeSpecific: !!editData.isEmployeeSpecific,
         description: editData.description || ""
       });
     } else {
@@ -35,7 +33,6 @@ const GovernmentFormModal = ({
         formCode: "",
         category: "",
         periodType: "FY",
-        isEmployeeSpecific: false,
         description: ""
       });
     }
@@ -78,12 +75,6 @@ const GovernmentFormModal = ({
             <option value="MONTH">Monthly</option>
             <option value="ONE_TIME">One Time</option>
           </select>
-
-          <label className="gov-checkbox-label">
-            <input type="checkbox" name="isEmployeeSpecific" checked={formData.isEmployeeSpecific} onChange={handleChange} />
-            Employee Specific
-          </label>
-
           <textarea
             name="description"
             placeholder="Description (optional)"

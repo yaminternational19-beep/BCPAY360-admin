@@ -28,8 +28,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* Content Wrapper */
@@ -45,8 +50,15 @@
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Header */
@@ -233,8 +245,15 @@
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .dept-item:hover {
@@ -275,8 +294,15 @@
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .desig-item:hover {
@@ -339,74 +365,70 @@
   flex-wrap: wrap;
 }
 
-.btn-edit, .btn-save, .btn-cancel, .btn-delete {
-  padding: 0.4rem 0.75rem;
+.btn-edit,
+.btn-save,
+.btn-cancel,
+.btn-delete {
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
 }
 
 .btn-edit {
-  background: var(--secondary-color);
-  color: white;
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
 }
 
 .btn-edit:hover {
-  background: #5a6268;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .btn-save {
-  background: var(--success-color);
-  color: white;
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
 }
 
 .btn-save:hover {
-  background: #218838;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .btn-cancel {
-  background: var(--secondary-color);
-  color: white;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
 }
 
 .btn-cancel:hover {
-  background: #5a6268;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .btn-delete {
-  background: var(--danger-color);
-  color: white;
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
 }
 
 .btn-delete:hover {
-  background: #c82333;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .btn-delete.warning {
-  background: var(--warning-color);
-  color: black;
-}
-
-.btn-delete.warning:hover {
-  background: #e0a800;
-  transform: translateY(-1px);
+  background: #fffbeb !important;
+  color: #d97706 !important;
 }
 
 .btn-delete.success {
-  background: var(--success-color);
-  color: white;
-}
-
-.btn-delete.success:hover {
-  background: #218838;
-  transform: translateY(-1px);
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
 }
 
 /* Empty Items */
@@ -443,7 +465,8 @@
     min-width: auto;
   }
 
-  .dept-item, .desig-item {
+  .dept-item,
+  .desig-item {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;

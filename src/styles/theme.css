@@ -25,7 +25,9 @@
     --bg-dark: #020617;
     /* Dark background (Slate-950) */
     --bg-input: rgba(2, 6, 23, 0.7);
-    /* Input background (dark mode) */
+    /* Input background (dark mode - used by login) */
+    --input-bg: #ffffff;
+    /* Standard Input background (light mode) */
 
     /* ===============================
      BRAND COLORS
@@ -133,13 +135,13 @@
     /* ===============================
      INPUT SYSTEM
      =============================== */
-    --input-bg: rgba(2, 6, 23, 0.7);
+    /* --input-bg is defined above with CORE BACKGROUNDS */
     --input-border: var(--border-default);
     --input-focus: var(--primary);
     --input-error: var(--danger);
     --input-disabled-bg: #f9fafb;
     --input-disabled-text: var(--text-muted);
-    --input-placeholder: #9ca3af;
+    --input-placeholder: #64748b;
 
     /* ===============================
      SHADOWS

@@ -291,3 +291,66 @@
         opacity: 1;
     }
 }
+
+/* Global Action Buttons */
+.btn-action {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0;
+}
+
+.btn-action:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(0.95);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.btn-action:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Color Variants based on User Concept */
+.btn-action.view {
+    background-color: #eff6ff !important;
+    color: #2563eb !important;
+}
+
+.btn-action.download {
+    background-color: #f0fdf4 !important;
+    color: #16a34a !important;
+}
+
+.btn-action.upload {
+    background-color: #f0f9ff !important;
+    color: #0ea5e9 !important;
+}
+
+.btn-action.delete,
+.btn-action.warning {
+    background-color: #fef2f2 !important;
+    color: #ef4444 !important;
+}
+
+.btn-action.edit {
+    background-color: #f5f3ff !important;
+    color: #7c3aed !important;
+}
+
+.btn-action.success {
+    background-color: #f0fdf4 !important;
+    color: #16a34a !important;
+}

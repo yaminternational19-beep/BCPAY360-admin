@@ -20,22 +20,48 @@
 }
 
 .btn {
-  padding: 6px 12px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
 }
 
-.btn-preview { background: #2563eb; color: #fff; }
-.btn-approve { background: #16a34a; color: #fff; }
-.btn-reject { background: #dc2626; color: #fff; }
-.btn-close { background: #6b7280; color: #fff; }
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.btn-preview {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+}
+
+.btn-approve {
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
+}
+
+.btn-reject {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+}
+
+.btn-close {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
 
 /* MODAL */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15,23,42,0.6);
+  background: rgba(15, 23, 42, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -119,44 +119,32 @@
 }
 
 .row-actions button {
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   background: #f3f4f6;
   color: #111827;
-  transition: background 0.2s ease;
-  white-space: nowrap;
-  font-family: "Inter", system-ui, sans-serif;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .row-actions button:hover:not(:disabled) {
-  background: #e5e7eb;
-}
-
-.row-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .row-actions button.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.row-actions button.warning:hover:not(:disabled) {
-  background: #fde68a;
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
 }
 
 .row-actions button.success {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.row-actions button.success:hover:not(:disabled) {
-  background: #a7f3d0;
+  background: #f0fdf4 !important;
+  color: #16a34a !important;
 }
 
 .empty-state {
@@ -244,7 +232,7 @@
   margin-bottom: 1.5rem;
 }
 
-.branch-form .form-grid > div {
+.branch-form .form-grid>div {
   display: flex;
   flex-direction: column;
 }
@@ -388,6 +376,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -398,6 +387,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -451,4 +441,3 @@
     justify-content: center;
   }
 }
-

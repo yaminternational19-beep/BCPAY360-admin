@@ -397,26 +397,29 @@
 }
 
 .doc-action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-md);
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-inverse);
-    transition: opacity var(--transition-normal);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
 }
 
 .doc-action-btn:hover {
-    opacity: 0.8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .doc-action-btn.view {
-    background: var(--primary);
+    background: #eff6ff !important;
+    color: #2563eb !important;
 }
 
 .doc-action-btn.download {
-    background: var(--info);
+    background: #f0fdf4 !important;
+    color: #16a34a !important;
 }
 
 /* AUDIT ITEMS */
@@ -493,4 +496,157 @@
 .empty-state p {
     font-size: var(--text-sm);
     margin: 8px 0 0 0;
+}
+
+/* FORM DOCUMENTS UPGRADE */
+.doc-section-title {
+    margin: 32px 0 16px 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-default);
+    padding-bottom: 8px;
+    font-weight: 700;
+}
+
+.doc-sub-section-title {
+    font-size: 10px;
+    color: var(--text-primary);
+    margin: 20px 0 10px 0;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-select-sm {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-default);
+    font-size: 13px;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    outline: none;
+    flex: 1;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+    appearance: auto;
+}
+
+.filter-select-sm:hover {
+    border-color: var(--primary-light);
+}
+
+.filter-select-sm:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.form-docs-container {
+    margin-top: 8px;
+}
+
+.form-doc-card {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.form-doc-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
+}
+
+.doc-info-main {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.doc-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.doc-form-code {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.doc-period-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: var(--primary-light);
+    border-radius: 4px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.doc-meta-row {
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.doc-uploader {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-link {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    cursor: pointer;
+}
+
+.action-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.action-link.view {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+}
+
+.action-link.download {
+    background: #f0fdf4 !important;
+    color: #16a34a !important;
+}
+
+.empty-text-sm {
+    font-size: 13px;
+    color: var(--text-disabled);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    background: var(--bg-muted);
+    border-radius: 10px;
+    border: 1px dashed var(--border-default);
 }
