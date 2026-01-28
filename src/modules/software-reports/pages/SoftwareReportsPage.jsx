@@ -10,7 +10,6 @@ import { getEmployeesByForm, uploadEmployeeForm, replaceEmployeeForm, deleteEmpl
 import { getBranches, getDepartments, getGovernmentForms } from "../../../api/master.api";
 import { REPORTS_CONFIG } from "../config/reports.config";
 import "../../../styles/shared/modern-ui.css";
-import "../styles/SoftwareReports.css";
 
 const MONTH_MAP = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
