@@ -114,30 +114,35 @@
 }
 
 /* INPUTS */
-.sa-field {
-  margin-bottom: 16px;
-}
-
-.sa-field input {
+.login-root .input-field {
   width: 100%;
   padding: 14px 14px;
   border-radius: var(--radius-lg);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   outline: none;
-  background: var(--bg-input);
+  background: rgba(255, 255, 255, 0.05) !important;
   color: var(--text-inverse) !important;
   font-size: var(--text-base);
   transition: all var(--transition-slow);
   font-family: var(--font-primary);
 }
 
-.sa-field input:focus {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+.login-root .input-field:hover {
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.login-root .input-field:focus {
+  border-color: #6366f1 !important;
+  box-shadow:
+    0 0 0 3px rgba(99, 102, 241, 0.25),
+    0 8px 16px -4px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   transform: translateY(-1px);
 }
 
-.sa-field input::placeholder {
-  color: var(--text-dim) !important;
+.login-root .input-field::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
 /* PASSWORD */

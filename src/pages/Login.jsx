@@ -411,7 +411,7 @@ export default function Login({ onLogin }) {
             <button
               type="submit"
               disabled={loading || !isAdminFormValid}
-              className="btn-primary animate-fade-in-up stagger-4"
+              className="btn-primary login-submit-btn-override animate-fade-in-up stagger-4"
             >
               {loading ? "Checking..." : "Continue"}
             </button>
