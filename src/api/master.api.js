@@ -278,7 +278,7 @@ export const getLeaveHistory = () =>
 
 /**
  * 🔹 Get employees for payroll processing
- * Query params: month, year
+ * Query params: pay_month, pay_year
  */
 export const getPayrollEmployees = ({ month, year }) =>
   api("/api/admin/payroll/employees", {
@@ -295,25 +295,22 @@ export const generatePayrollBatch = (payload) =>
     body: JSON.stringify(payload),
   });
 
-
-export const getLatestPayrollBatch = () =>
-  api("/api/admin/payroll/batch/latest");
 /**
- * 🔹 Get payroll batch details (for confirm screen)
+ * 🔹 Get payroll batch details (Review screen)
  */
-export const getPayrollBatchDetails = (batchId) =>
-  api(`/api/admin/payroll/batches/${batchId}`);
+export const getPayrollBatch = ({ pay_month, pay_year }) =>
+  api("/api/admin/payroll/batch", {
+    params: { pay_month, pay_year }
+  });
 
 /**
- * 🔹 Confirm payroll batch
- * - Generates payslip
- * - Uploads PDF to S3
- * - Sends email
- * - Locks batch
+ * 🔹 Confirm payroll batch (Pay Salary)
+ * Payload: { payMonth, payYear, action: "CONFIRM" }
  */
-export const confirmPayrollBatch = (batchId) =>
-  api(`/api/admin/payroll/batches/${batchId}/confirm`, {
+export const confirmPayrollBatch = (payload) =>
+  api("/api/admin/payroll/confirm", {
     method: "POST",
+    body: JSON.stringify(payload),
   });
 
 export const generateEmployeeCode = (data) =>

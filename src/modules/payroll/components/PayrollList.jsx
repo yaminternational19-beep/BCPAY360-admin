@@ -2,7 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getPayrollEmployees,
-  generatePayrollBatch
+  generatePayrollBatch,
+  getBranches,
+  getDepartments
 } from "../../../api/master.api.js";
 import PageHeader from "../../../components/ui/PageHeader";
 import SummaryCards from "../../../components/ui/SummaryCards";
@@ -17,8 +19,8 @@ const PayrollList = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const month = 1;
-  const year = 2026;
+  const [payMonth, setPayMonth] = useState(new Date().getMonth() + 1);
+  const [payYear, setPayYear] = useState(new Date().getFullYear());
 
   const [summary, setSummary] = useState({
     total: 0,
@@ -28,56 +30,42 @@ const PayrollList = () => {
   });
 
   const [employees, setEmployees] = useState([]);
+  const [batch, setBatch] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [payrollData, setPayrollData] = useState({});
+
+  // Master Data state
+  const [branchList, setBranchList] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterBranch, setFilterBranch] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("");
-  const [filterDesignation, setFilterDesignation] = useState("");
+  const [filterBranchId, setFilterBranchId] = useState("");
+  const [filterDepartmentId, setFilterDepartmentId] = useState("");
 
   const loadEmployees = async () => {
     setLoading(true);
+    setSelected([]); // Reset selection on fetch
     try {
-      const res = await getPayrollEmployees({ month, year });
+      const res = await getPayrollEmployees({ month: payMonth, year: payYear });
       setSummary(res.summary);
+      setBatch(res.batch || null);
 
-      const normalized = res.employees
-        .sort((a, b) => {
-          if (a.payment_status === b.payment_status) return 0;
-          return a.payment_status === "PENDING" ? -1 : 1;
-        })
-        .map((e) => ({
-          id: e.employee_id,
-          emp_code: e.employee_code,
-          name: e.full_name,
-          department: e.department_name,
-          designation: e.designation_name,
-          branch: e.branch_name,
-
-          uan_number: e.uan_number,
-          base_salary: Number(e.base_salary),
-          net_salary: Number(e.net_salary || 0),
-
-          working_days: Number(e.working_days),
-          present_days: Number(e.present_days),
-          late_days: Number(e.late_days),
-          leave_days: Number(e.leave_days),
-          absent_days: Number(e.absent_days),
-          ot_hours: Number(e.ot_hours),
-
-          bank_name: e.bank_name,
-          account_number: e.account_number,
-          ifsc_code: e.ifsc_code,
-
-          payment_status: e.payment_status,
-
-          // editable
-          incentive: 0,
-          deductions: 0
-        }));
+      const normalized = res.employees || [];
 
       setEmployees(normalized);
+
+      // Initialize keyed payroll data
+      const initialData = {};
+      normalized.forEach(e => {
+        initialData[e.employee_id] = {
+          incentive: Number(e.incentive || 0),
+          bonus: Number(e.bonus || 0),
+          other_deductions: Number(e.other_deductions || 0),
+          pf_applicable: e.pf_applicable ?? 0
+        };
+      });
+      setPayrollData(initialData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -85,65 +73,72 @@ const PayrollList = () => {
     }
   };
 
+  const loadMasters = async () => {
+    try {
+      const branches = await getBranches();
+      setBranchList(branches);
+    } catch (err) {
+      console.error("Master data fetch failed:", err);
+    }
+  };
+
+  // Dynamically derive departments from loaded employees to avoid 400 error on global fetch
+  // but keeping ID-based structure as requested
+  useEffect(() => {
+    if (employees.length > 0) {
+      const uniqueDepts = [];
+      const seenIds = new Set();
+
+      employees.forEach(e => {
+        if (e.department_id && !seenIds.has(e.department_id)) {
+          seenIds.add(e.department_id);
+          uniqueDepts.push({
+            id: e.department_id,
+            department_name: e.department_name
+          });
+        }
+      });
+      setDepartmentList(uniqueDepts);
+    }
+  }, [employees]);
+
   useEffect(() => {
     loadEmployees();
-  }, []);
-
-  // Derive unique filter options
-  const branches = useMemo(
-    () => [...new Set(employees.map(e => e.branch).filter(Boolean))],
-    [employees]
-  );
-
-  const departments = useMemo(
-    () => [...new Set(employees.map(e => e.department).filter(Boolean))],
-    [employees]
-  );
-
-  const designations = useMemo(
-    () => [...new Set(employees.map(e => e.designation).filter(Boolean))],
-    [employees]
-  );
+    loadMasters();
+  }, [payMonth, payYear]); // Re-fetch employees on month/year change
 
   // Filter employees based on all criteria
   const filteredEmployees = useMemo(() => {
     return employees.filter(e => {
       const matchesSearch =
-        e.emp_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        e.name?.toLowerCase().includes(searchQuery.toLowerCase());
+        e.employee_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        e.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesBranch = !filterBranch || e.branch === filterBranch;
-      const matchesDept = !filterDepartment || e.department === filterDepartment;
-      const matchesDesg = !filterDesignation || e.designation === filterDesignation;
+      const matchesBranch = !filterBranchId || String(e.branch_id) === String(filterBranchId);
+      const matchesDept = !filterDepartmentId || String(e.department_id) === String(filterDepartmentId);
 
-      return matchesSearch && matchesBranch && matchesDept && matchesDesg;
+      return matchesSearch && matchesBranch && matchesDept;
     });
-  }, [employees, searchQuery, filterBranch, filterDepartment, filterDesignation]);
+  }, [employees, searchQuery, filterBranchId, filterDepartmentId]);
 
   // Summary mapping for SummaryCards
   const summaryCards = useMemo(() => {
-    const paidCount = filteredEmployees.filter(e => e.payment_status === "SUCCESS").length;
-    const pendingCount = filteredEmployees.filter(e => e.payment_status === "PENDING").length;
-    const totalSalaryPaid = filteredEmployees
-      .filter(e => e.payment_status === "SUCCESS")
-      .reduce((sum, e) => sum + (e.net_salary || 0), 0);
-
     return [
       {
         label: "Total Employees",
-        value: filteredEmployees.length,
+        value: summary.total,
         icon: <FaUsers />,
         color: "blue"
       },
       {
         label: "Paid Staff",
-        value: paidCount,
+        value: summary.paid,
         icon: <FaCheckCircle />,
         color: "green"
       },
       {
         label: "Pending Pay",
-        value: pendingCount,
+        value: summary.pending,
         icon: <FaHourglassHalf />,
         color: "orange"
       },
@@ -154,34 +149,39 @@ const PayrollList = () => {
         color: "orange"
       },
       {
-        label: "Total Disbursed",
-        value: `₹${totalSalaryPaid.toLocaleString('en-IN')}`,
-        icon: <FaWallet />,
-        color: "blue"
+        label: "Batch Status",
+        value: batch?.status || "NOT GENERATED",
+        icon: <FaSync />,
+        color: batch?.status === "PAID" ? "green" : "orange"
       },
       {
         label: "Period",
-        value: `${month}/${year}`,
+        value: `${payMonth}/${payYear}`,
         icon: <FaCalendarAlt />,
         color: "blue"
       }
     ];
-  }, [filteredEmployees, summary.not_generated]);
+  }, [summary, batch, payMonth, payYear]);
+
+  const isLocked = batch && batch.status !== "DRAFT";
 
   const toggleAll = (checked) => {
-    if (!checked) {
+    if (!checked || isLocked) {
       setSelected([]);
       return;
     }
 
     const selectable = filteredEmployees
-      .filter((e) => e.payment_status !== "SUCCESS")
-      .map((e) => e.id);
+      .filter(e => e.payment_status !== "SUCCESS")
+      .map((e) => e.employee_id);
 
     setSelected(selectable);
   };
 
   const toggleOne = (id) => {
+    const emp = employees.find(e => e.employee_id === id);
+    if (isLocked || emp?.payment_status === "SUCCESS") return;
+
     setSelected((prev) =>
       prev.includes(id)
         ? prev.filter((x) => x !== id)
@@ -190,42 +190,42 @@ const PayrollList = () => {
   };
 
   const updateEditable = (id, key, value) => {
-    setEmployees((prev) =>
-      prev.map((e) =>
-        e.id === id ? { ...e, [key]: Number(value) || 0 } : e
-      )
-    );
+    setPayrollData((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [key]: key === "pf_applicable" ? value : (Number(value) || 0)
+      }
+    }));
   };
 
   const generatePay = async () => {
-    if (!selected.length) return;
+    if (!selected.length || isLocked) return;
 
     const payload = {
-      pay_month: month,
-      pay_year: year,
+      pay_month: payMonth,
+      pay_year: payYear,
       employees: employees
         .filter(
           (e) =>
-            selected.includes(e.id) &&
-            e.payment_status !== "SUCCESS"
+            selected.includes(e.employee_id)
         )
-        .map((e) => ({
-          employee_id: e.id,
-          base_salary: e.base_salary,
-          present_days: e.present_days,
-          late_days: e.late_days,
-          leave_days: e.leave_days,
-          ot_hours: e.ot_hours,
-          incentive: e.incentive,
-          other_deductions: e.deductions,
-          pf_applicable:
-            e.uan_number && e.uan_number !== "-" ? 1 : 0
-        }))
+        .map((e) => {
+          const data = payrollData[e.employee_id] || {};
+          return {
+            employee_id: e.employee_id,
+            base_salary: Number(e.base_salary),
+            incentive: data.incentive || 0,
+            bonus: data.bonus || 0,
+            other_deductions: data.other_deductions || 0,
+            pf_applicable: data.pf_applicable || 0
+          };
+        })
     };
 
     try {
       await generatePayrollBatch(payload);
-      navigate("/payroll/confirm");
+      navigate(`/payroll/confirm?month=${payMonth}&year=${payYear}`);
     } catch (err) {
       console.error(err);
       alert("Failed to generate payroll");
@@ -237,23 +237,29 @@ const PayrollList = () => {
       header: (
         <input
           type="checkbox"
+          disabled={isLocked}
           onChange={(e) => toggleAll(e.target.checked)}
-          checked={selected.length > 0 && selected.length === filteredEmployees.filter(e => e.payment_status !== "SUCCESS").length}
+          checked={
+            (() => {
+              const selectable = filteredEmployees.filter(e => e.payment_status !== "SUCCESS");
+              return selectable.length > 0 && selected.length === selectable.length && !isLocked;
+            })()
+          }
         />
       ),
       render: (e) => (
         <input
           type="checkbox"
-          disabled={e.payment_status === "SUCCESS"}
-          checked={selected.includes(e.id)}
-          onChange={() => toggleOne(e.id)}
+          disabled={isLocked || e.payment_status === "SUCCESS"}
+          checked={selected.includes(e.employee_id)}
+          onChange={() => toggleOne(e.employee_id)}
         />
       ),
       className: "sticky-col"
     },
-    { header: "Emp Code", render: (e) => <span className="emp-code-cell">{e.emp_code}</span>, className: "sticky-col-2" },
-    { header: "Name", key: "name", className: "name-cell" },
-    { header: "Dept", key: "department" },
+    { header: "Emp Code", render: (e) => <span className="emp-code-cell">{e.employee_code}</span>, className: "sticky-col-2" },
+    { header: "Name", key: "full_name", className: "name-cell" },
+    { header: "Dept", key: "department_name" },
     { header: "UAN", render: (e) => e.uan_number || "-", className: "muted-cell" },
     { header: "Base Salary", render: (e) => `₹${Number(e.base_salary).toLocaleString()}`, className: "weight-semibold" },
     { header: "Working", key: "working_days" },
@@ -266,9 +272,21 @@ const PayrollList = () => {
         <input
           type="number"
           className="table-input"
-          disabled={e.payment_status === "SUCCESS"}
-          value={e.incentive}
-          onChange={(ev) => updateEditable(e.id, "incentive", ev.target.value)}
+          disabled={isLocked || e.payment_status === "SUCCESS"}
+          value={payrollData[e.employee_id]?.incentive || 0}
+          onChange={(ev) => updateEditable(e.employee_id, "incentive", ev.target.value)}
+        />
+      )
+    },
+    {
+      header: "Bonus",
+      render: (e) => (
+        <input
+          type="number"
+          className="table-input"
+          disabled={isLocked || e.payment_status === "SUCCESS"}
+          value={payrollData[e.employee_id]?.bonus || 0}
+          onChange={(ev) => updateEditable(e.employee_id, "bonus", ev.target.value)}
         />
       )
     },
@@ -278,9 +296,20 @@ const PayrollList = () => {
         <input
           type="number"
           className="table-input"
-          disabled={e.payment_status === "SUCCESS"}
-          value={e.deductions}
-          onChange={(ev) => updateEditable(e.id, "deductions", ev.target.value)}
+          disabled={isLocked || e.payment_status === "SUCCESS"}
+          value={payrollData[e.employee_id]?.other_deductions || 0}
+          onChange={(ev) => updateEditable(e.employee_id, "other_deductions", ev.target.value)}
+        />
+      )
+    },
+    {
+      header: "PF?",
+      render: (e) => (
+        <input
+          type="checkbox"
+          disabled={isLocked || e.payment_status === "SUCCESS"}
+          checked={payrollData[e.employee_id]?.pf_applicable === 1}
+          onChange={(ev) => updateEditable(e.employee_id, "pf_applicable", ev.target.checked ? 1 : 0)}
         />
       )
     },
@@ -288,8 +317,8 @@ const PayrollList = () => {
       header: "Status",
       render: (e) => (
         <StatusBadge
-          type={e.payment_status === "SUCCESS" ? "success" : "warning"}
-          label={e.payment_status}
+          type={e.payment_status === "SUCCESS" ? "success" : e.payment_status === "PENDING" ? "warning" : "neutral"}
+          label={e.payment_status || "NOT_GENERATED"}
         />
       )
     }
@@ -301,9 +330,31 @@ const PayrollList = () => {
         title="Payroll Processing"
         subtitle="Review attendance data, apply incentives/deductions and generate monthly disbursements."
         actions={
-          <button className="btn-primary" onClick={loadEmployees}>
-            <FaSync className={loading ? "animate-spin" : ""} /> Refresh Data
-          </button>
+          <div className="payroll-selectors">
+            <select
+              value={payMonth}
+              onChange={(e) => setPayMonth(Number(e.target.value))}
+              className="filter-select-modern"
+            >
+              {[...Array(12)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                </option>
+              ))}
+            </select>
+            <select
+              value={payYear}
+              onChange={(e) => setPayYear(Number(e.target.value))}
+              className="filter-select-modern"
+            >
+              {[2024, 2025, 2026].map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <button className="btn-primary" onClick={loadEmployees}>
+              <FaSync className={loading ? "animate-spin" : ""} /> Fetch Data
+            </button>
+          </div>
         }
       />
 
@@ -315,39 +366,28 @@ const PayrollList = () => {
         placeholder="Search by code or name..."
       >
         <select
-          value={filterBranch}
-          onChange={(e) => setFilterBranch(e.target.value)}
+          value={filterBranchId}
+          onChange={(e) => setFilterBranchId(e.target.value)}
           className="filter-select-modern"
         >
           <option value="">All Branches</option>
-          {branches.map(b => (
-            <option key={b} value={b}>{b}</option>
+          {branchList.map(b => (
+            <option key={b.id} value={b.id}>{b.branch_name}</option>
           ))}
         </select>
 
         <select
-          value={filterDepartment}
-          onChange={(e) => setFilterDepartment(e.target.value)}
+          value={filterDepartmentId}
+          onChange={(e) => setFilterDepartmentId(e.target.value)}
           className="filter-select-modern"
         >
           <option value="">All Departments</option>
-          {departments.map(d => (
-            <option key={d} value={d}>{d}</option>
+          {departmentList.map(d => (
+            <option key={d.id} value={d.id}>{d.department_name}</option>
           ))}
         </select>
 
-        <select
-          value={filterDesignation}
-          onChange={(e) => setFilterDesignation(e.target.value)}
-          className="filter-select-modern"
-        >
-          <option value="">All Designations</option>
-          {designations.map(dsg => (
-            <option key={dsg} value={dsg}>{dsg}</option>
-          ))}
-        </select>
-
-        <button onClick={() => { setSearchQuery(""); setFilterBranch(""); setFilterDepartment(""); setFilterDesignation(""); }} className="btn-export">
+        <button onClick={() => { setSearchQuery(""); setFilterBranchId(""); setFilterDepartmentId(""); }} className="btn-export">
           Clear Filters
         </button>
       </FiltersBar>
@@ -369,8 +409,8 @@ const PayrollList = () => {
           <div className="footer-info">
             <span><strong>{selected.length}</strong> employees selected for processing</span>
           </div>
-          <button className="btn-primary btn-large" onClick={generatePay}>
-            Generate Payroll Batch
+          <button className="btn-primary btn-large" onClick={generatePay} disabled={isLocked}>
+            {isLocked ? "Payroll Locked" : "Generate Payroll Batch (Draft)"}
           </button>
         </div>
       )}

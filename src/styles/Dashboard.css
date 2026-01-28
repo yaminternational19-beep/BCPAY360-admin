@@ -231,3 +231,118 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.dashboard {
+  padding: 24px;
+  background: #f5f7fb;
+}
+
+/* HERO */
+.dash-hero {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dash-hero h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.dash-sub {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.hero-tags .tag {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.tag.success {
+  background: #e6f9f0;
+  color: #047857;
+}
+
+.tag.warn {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+/* KPI */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.kpi-card.warning {
+  background: #fff7ed;
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 6px 0;
+}
+
+.kpi-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ANALYTICS */
+.dash-analytics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.card h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* STATUS */
+.status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.status-list li {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.status-list .ok {
+  color: #047857;
+}
+
+.status-list .warn {
+  color: #b45309;
+}
+
+.status-list .info {
+  color: #2563eb;
+}

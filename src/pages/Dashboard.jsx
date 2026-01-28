@@ -1,182 +1,183 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Dashboard.css";
 import { API_BASE } from "../utils/apiBase";
 
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
   ArcElement,
   Tooltip,
   Legend,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend
-);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Dashboard = () => {
-  const [dashboard, setDashboard] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  /* ✅ hooks FIRST, no conditions above */
+  const attendanceChart = useMemo(() => {
+    if (!data) return null;
+
+    return {
+      labels: ["Present", "Absent", "Late"],
+      datasets: [
+        {
+          data: [
+            data.attendance.present,
+            data.attendance.absent,
+            data.attendance.late,
+          ],
+          backgroundColor: ["#22c55e", "#ef4444", "#f59e0b"],
+        },
+      ],
+    };
+  }, [data]);
+
+  const costChart = useMemo(() => {
+    if (!data) return null;
+
+    return {
+      labels: ["Payroll", "Overtime", "PF"],
+      datasets: [
+        {
+          data: [
+            data.cost.payroll,
+            data.cost.overtime,
+            data.cost.pf,
+          ],
+          backgroundColor: ["#2563eb", "#f97316", "#14b8a6"],
+        },
+      ],
+    };
+  }, [data]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setDashboard(data.kpis);
+    const controller = new AbortController();
+
+    const loadDashboard = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/dashboard`, {
+          signal: controller.signal,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to load dashboard");
+
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        if (err.name !== "AbortError") setError(err.message);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    loadDashboard();
+    return () => controller.abort();
   }, []);
 
+  /* ✅ conditionals AFTER hooks */
   if (loading) return <div className="dash-loading">Loading dashboard…</div>;
-  if (!dashboard) return <div className="dash-loading">No data available</div>;
+  if (error) return <div className="dash-error">{error}</div>;
+  if (!data) return <div className="dash-empty">No data</div>;
 
-  /* ===========================
-     CHART DATA
-  =========================== */
-
-  const attendanceChart = {
-    labels: ["Present", "Absent", "Late", "On Leave"],
-    datasets: [
-      {
-        data: [
-          dashboard.attendance.present,
-          dashboard.attendance.absent,
-          dashboard.attendance.late,
-          dashboard.approvals.leave,
-        ],
-        backgroundColor: ["#22c55e", "#ef4444", "#f59e0b", "#6366f1"],
-      },
-    ],
-  };
-
-  const costChart = {
-    labels: ["Payroll", "Overtime", "PF"],
-    datasets: [
-      {
-        data: [
-          dashboard.cost.payroll,
-          dashboard.cost.overtime,
-          dashboard.cost.esiPf,
-        ],
-        backgroundColor: ["#2563eb", "#f97316", "#14b8a6"],
-      },
-    ],
-  };
+  const { employees, attendance, approvals, payroll, cost, compliance } = data;
 
   return (
-    <div className="dashboard">
+  <div className="dashboard">
 
-      {/* HEADER */}
-      <div className="dash-header">
+    {/* HERO SUMMARY */}
+    <div className="dash-hero">
+      <div>
         <h2>HR & Payroll Dashboard</h2>
         <span className="dash-sub">
-          Live company metrics & compliance status
+          Live attendance, payroll & compliance overview
         </span>
       </div>
 
-      {/* KPI STRIP */}
-      <div className="kpi-strip">
+      <div className="hero-tags">
+        <span className="tag success">
+          Payroll {payroll ? "Running" : "Not Started"}
+        </span>
+        <span className="tag warn">
+          {approvals.leave} Pending Actions
+        </span>
+      </div>
+    </div>
 
-        <div className="kpi-card">
-          <h4>Total Employees</h4>
-          <div className="kpi-value">{dashboard.employees.total}</div>
-          <p className="kpi-meta">
-            {dashboard.employees.inactive} inactive
-          </p>
-          <Link to="employees" className="btn">
-            Manage Employees
-          </Link>
-        </div>
+    {/* KPI STRIP */}
+    <div className="kpi-strip">
 
-        <div className="kpi-card">
-          <h4>Attendance Today</h4>
-          <div className="kpi-value">
-            {dashboard.attendance.present}
-          </div>
-          <p className="kpi-meta">
-            Absent {dashboard.attendance.absent} · Late {dashboard.attendance.late}
-          </p>
-          <Link to="attendance" className="btn">
-            View Attendance
-          </Link>
-        </div>
-
-        <div className="kpi-card warning">
-          <h4>Pending Approvals</h4>
-          <div className="kpi-value">
-            {dashboard.approvals.leave + dashboard.approvals.fnf}
-          </div>
-          <p className="kpi-meta">
-            Leaves {dashboard.approvals.leave} · FNF {dashboard.approvals.fnf}
-          </p>
-          <Link to="leavemanagement" className="btn warning">
-            Review Requests
-          </Link>
-        </div>
-
-        <div className="kpi-card success">
-          <h4>Payroll Status</h4>
-          <div className="kpi-value small">
-            {dashboard.salary.status}
-          </div>
-          <p className="kpi-meta">
-            Month: {dashboard.salary.month || "N/A"}
-          </p>
-          <Link to="payroll" className="btn success">
-            Payroll
-          </Link>
-        </div>
-
+      <div className="kpi-card">
+        <h4>Total Employees</h4>
+        <div className="kpi-value">{employees.total}</div>
+        <p className="kpi-meta">
+          {employees.active} Active · {employees.inactive} Inactive
+        </p>
+        <Link to="employees" className="btn">
+          Manage
+        </Link>
       </div>
 
-      {/* ANALYTICS */}
-      <div className="dash-analytics">
-
-        <div className="card">
-          <h3>Attendance Distribution</h3>
-          <Doughnut data={attendanceChart} />
-        </div>
-
-        <div className="card">
-          <h3>Monthly Cost Split</h3>
-          <Doughnut data={costChart} />
-        </div>
-
-        <div className="card">
-          <h3>Compliance Status</h3>
-          <ul className="status-list">
-            <li className="ok">PF: {dashboard.compliance.pf}</li>
-            <li className="warn">ESI: {dashboard.compliance.esi}</li>
-            <li className="info">Bonus: {dashboard.compliance.bonus}</li>
-            <li className="ok">Gratuity: OK</li>
-          </ul>
-        </div>
-
+      <div className="kpi-card">
+        <h4>Attendance Today</h4>
+        <div className="kpi-value">{attendance.present}</div>
+        <p className="kpi-meta">
+          Absent {attendance.absent} · Late {attendance.late}
+        </p>
+        <Link to="attendance" className="btn">
+          View
+        </Link>
       </div>
 
-      {/* ACTION BAR */}
-      <div className="dash-actions">
-        <Link to="payroll" className="btn">Run Payroll</Link>
-        <Link to="reports" className="btn">Reports</Link>
-        <Link to="attendance" className="btn">Attendance</Link>
+      <div className="kpi-card warning">
+        <h4>Pending Approvals</h4>
+        <div className="kpi-value">{approvals.leave}</div>
+        <p className="kpi-meta">Leave Requests</p>
+        <Link to="leavemanagement" className="btn warning">
+          Review
+        </Link>
       </div>
 
     </div>
-  );
+
+    {/* ANALYTICS */}
+    <div className="dash-analytics">
+
+      <div className="card">
+        <h3>Attendance Distribution</h3>
+        {attendanceChart && <Doughnut data={attendanceChart} />}
+      </div>
+
+      <div className="card">
+        <h3>Cost Split</h3>
+        {costChart && <Doughnut data={costChart} />}
+      </div>
+
+      <div className="card">
+        <h3>Compliance Status</h3>
+        <ul className="status-list">
+          <li className={compliance.pfFiled ? "ok" : "warn"}>
+            PF: {compliance.pfFiled ? "Filed" : "Pending"}
+          </li>
+          <li className="warn">ESI: Pending</li>
+          <li className={compliance.gratuityEligible ? "ok" : "info"}>
+            Gratuity: {compliance.gratuityEligible ? "Eligible" : "N/A"}
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+);
+
 };
 
 export default Dashboard;

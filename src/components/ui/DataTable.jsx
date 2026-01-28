@@ -1,6 +1,6 @@
 import React from "react";
 
-const DataTable = ({ columns, data, emptyState }) => {
+const DataTable = ({ columns, data, emptyState, rowClassName }) => {
     if (!data || data.length === 0) {
         return (
             <div className="empty-state-card">
@@ -23,7 +23,7 @@ const DataTable = ({ columns, data, emptyState }) => {
                 </thead>
                 <tbody>
                     {data.map((row, rowIdx) => (
-                        <tr key={rowIdx}>
+                        <tr key={rowIdx} className={rowClassName ? rowClassName(row) : ""}>
                             {columns.map((col, colIdx) => (
                                 <td key={colIdx} className={col.className}>
                                     {col.render ? col.render(row) : row[col.key]}

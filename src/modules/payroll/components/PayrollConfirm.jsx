@@ -1,30 +1,42 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import {
-  getLatestPayrollBatch,
+  getPayrollBatch,
   confirmPayrollBatch
 } from "../../../api/master.api";
+import PageHeader from "../../../components/ui/PageHeader";
+import DataTable from "../../../components/ui/DataTable";
+import { FaArrowLeft, FaSync, FaMoneyBillWave, FaCheckCircle } from "react-icons/fa";
 import "./payroll.css";
+import "../../../styles/shared/modern-ui.css";
 
 const PayrollConfirm = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [payMonth, setPayMonth] = useState(
+    Number(searchParams.get("month")) || new Date().getMonth() + 1
+  );
+  const payYear = Number(searchParams.get("year")) || new Date().getFullYear();
 
   const [loading, setLoading] = useState(true);
   const [batch, setBatch] = useState(null);
   const [employees, setEmployees] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
 
-  /* -------------------------------
-     LOAD LATEST PAYROLL BATCH
-  -------------------------------- */
   const loadBatch = useCallback(async () => {
     try {
       setLoading(true);
+      const data = await getPayrollBatch({
+        pay_month: payMonth,
+        pay_year: payYear
+      });
 
-      const data = await getLatestPayrollBatch();
       setBatch(data.batch);
-      setEmployees(data.employees);
+      setEmployees(data.employees || []);
+      setSelected((data.employees || []).map(e => e.employee_id));
 
     } catch (err) {
       console.error("LOAD PAYROLL ERROR:", err);
@@ -32,32 +44,68 @@ const PayrollConfirm = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [payMonth, payYear]);
 
   useEffect(() => {
+    setSearchParams({ month: payMonth, year: payYear }, { replace: true });
     loadBatch();
-  }, [loadBatch]);
+  }, [payMonth, payYear, loadBatch]);
 
-  /* -------------------------------
-     DERIVED STATE
-  -------------------------------- */
-  const pendingEmployees = employees.filter(
-    (e) => e.payment_status === "PENDING"
-  );
+  const toggleAll = (checked) => {
+    setSelected(checked ? employees.map(e => e.employee_id) : []);
+  };
 
-  /* -------------------------------
-     CONFIRM PAYROLL
-  -------------------------------- */
+  const toggleOne = (id) => {
+    setSelected(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const columns = [
+    {
+      header: (
+        <input
+          type="checkbox"
+          checked={selected.length === employees.length && employees.length > 0}
+          onChange={(e) => toggleAll(e.target.checked)}
+        />
+      ),
+      render: (e) => (
+        <input
+          type="checkbox"
+          checked={selected.includes(e.employee_id)}
+          onChange={() => toggleOne(e.employee_id)}
+        />
+      )
+    },
+    { header: "Emp Code", key: "employee_code" },
+    { header: "Name", key: "full_name" },
+    { header: "Bank Name", key: "bank_name" },
+    { header: "Account No", key: "account_number" },
+    { header: "IFSC", key: "ifsc_code" },
+    { header: "Base Salary", render: (e) => `₹${Number(e.base_salary).toLocaleString()}` },
+    { header: "Incentive", render: (e) => `₹${Number(e.incentive).toLocaleString()}` },
+    { header: "PF Amount", render: (e) => `₹${Number(e.pf_amount || 0).toLocaleString()}` },
+    { header: "Deductions", render: (e) => `₹${Number(e.other_deductions).toLocaleString()}` },
+    { header: "Gross", render: (e) => `₹${Number(e.gross_salary || 0).toLocaleString()}` },
+    { header: "Net Salary", render: (e) => `₹${Number(e.net_salary).toLocaleString()}` }
+  ];
+
   const handleConfirm = async () => {
-    if (!batch?.id || confirming || pendingEmployees.length === 0) return;
+    if (confirming || employees.length === 0) return;
 
     setConfirming(true);
     setError("");
 
     try {
-      await confirmPayrollBatch(batch.id);
+      await confirmPayrollBatch({
+        payMonth,
+        payYear,
+        employeeIds: selected,
+        action: "CONFIRM"
+      });
 
-      // Reload updated state
+      alert("Salary processed successfully");
       await loadBatch();
 
     } catch (err) {
@@ -68,93 +116,62 @@ const PayrollConfirm = () => {
     }
   };
 
-  /* -------------------------------
-     RENDER STATES
-  -------------------------------- */
-  if (loading) return <p>Loading payroll batch…</p>;
-  if (error) return <p className="error">{error}</p>;
-  if (!batch) return <p>No payroll batch found.</p>;
-
   return (
-    <div className="payroll-confirm">
-      <h2>
-        Payroll Confirmation – {batch.pay_month}/{batch.pay_year}
-      </h2>
+    <div className="page-container fade-in">
+      <PageHeader
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            <button onClick={() => navigate(-1)} className="btn-action view">
+              <FaArrowLeft />
+            </button>
+            <span>Confirm Payroll</span>
+          </div>
+        }
+        subtitle="Send salary for the selected month."
+        actions={
+          <div className="payroll-selectors">
+            <select
+              value={payMonth}
+              onChange={(e) => setPayMonth(Number(e.target.value))}
+              className="filter-select-modern"
+            >
+              {[...Array(12)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {new Date(0, i).toLocaleString("default", { month: "long" })}
+                </option>
+              ))}
+            </select>
+            <button className="btn-primary" onClick={loadBatch} disabled={loading}>
+              <FaSync /> Refresh
+            </button>
+          </div>
+        }
+      />
 
-      <p>
-        Batch Status: <b>{batch.status}</b> | Pending Salaries:{" "}
-        <b>{pendingEmployees.length}</b>
-      </p>
+      <div className="payroll-table-section">
+        <DataTable
+          columns={columns}
+          data={employees}
+          emptyState={{
+            title: "No employees in this batch",
+            subtitle: "Try selecting a different month.",
+            icon: <FaMoneyBillWave />
+          }}
+        />
+      </div>
 
-      <table className="payroll-table">
-        <thead>
-          <tr>
-            <th>Emp Code</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Basic</th>
-            <th>Incentive</th>
-            <th>Deductions</th>
-            <th>PF</th>
-            <th>Net Salary</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {pendingEmployees.map((e) => (
-            <tr key={e.payroll_entry_id}>
-              <td>{e.employee_code}</td>
-              <td>{e.full_name}</td>
-              <td>{e.email}</td>
-              <td>₹{Number(e.base_salary).toLocaleString()}</td>
-              <td>₹{Number(e.incentive).toLocaleString()}</td>
-              <td>₹{Number(e.other_deductions).toLocaleString()}</td>
-              <td>
-                {e.pf_applicable
-                  ? `₹${Number(e.pf_amount).toLocaleString()}`
-                  : "NA"}
-              </td>
-              <td>
-                <b>₹{Number(e.net_salary).toLocaleString()}</b>
-              </td>
-              <td>{e.payment_status}</td>
-            </tr>
-          ))}
-
-          {pendingEmployees.length === 0 && (
-            <tr>
-              <td colSpan="9" style={{ textAlign: "center" }}>
-                ✅ All salaries have been processed
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      {/* ACTIONS */}
-      {pendingEmployees.length > 0 && batch.status !== "LOCKED" && (
-        <button
-          className="primary"
-          onClick={handleConfirm}
-          disabled={confirming}
-        >
-          {confirming
-            ? "Processing..."
-            : `Confirm & Send Salary (${pendingEmployees.length})`}
+      <div className="payroll-footer-action slide-up">
+        <button onClick={() => navigate("/payroll")} className="btn-secondary">
+          Back to Payroll
         </button>
-      )}
-
-      {batch.status === "CONFIRMED" && (
-        <div className="success-box">
-          <h3>✅ Payroll Completed</h3>
-          <p>All pending salaries have been processed.</p>
-
-          <button onClick={() => navigate("/payroll")}>
-            Back to Payroll
-          </button>
-        </div>
-      )}
+        <button
+          className="btn-primary btn-large"
+          onClick={handleConfirm}
+          disabled={confirming || selected.length === 0}
+        >
+          {confirming ? "Processing..." : `Send Salary (${selected.length})`}
+        </button>
+      </div>
     </div>
   );
 };

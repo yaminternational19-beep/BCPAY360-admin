@@ -57,6 +57,12 @@
   text-align: right;
 }
 
+.row-disabled {
+  opacity: 0.6;
+  background-color: var(--bg-muted) !important;
+  pointer-events: none;
+}
+
 /* Input styling in table */
 .table-input {
   width: 80px;
