@@ -62,25 +62,39 @@ const GovernmentFormModal = ({
       <div className="gov-modal" onClick={e => e.stopPropagation()}>
         <div className="gov-modal-header">
           <h3>{editData ? "Edit Government Form" : "Create Government Form"}</h3>
-          <button onClick={onClose}>✕</button>
+          <button className="modal-close-btn" onClick={onClose}>✕</button>
         </div>
 
         <div className="gov-modal-body">
-          <input name="formCode" placeholder="Form Code" value={formData.formCode} onChange={handleChange} />
-          <input name="formName" placeholder="Form Name" value={formData.formName} onChange={handleChange} />
-          <input name="category" placeholder="Category (PF / ESI / IT)" value={formData.category} onChange={handleChange} />
-
-          <select name="periodType" value={formData.periodType} onChange={handleChange}>
-            <option value="FY">Financial Year</option>
-            <option value="MONTH">Monthly</option>
-            <option value="ONE_TIME">One Time</option>
-          </select>
-          <textarea
-            name="description"
-            placeholder="Description (optional)"
-            value={formData.description}
-            onChange={handleChange}
-          />
+          <div className="form-group">
+            <label>Form Code *</label>
+            <input name="formCode" placeholder="Form Code" value={formData.formCode} onChange={handleChange} />
+          </div>
+          <div className="form-group">
+            <label>Form Name *</label>
+            <input name="formName" placeholder="Form Name" value={formData.formName} onChange={handleChange} />
+          </div>
+          <div className="form-group">
+            <label>Category *</label>
+            <input name="category" placeholder="Category (PF / ESI / IT)" value={formData.category} onChange={handleChange} />
+          </div>
+          <div className="form-group">
+            <label>Period Type</label>
+            <select name="periodType" value={formData.periodType} onChange={handleChange}>
+              <option value="FY">Financial Year</option>
+              <option value="MONTH">Monthly</option>
+              <option value="ONE_TIME">One Time</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              name="description"
+              placeholder="Description (optional)"
+              value={formData.description}
+              onChange={handleChange}
+            />
+          </div>
 
           {error && <p className="error-text">{error}</p>}
         </div>

@@ -354,3 +354,36 @@ export const deleteGovernmentForm = (id) =>
   api(`/api/admin/government-forms/${id}`, {
     method: "DELETE"
   });
+
+
+  /* ===================================================================================
+   HOLIDAYS (ADMIN)
+   Base: /api/admin/holidays/branch-holidays
+   =================================================================================== */
+
+
+export const getBranchHolidays = (params) =>
+  api("/api/admin/holidays/branch-holidays", {
+    params
+  });
+
+
+export const createBranchHolidays = (data) =>
+  api("/api/admin/holidays/branch-holidays", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+
+
+export const updateBranchHolidays = (data) =>
+  api("/api/admin/holidays/branch-holidays", {
+    method: "PUT",
+    body: JSON.stringify(data)
+  });
+
+
+export const deleteBranchHolidays = (data) =>
+  api("/api/admin/holidays/branch-holidays", {
+    method: "DELETE",
+    body: JSON.stringify(data)
+  });

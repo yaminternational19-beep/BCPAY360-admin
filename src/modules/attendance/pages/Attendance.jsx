@@ -120,6 +120,10 @@ const Attendance = () => {
 
   return (
     <div className="attendance-container">
+      {viewType === "DAILY" && attendanceMode === "DAILY" && (
+        <AttendanceSummary summary={summary} loading={loading} />
+      )}
+
       <AttendanceHeader
         viewType={viewType}
         attendanceMode={attendanceMode}
@@ -143,19 +147,21 @@ const Attendance = () => {
       />
 
       {viewType === "DAILY" && attendanceMode === "DAILY" && (
-        <>
-          <AttendanceSummary summary={summary} loading={loading} />
-          <DailyAttendanceTable
-            rows={rows}
-            loading={loading}
-            onViewHistory={loadHistoryAttendance}
-          />
-        </>
+        <DailyAttendanceTable
+          rows={rows}
+          loading={loading}
+          onViewHistory={loadHistoryAttendance}
+        />
       )}
 
       {viewType === "DAILY" && attendanceMode === "MONTHLY" && (
-        <MonthlyAttendanceTable data={monthlyData} loading={loading} />
+        <>
+          {/* Optional: Add Monthly Summary here if API supports it, 
+              or keep it consistent with Daily after swapping header */}
+          <MonthlyAttendanceTable data={monthlyData} loading={loading} />
+        </>
       )}
+
 
       {viewType === "HISTORY" && historyData && (
         <HistoryAttendanceDrawer

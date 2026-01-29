@@ -8,6 +8,7 @@ import {
   FaChevronRight,
   FaBuilding,
   FaIdCard,
+  FaCalendarAlt,
   FaClock,
   FaUmbrellaBeach,
   FaMoneyBillWave,
@@ -37,6 +38,7 @@ const VALID_ROUTES = [
   "softwarereports",
   "hr-management",
   "organization",
+  "holidays",
 ];
 
 const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: userProp }) => {
@@ -301,6 +303,22 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                     }}
                   >
                     <FaMoneyBillWave /> Payroll
+                  </button>
+                )}
+
+                {canAccess("HOLIDAYS") && (
+                  <button
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // FORCE absolute navigation to /admin/holidays
+                      navigate("/holidays");
+                      onCloseMobile?.();
+                    }}
+                  >
+                    <FaCalendarAlt /> Holidays
                   </button>
                 )}
 

@@ -16,6 +16,7 @@ import HRLogin from "./pages/HRLogin";
 
 // New module imports
 import SuperAdminRoutes from "./modules/super-admin";
+import HolidaysPage from "./modules/holidays";
 import { SoftwareReportsDashboard, SoftwareReportsPage } from "./modules/software-reports";
 import FormsRouter from "./modules/forms/FormsRouter";
 import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode, GovernmentForms } from "./modules/organization";
@@ -57,16 +58,16 @@ const AdminLayout = ({ user, setUser }) => {
 
   return (
     <div className="app-root">
-      <Sidebar collapsed={collapsed} user={user} />
+      <Navbar
+        user={user}
+        onToggleSidebar={() => setCollapsed((prev) => !prev)}
+        onLogout={logout}
+      />
 
-      <div className={`main ${collapsed ? "collapsed" : ""}`}>
-        <Navbar
-          user={user}
-          onToggleSidebar={() => setCollapsed((prev) => !prev)}
-          onLogout={logout}
-        />
+      <div className="main-wrapper">
+        <Sidebar collapsed={collapsed} user={user} />
 
-        <main className="app-content">
+        <main className="main-content">
           <Routes>
             <Route index element={<Navigate to="dashboard" replace />} />
 
@@ -124,9 +125,18 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
 
-
-
-
+            <Route
+              path="holidays"
+              element={
+                <PermissionProtectedRoute
+                  user={user}
+                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                  moduleKey="HOLIDAYS"
+                >
+                  <HolidaysPage />
+                </PermissionProtectedRoute>
+              }
+            />
 
             <Route
               path="departments"
@@ -194,12 +204,6 @@ const AdminLayout = ({ user, setUser }) => {
                 </RoleProtectedRoute>
               }
             />
-
-
-
-
-
-
 
             <Route
               path="accounting"

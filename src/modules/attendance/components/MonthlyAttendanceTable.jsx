@@ -3,17 +3,17 @@ import "../../../styles/Attendance.css";
 const statusClassMap = {
   P: "status-present",
   A: "status-absent",
-  L: "status-leave",
   U: "status-unmarked",
-  H: "status-holiday"
+  H: "status-holiday",
+  "-": "status-unmarked"
 };
 
 const statusLabelMap = {
   P: "Present",
   A: "Absent",
-  L: "Leave",
   U: "Unmarked",
-  H: "Holiday"
+  H: "Holiday",
+  "-": "N/A"
 };
 
 const MonthlyAttendanceTable = ({ data = [], loading }) => {
@@ -56,7 +56,6 @@ const MonthlyAttendanceTable = ({ data = [], loading }) => {
             {/* TOTAL HEADERS */}
             <th title="Total Present Days">Present</th>
             <th title="Total Absent Days">Absent</th>
-            <th title="Total Leave Days">Leave</th>
             <th title="Total Unmarked Days">Unmarked</th>
             <th title="Total Holidays">Holidays</th>
           </tr>
@@ -95,9 +94,6 @@ const MonthlyAttendanceTable = ({ data = [], loading }) => {
               </td>
               <td className="total-absent" title="Total Absent Days">
                 {emp.totals.absent}
-              </td>
-              <td className="total-leave" title="Total Leave Days">
-                {emp.totals.leave}
               </td>
               <td className="total-unmarked" title="Total Unmarked Days">
                 {emp.totals.unmarked}

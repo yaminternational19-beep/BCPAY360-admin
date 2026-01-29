@@ -3,7 +3,7 @@ import "../../../styles/LeaveManagement.css";
 import useLeaveMaster from "../hooks/useLeaveMaster";
 import LeavePolicyForm from "./LeavePolicyForm";
 
-export default function LeavePolicyTable() {
+export default function LeavePolicyTable({ filters }) {
   const {
     leaveTypes,
     loading,
@@ -33,23 +33,16 @@ export default function LeavePolicyTable() {
     await removeLeaveType(id);
   };
 
+  // Local Filtering
+  const filteredPolicies = leaveTypes.filter(l => {
+    const matchesSearch = !filters.search ||
+      l.leave_name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      l.leave_code.toLowerCase().includes(filters.search.toLowerCase());
+    return matchesSearch;
+  });
+
   return (
-    <section className="card">
-      {/* ===== HEADER WITH ADD BUTTON ===== */}
-      <div className="card-header">
-        <h2>Leave Policy (Master)</h2>
-        <button
-          className="btn-add-leave"
-          onClick={() => {
-            setEditData(null);
-            setShowForm(true);
-          }}
-        >
-          + Add Leave
-        </button>
-
-      </div>
-
+    <div style={{ position: 'relative' }}>
       {loading && (
         <div className="loading-overlay">
           Loading leave policies...
@@ -71,15 +64,15 @@ export default function LeavePolicyTable() {
         </thead>
 
         <tbody>
-          {leaveTypes.length === 0 && (
+          {filteredPolicies.length === 0 && (
             <tr>
-              <td colSpan="7" className="muted">
-                No leave types created
+              <td colSpan="7" className="muted" style={{ padding: '40px' }}>
+                No leave types matched your criteria
               </td>
             </tr>
           )}
 
-          {leaveTypes.map((l) => (
+          {filteredPolicies.map((l) => (
             <tr key={l.id}>
               <td>{l.leave_code}</td>
               <td>{l.leave_name}</td>
@@ -113,7 +106,7 @@ export default function LeavePolicyTable() {
                   Edit
                 </button>
                 <button
-                  className="btn-danger"
+                  className="btn-danger table-action"
                   onClick={() => handleDelete(l.id)}
                 >
                   Delete
@@ -124,7 +117,7 @@ export default function LeavePolicyTable() {
         </tbody>
       </table>
 
-      {/* ===== MODAL (ONLY PLACE IT EXISTS) ===== */}
+      {/* ===== MODAL ===== */}
       {showForm && (
         <LeavePolicyForm
           initialData={editData}
@@ -135,6 +128,6 @@ export default function LeavePolicyTable() {
           onSave={handleSave}
         />
       )}
-    </section>
+    </div>
   );
 }

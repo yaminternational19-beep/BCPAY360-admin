@@ -3,7 +3,7 @@ import "../../../styles/LeaveManagement.css";
 import useLeaveRequests from "../hooks/useLeaveRequests";
 import EmployeeLeaveModal from "./EmployeeLeaveModal";
 
-export default function LeaveHistoryTable() {
+export default function LeaveHistoryTable({ filters }) {
   const { history, fetchHistory, loading, error } = useLeaveRequests();
   const [selectedEmp, setSelectedEmp] = useState(null);
 
@@ -18,19 +18,31 @@ export default function LeaveHistoryTable() {
       year: "numeric"
     });
 
-  return (
-    <section className="card full">
-      <h2>Leave History</h2>
+  const filteredHistory = history.filter(row => {
+    const searchLow = filters.search.toLowerCase();
+    const matchesSearch = !filters.search ||
+      row.full_name.toLowerCase().includes(searchLow) ||
+      row.emp_id.toLowerCase().includes(searchLow);
 
+    const matchesBranch = !filters.branchId || String(row.branch_id) === String(filters.branchId);
+    const matchesDept = !filters.departmentId || String(row.department_id) === String(filters.departmentId);
+
+    return matchesSearch && matchesBranch && matchesDept;
+  });
+
+  return (
+    <div style={{ position: 'relative' }}>
       {loading && <div className="loading-overlay">Loading leave history...</div>}
 
-      {error && <div className="error">Error: {error}</div>}
+      {error && <div className="error" style={{ padding: '20px' }}>Error: {error}</div>}
 
-      {history.length === 0 && !loading && (
-        <p className="muted">No leave history found</p>
+      {filteredHistory.length === 0 && !loading && (
+        <div className="muted" style={{ padding: '60px 20px', textAlign: 'center' }}>
+          No leave history found matching your filters
+        </div>
       )}
 
-      {history.length > 0 && (
+      {filteredHistory.length > 0 && (
         <table className="clean-table">
           <thead>
             <tr>
@@ -48,7 +60,7 @@ export default function LeaveHistoryTable() {
           </thead>
 
           <tbody>
-            {history.map((row) => (
+            {filteredHistory.map((row) => (
               <tr
                 key={row.id}
                 className="clickable"
@@ -99,6 +111,6 @@ export default function LeaveHistoryTable() {
           onClose={() => setSelectedEmp(null)}
         />
       )}
-    </section>
+    </div>
   );
 }

@@ -11,44 +11,48 @@ export default function LeaveRequestCard({ request, onApprove, onReject }) {
 
   return (
     <div className="req-card">
-      {/* ================= LEFT INFO ================= */}
       <div className="req-info">
-        <div>
-          <strong>
-            {request.full_name}
-          </strong>
-          <span className="muted" style={{ marginLeft: 6 }}>
-            ({request.emp_id})
-          </span>
+        <div className="req-header">
+          <h3>{request.full_name}</h3>
+          <span className="emp-id">({request.emp_id})</span>
         </div>
 
-        <div className="meta">
-          {request.department_name || "—"} ·{" "}
-          {request.leave_name} · {request.total_days} day(s)
-        </div>
-
-        <div className="meta">
-          {formatDate(request.from_date)} → {formatDate(request.to_date)}
-        </div>
-
-        {request.shift_name && (
-          <div className="meta">
-            Shift: {request.shift_name} ({request.shift_timing})
+        <div className="req-meta-grid">
+          <div className="meta-item">
+            <span className="meta-label">Leave Type</span>
+            <span className="meta-value">{request.leave_name}</span>
           </div>
-        )}
+          <div className="meta-item">
+            <span className="meta-label">Duration</span>
+            <span className="meta-value">{request.total_days} Day(s)</span>
+          </div>
+          <div className="meta-item">
+            <span className="meta-label">Dates</span>
+            <span className="meta-value">{formatDate(request.from_date)} - {formatDate(request.to_date)}</span>
+          </div>
+          <div className="meta-item">
+            <span className="meta-label">Department</span>
+            <span className="meta-value">{request.department_name || "—"}</span>
+          </div>
+          {request.shift_name && (
+            <div className="meta-item">
+              <span className="meta-label">Shift</span>
+              <span className="meta-value">{request.shift_name}</span>
+            </div>
+          )}
+          <div className="meta-item">
+            <span className="meta-label">Applied On</span>
+            <span className="meta-value">{formatDate(request.applied_at)}</span>
+          </div>
+        </div>
 
         {request.reason && (
-          <div className="reason">
+          <div className="reason-box">
             <strong>Reason:</strong> {request.reason}
           </div>
         )}
-
-        <div className="meta">
-          Applied on {formatDate(request.applied_at)}
-        </div>
       </div>
 
-      {/* ================= ACTIONS ================= */}
       <div className="req-actions">
         <button
           className="btn-success"
@@ -69,3 +73,4 @@ export default function LeaveRequestCard({ request, onApprove, onReject }) {
     </div>
   );
 }
+

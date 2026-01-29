@@ -82,25 +82,23 @@ const PayrollList = () => {
     }
   };
 
-  // Dynamically derive departments from loaded employees to avoid 400 error on global fetch
-  // but keeping ID-based structure as requested
+  // Fetch departments when branch filter changes
   useEffect(() => {
-    if (employees.length > 0) {
-      const uniqueDepts = [];
-      const seenIds = new Set();
-
-      employees.forEach(e => {
-        if (e.department_id && !seenIds.has(e.department_id)) {
-          seenIds.add(e.department_id);
-          uniqueDepts.push({
-            id: e.department_id,
-            department_name: e.department_name
-          });
+    if (filterBranchId) {
+      (async () => {
+        try {
+          const depts = await getDepartments(filterBranchId);
+          setDepartmentList(depts || []);
+        } catch (err) {
+          console.error("Failed to fetch departments:", err);
+          setDepartmentList([]);
         }
-      });
-      setDepartmentList(uniqueDepts);
+      })();
+    } else {
+      setDepartmentList([]);
     }
-  }, [employees]);
+    setFilterDepartmentId("");
+  }, [filterBranchId]);
 
   useEffect(() => {
     loadEmployees();
@@ -147,12 +145,6 @@ const PayrollList = () => {
         value: summary.not_generated,
         icon: <FaExclamationCircle />,
         color: "orange"
-      },
-      {
-        label: "Batch Status",
-        value: batch?.status || "NOT GENERATED",
-        icon: <FaSync />,
-        color: batch?.status === "PAID" ? "green" : "orange"
       },
       {
         label: "Period",
@@ -365,6 +357,13 @@ const PayrollList = () => {
         onSearchChange={setSearchQuery}
         placeholder="Search by code or name..."
       >
+        <button
+          className="btn-confirm-salary"
+          onClick={() => navigate(`/payroll/confirm?month=${payMonth}&year=${payYear}`)}
+        >
+          <FaCheckCircle /> Confirm / Send Salary
+        </button>
+
         <select
           value={filterBranchId}
           onChange={(e) => setFilterBranchId(e.target.value)}

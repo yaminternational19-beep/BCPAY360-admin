@@ -88,7 +88,15 @@ const PayrollConfirm = () => {
     { header: "PF Amount", render: (e) => `₹${Number(e.pf_amount || 0).toLocaleString()}` },
     { header: "Deductions", render: (e) => `₹${Number(e.other_deductions).toLocaleString()}` },
     { header: "Gross", render: (e) => `₹${Number(e.gross_salary || 0).toLocaleString()}` },
-    { header: "Net Salary", render: (e) => `₹${Number(e.net_salary).toLocaleString()}` }
+    { header: "Net Salary", render: (e) => `₹${Number(e.net_salary).toLocaleString()}` },
+    {
+      header: "Status",
+      render: (e) => (
+        <span className={`status-badge ${e.payment_status.toLowerCase()}`}>
+          {e.payment_status}
+        </span>
+      )
+    }
   ];
 
   const handleConfirm = async () => {

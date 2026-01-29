@@ -103,11 +103,24 @@ const GovernmentForms = () => {
     }
   };
 
+  const handleToggleStatus = async (form) => {
+    try {
+      const newStatus = form.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      await updateGovernmentForm(form.id, { status: newStatus });
+      toast.success(`Form ${newStatus.toLowerCase()}d successfully`);
+      fetchForms();
+    } catch {
+      toast.error("Failed to update status");
+    }
+  };
+
   return (
     <div className="gov-forms-container">
       <div className="gov-forms-header">
         <h2>Government Forms</h2>
-        <button onClick={() => setModalOpen(true)}>+ New Form</button>
+        <button className="btn-primary" onClick={() => setModalOpen(true)}>
+          + New Form
+        </button>
       </div>
 
       <input
@@ -125,6 +138,7 @@ const GovernmentForms = () => {
           setModalOpen(true);
         }}
         onDelete={handleDelete}
+        onToggleStatus={handleToggleStatus}
       />
 
       <GovernmentFormModal

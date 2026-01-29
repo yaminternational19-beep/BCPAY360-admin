@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import "../../../styles/Branch.css";
 
 const EMPTY_FORM = {
@@ -48,13 +47,13 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
         <div className="branch-modal-header">
           <h3>{isEdit ? "Edit Branch" : "Add Branch"}</h3>
           <button onClick={onClose} className="close-btn">
-            <X size={20} />
+            ✕
           </button>
         </div>
 
         <form className="branch-form" onSubmit={handleSubmit}>
           <div className="form-grid">
-            <div>
+            <div className="form-group">
               <label>Branch Code</label>
               <input
                 placeholder="Auto-generated or manual"
@@ -62,8 +61,8 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
                 onChange={(e) => change("branch_code", e.target.value)}
               />
             </div>
-            <div>
-              <label>Branch Name <span style={{ color: "#dc2626" }}>*</span></label>
+            <div className="form-group">
+              <label>Branch Name <span style={{ color: "#ef4444" }}>*</span></label>
               <input
                 placeholder="Branch name"
                 value={form.branch_name}
@@ -73,7 +72,7 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
             </div>
           </div>
 
-          <div>
+          <div className="form-group">
             <label>Location</label>
             <input
               placeholder="City / Location"
@@ -82,7 +81,7 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
             />
           </div>
 
-          <div>
+          <div className="form-group">
             <label>Address</label>
             <textarea
               placeholder="Full address"
@@ -93,7 +92,7 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
           </div>
 
           <div className="form-grid">
-            <div>
+            <div className="form-group">
               <label>Phone</label>
               <input
                 type="tel"
@@ -102,7 +101,7 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
                 onChange={(e) => change("phone", e.target.value.replace(/\D/g, ""))}
               />
             </div>
-            <div>
+            <div className="form-group">
               <label>Email</label>
               <input
                 type="email"
@@ -113,8 +112,8 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
             </div>
           </div>
 
-          <div>
-            <label>
+          <div className="form-group">
+            <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={form.is_active}

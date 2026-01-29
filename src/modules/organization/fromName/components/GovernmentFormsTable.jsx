@@ -1,6 +1,8 @@
 import React from "react";
 import "../styles/styleforms.css";
-const GovernmentFormsTable = ({ data, loading, onEdit, onDelete }) => {
+import { FaEdit, FaTrash, FaPowerOff, FaEye, FaBan } from "react-icons/fa";
+
+const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus }) => {
   if (loading) return <p>Loading…</p>;
   if (!data.length) return <p>No government forms found.</p>;
 
@@ -34,19 +36,34 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete }) => {
               <td>
                 <div className="gov-actions">
                   <button
-                    className="btn-action edit"
+                    className="btn-action btn-action-view"
                     onClick={() => onEdit(f)}
-                    title="Edit"
+                    title="View Form Details"
                   >
-                    ✎
+                    <FaEye />
+                  </button>
+
+                  <button
+                    className="btn-action btn-action-edit"
+                    onClick={() => onEdit(f)}
+                    title="Edit Form"
+                  >
+                    <FaEdit />
                   </button>
                   <button
-                    className="btn-action delete"
+                    className={`btn-action btn-action-toggle ${f.status === "ACTIVE" ? "active" : "inactive"}`}
+                    onClick={() => onToggleStatus(f)}
+                    title={f.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                  >
+                    <FaBan />
+                  </button>
+                  <button
+                    className="btn-action btn-action-delete"
                     disabled={f.status === "ACTIVE"}
                     onClick={() => onDelete(f)}
-                    title="Delete"
+                    title={f.status === "ACTIVE" ? "Deactivate before deleting" : "Delete Form"}
                   >
-                    🗑
+                    <FaTrash />
                   </button>
                 </div>
               </td>

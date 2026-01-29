@@ -6,7 +6,16 @@ const statusLabelMap = {
   ABSENT: "Absent",
   CHECKED_IN: "Checked In",
   UNMARKED: "Unmarked",
-  LEAVE: "Leave"
+  LEAVE: "Leave",
+  H: "Holiday",
+  "-": "N/A"
+};
+
+const getStatusClass = (status) => {
+  if (!status) return "neutral";
+  if (status === "-") return "neutral";
+  if (status === "H") return "holiday";
+  return status.toLowerCase();
 };
 
 const formatDate = (dateStr) => {
@@ -39,20 +48,39 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
       =========================== */}
       <div className="history-header">
 
-        <div className="employee-profile card">
-          <img
-            src={employee.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=eff6ff&color=2563eb`}
-            alt={employee.name}
-            className="employee-photo"
-          />
 
-          <div className="employee-info">
-            <h3>{employee.name}</h3>
-            <p className="muted">{employee.code}</p>
-            <p className="muted">
-              {employee.department} · {employee.designation}
-            </p>
-            <p className="muted">Shift: {employee.shift}</p>
+        <div className="employee-profile-card">
+          <div className="profile-image-container">
+            <img
+              src={employee.profile_photo_url || employee.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=EFF6FF&color=3B82F6&bold=true`}
+              alt={employee.name}
+              className="employee-avatar large"
+              onError={(e) => {
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=F1F5F9&color=64748B&bold=true`;
+              }}
+            />
+          </div>
+
+          <div className="employee-details">
+            <div className="name-row">
+              <h3>{employee.name}</h3>
+              <span className="status-indicator active">{employee.status}</span>
+            </div>
+            <p className="emp-code-main">{employee.code}</p>
+            <div className="meta-grid">
+              <div className="meta-item">
+                <small>Department</small>
+                <span>{employee.department}</span>
+              </div>
+              <div className="meta-item">
+                <small>Designation</small>
+                <span>{employee.designation}</span>
+              </div>
+              <div className="meta-item">
+                <small>Current Shift</small>
+                <span>{employee.shift}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -96,10 +124,10 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
 
                   <td>
                     <span
-                      className={`status-badge ${row.status.toLowerCase()}`}
+                      className={`status-badge ${getStatusClass(row.status)}`}
                       title={statusLabelMap[row.status] || row.status}
                     >
-                      {row.status}
+                      {statusLabelMap[row.status] || row.status}
                     </span>
                   </td>
 

@@ -11,6 +11,8 @@ import {
 
 
 
+import { FaPlus, FaEdit, FaPowerOff, FaTrash, FaEye, FaBan } from "react-icons/fa";
+
 export default function BranchList({ user }) {
   const isAdmin = user?.role === "COMPANY_ADMIN";
 
@@ -22,16 +24,16 @@ export default function BranchList({ user }) {
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [companies, setCompanies] = useState([]);
-
-
 
   const loadBranches = async () => {
     try {
+      setLoading(true);
       const data = await getBranches();
       setBranches(Array.isArray(data) ? data : []);
     } catch (error) {
       setBranches([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,7 +42,6 @@ export default function BranchList({ user }) {
   }, []);
 
   const handleSave = async (payload) => {
-    setLoading(true);
     try {
       if (selected) {
         await updateBranch(selected.id, payload);
@@ -54,13 +55,7 @@ export default function BranchList({ user }) {
       }
     } catch (error) {
       console.error("Failed to save branch:", error);
-      if (error.message && error.message.includes("already exists")) {
-        alert(error.message);
-      } else {
-        alert("Failed to save branch. Please try again.");
-      }
-    } finally {
-      setLoading(false);
+      alert(error.message || "Failed to save branch. Please try again.");
     }
   };
 
@@ -100,7 +95,6 @@ export default function BranchList({ user }) {
     }
   };
 
-
   const formatDate = (dateString) => {
     if (!dateString) return "—";
     try {
@@ -127,7 +121,7 @@ export default function BranchList({ user }) {
               setShowForm(true);
             }}
           >
-            Add Branch
+            <FaPlus /> Add Branch
           </button>
         )}
       </div>
@@ -141,12 +135,15 @@ export default function BranchList({ user }) {
                 <th>Code</th>
                 <th>Location</th>
                 <th>Status</th>
-                <th>Created Date</th>
                 {(canEdit || canDelete) && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {branches.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "40px" }}>Loading branches...</td>
+                </tr>
+              ) : branches.length === 0 ? (
                 <tr>
                   <td colSpan={canEdit || canDelete ? 6 : 5} className="empty-state">
                     No branches found
@@ -155,7 +152,7 @@ export default function BranchList({ user }) {
               ) : (
                 branches.map((branch) => (
                   <tr key={branch.id}>
-                    <td>{branch.branch_name || branch.name}</td>
+                    <td style={{ fontWeight: 600 }}>{branch.branch_name || branch.name}</td>
                     <td>{branch.branch_code || "—"}</td>
                     <td>{branch.location || "—"}</td>
                     <td>
@@ -164,32 +161,47 @@ export default function BranchList({ user }) {
                       </span>
                     </td>
                     <td>{formatDate(branch.created_at || branch.created_date)}</td>
-                    {(canEdit || canDelete) && (
-                      <td className="row-actions">
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          className="btn-action btn-action-view"
+                          onClick={() => handleEdit(branch.id)}
+                          title="View Details"
+                        >
+                          <FaEye />
+                        </button>
+
                         {canEdit && (
-                          <button onClick={() => handleEdit(branch.id)}>Edit</button>
+                          <button
+                            className="btn-action btn-action-edit"
+                            onClick={() => handleEdit(branch.id)}
+                            title="Edit Branch"
+                          >
+                            <FaEdit />
+                          </button>
                         )}
 
                         {canEdit && (
                           <button
                             onClick={() => handleToggleStatus(branch.id)}
-                            className={branch.is_active ? "warning" : "success"}
+                            className={`btn-action btn-action-toggle ${branch.is_active ? "active" : "inactive"}`}
+                            title={branch.is_active ? "Deactivate" : "Activate"}
                           >
-                            {branch.is_active ? "Disable" : "Enable"}
+                            <FaBan />
                           </button>
                         )}
 
                         {canDelete && (
                           <button
-                            className="danger"
+                            className="btn-action btn-action-delete"
                             onClick={() => handleDelete(branch.id)}
+                            title="Delete Branch"
                           >
-                            Delete
+                            <FaTrash />
                           </button>
                         )}
-                      </td>
-
-                    )}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
