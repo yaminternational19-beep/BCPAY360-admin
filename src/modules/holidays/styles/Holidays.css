@@ -24,8 +24,8 @@
 
 .holidays-container {
   padding: 24px;
-  background: var(--secondary-bg);
-  min-height: 100vh;
+  background: var(--bg-page);
+  min-height: 100%;
 }
 
 .holidays-filters {

@@ -9,9 +9,7 @@ import {
   deleteBranch,
 } from "../../../api/master.api";
 
-
-
-import { FaPlus, FaEdit, FaPowerOff, FaTrash, FaEye, FaBan } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaBan } from "react-icons/fa";
 
 export default function BranchList({ user }) {
   const isAdmin = user?.role === "COMPANY_ADMIN";
@@ -59,12 +57,9 @@ export default function BranchList({ user }) {
     }
   };
 
-  const handleEdit = (id) => {
-    const branch = branches.find((b) => b.id === id);
-    if (branch) {
-      setSelected(branch);
-      setShowForm(true);
-    }
+  const handleEdit = (branch) => {
+    setSelected(branch);
+    setShowForm(true);
   };
 
   const handleToggleStatus = async (id) => {
@@ -95,105 +90,100 @@ export default function BranchList({ user }) {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   return (
-    <div className="branch-page">
-      <div className="branch-header">
-        <h2>Branches</h2>
-        {canCreate && (
-          <button
-            className="btn-primary"
-            onClick={() => {
-              setSelected(null);
-              setShowForm(true);
-            }}
-          >
-            <FaPlus /> Add Branch
-          </button>
-        )}
-      </div>
+    <div className="branch-container">
+      <div className="branch-layout-wrapper">
+        <div className="branch-main-panel">
 
-      <div className="card">
-        <div className="table-wrapper">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Branch Name</th>
-                <th>Code</th>
-                <th>Location</th>
-                <th>Status</th>
-                {(canEdit || canDelete) && <th>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "40px" }}>Loading branches...</td>
-                </tr>
-              ) : branches.length === 0 ? (
-                <tr>
-                  <td colSpan={canEdit || canDelete ? 6 : 5} className="empty-state">
-                    No branches found
-                  </td>
-                </tr>
-              ) : (
-                branches.map((branch) => (
-                  <tr key={branch.id}>
-                    <td style={{ fontWeight: 600 }}>{branch.branch_name || branch.name}</td>
-                    <td>{branch.branch_code || "—"}</td>
-                    <td>{branch.location || "—"}</td>
-                    <td>
+          {/* Header */}
+          <div className="branch-panel-header">
+            <div className="header-info">
+              <h3>Branches</h3>
+              <span>Total: {branches.length}</span>
+            </div>
+
+            <div className="header-actions-row">
+              {canCreate && (
+                <button
+                  className="btn-add-branch"
+                  onClick={() => {
+                    setSelected(null);
+                    setShowForm(true);
+                  }}
+                >
+                  <FaPlus /> Add Branch
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Content Area */}
+          <div className="branch-list-scroll">
+            {loading ? (
+              <div className="no-data-msg">Loading branches...</div>
+            ) : branches.length === 0 ? (
+              <div className="branch-empty-state">
+                <div className="empty-box">
+                  <h3>No Branches Found</h3>
+                  <p>Create your first branch to get started.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="branch-grid">
+                {branches.map((branch) => (
+                  <div key={branch.id} className="branch-card-item">
+                    <div className="branch-header">
+                      <div>
+                        <div className="branch-name">{branch.branch_name || branch.name}</div>
+                        {branch.branch_code && (
+                          <div className="branch-code">{branch.branch_code}</div>
+                        )}
+                      </div>
                       <span className={`status-badge ${branch.is_active ? "active" : "inactive"}`}>
                         {branch.is_active ? "Active" : "Inactive"}
                       </span>
-                    </td>
-                    <td>{formatDate(branch.created_at || branch.created_date)}</td>
-                    <td>
-                      <div className="row-actions">
-                        <button
-                          className="btn-action btn-action-view"
-                          onClick={() => handleEdit(branch.id)}
-                          title="View Details"
-                        >
-                          <FaEye />
-                        </button>
+                    </div>
 
+                    <div className="branch-details">
+                      {branch.location && (
+                        <div className="branch-location">
+                          <FaMapMarkerAlt size={12} />
+                          {branch.location}
+                        </div>
+                      )}
+
+                      {branch.address && (
+                        <div className="branch-detail-row">
+                          {branch.address}
+                        </div>
+                      )}
+
+                      {(branch.phone || branch.email) && (
+                        <div className="branch-detail-row">
+                          {branch.phone && <span>📞 {branch.phone}</span>}
+                          {branch.email && <span>✉️ {branch.email}</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {(canEdit || canDelete) && (
+                      <div className="branch-actions">
                         {canEdit && (
-                          <button
-                            className="btn-action btn-action-edit"
-                            onClick={() => handleEdit(branch.id)}
-                            title="Edit Branch"
-                          >
-                            <FaEdit />
-                          </button>
+                          <>
+                            <button onClick={() => handleEdit(branch)} title="Edit Branch">
+                              <FaEdit />
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(branch.id)}
+                              title={branch.is_active ? "Deactivate" : "Activate"}
+                            >
+                              <FaBan />
+                            </button>
+                          </>
                         )}
-
-                        {canEdit && (
-                          <button
-                            onClick={() => handleToggleStatus(branch.id)}
-                            className={`btn-action btn-action-toggle ${branch.is_active ? "active" : "inactive"}`}
-                            title={branch.is_active ? "Deactivate" : "Activate"}
-                          >
-                            <FaBan />
-                          </button>
-                        )}
-
                         {canDelete && (
                           <button
-                            className="btn-action btn-action-delete"
+                            className="btn-trash"
                             onClick={() => handleDelete(branch.id)}
                             title="Delete Branch"
                           >
@@ -201,12 +191,13 @@ export default function BranchList({ user }) {
                           </button>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 
@@ -223,4 +214,3 @@ export default function BranchList({ user }) {
     </div>
   );
 }
-

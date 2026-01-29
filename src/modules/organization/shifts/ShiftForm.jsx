@@ -30,10 +30,11 @@ export default function ShiftForm({ onSave, onCancel, initialData, selectedBranc
   const canSubmit = shiftData.shift_name.trim() && shiftData.start_time && shiftData.end_time;
 
   return (
-    <div className="shifts-form card">
-      <h3>{initialData ? "Edit Shift" : "Add New Shift"}</h3>
-      <div className="form-grid">
-        <div>
+    <div className="shifts-container">
+      <div className="shifts-form-container">
+        <h3>{initialData ? "Edit Shift" : "Add New Shift"}</h3>
+
+        <div className="form-group">
           <label>Shift Name</label>
           <input
             placeholder="e.g., General Shift, Night Shift"
@@ -43,45 +44,50 @@ export default function ShiftForm({ onSave, onCancel, initialData, selectedBranc
             }
           />
         </div>
-        <div>
-          <label>Start Time</label>
-          <input
-            type="time"
-            value={shiftData.start_time}
+
+        <div className="form-group-row">
+          <div className="form-group">
+            <label>Start Time</label>
+            <input
+              type="time"
+              value={shiftData.start_time}
+              onChange={(e) =>
+                setShiftData({ ...shiftData, start_time: e.target.value })
+              }
+            />
+          </div>
+          <div className="form-group">
+            <label>End Time</label>
+            <input
+              type="time"
+              value={shiftData.end_time}
+              onChange={(e) =>
+                setShiftData({ ...shiftData, end_time: e.target.value })
+              }
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Description (Optional)</label>
+          <textarea
+            placeholder="Additional details about the shift"
+            value={shiftData.description}
             onChange={(e) =>
-              setShiftData({ ...shiftData, start_time: e.target.value })
+              setShiftData({ ...shiftData, description: e.target.value })
             }
+            rows={3}
           />
         </div>
-        <div>
-          <label>End Time</label>
-          <input
-            type="time"
-            value={shiftData.end_time}
-            onChange={(e) =>
-              setShiftData({ ...shiftData, end_time: e.target.value })
-            }
-          />
+
+        <div className="form-actions">
+          <button className="btn-cancel" onClick={onCancel} disabled={loading}>
+            Cancel
+          </button>
+          <button className="btn-save" onClick={() => onSave(shiftData)} disabled={loading || !canSubmit}>
+            {initialData ? "Update Shift" : "Add Shift"}
+          </button>
         </div>
-      </div>
-      <div>
-        <label>Description (Optional)</label>
-        <textarea
-          placeholder="Additional details about the shift"
-          value={shiftData.description}
-          onChange={(e) =>
-            setShiftData({ ...shiftData, description: e.target.value })
-          }
-          rows={2}
-        />
-      </div>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button onClick={() => onSave(shiftData)} disabled={loading || !canSubmit}>
-          {initialData ? "Update Shift" : "Add Shift"}
-        </button>
-        <button onClick={onCancel} disabled={loading}>
-          Cancel
-        </button>
       </div>
     </div>
   );

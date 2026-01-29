@@ -85,7 +85,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
     onCloseMobile?.();
   };
 
-
   const safeToggle = (setter, value) => {
     if (collapsed) return;
     setter(value);
@@ -103,13 +102,15 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
     return hasPermission(hrPermissions, moduleKey, action);
   };
 
-
-
   return (
     <aside
       className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""
         }`}
     >
+      <div className="sidebar-header">
+        {/* Branding icon and text removed as per user request */}
+      </div>
+
       <nav className="sidebar-menu">
         <button
           type="button"
@@ -223,7 +224,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 >
                   📄 Government Forms
                 </button>
-                {/* HR Permissions route requires hrId parameter - access via HR management page */}
               </div>
             )}
           </>
@@ -313,7 +313,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // FORCE absolute navigation to /admin/holidays
                       navigate("/holidays");
                       onCloseMobile?.();
                     }}
@@ -321,10 +320,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                     <FaCalendarAlt /> Holidays
                   </button>
                 )}
-
-
-
-
               </div>
             )}
           </>
@@ -332,7 +327,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
         {isAdmin && (
           <>
-
             <button
               type="button"
               className="menu-item expandable"
@@ -346,26 +340,12 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 <FaChartLine />
                 {!collapsed && <span>Software Reports</span>}
               </div>
-              {!collapsed &&
-                (reportsOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
+              {!collapsed && (reportsOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
             </button>
 
             {reportsOpen && !collapsed && (
               <div className="submenu">
-                {/* Dashboard */}
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    go("softwarereports");
-                  }}
-                >
-                  📊 Dashboard
-                </button>
-
-                {/* Statutory Forms Module - Dynamic */}
+                {/* Statutory Forms Folder */}
                 <div className="submenu-section">
                   <button
                     type="button"
@@ -376,13 +356,20 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                       safeToggle(setFormsSubOpen, !formsSubOpen);
                     }}
                   >
-                    <span>📜 Forms</span>
+                    <span>📜 FORMS</span>
                     {!collapsed &&
                       (formsSubOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
                   </button>
 
                   {formsSubOpen && (
                     <div className="submenu-nested">
+                      <button
+                        type="button"
+                        className="submenu-item-nested"
+                        onClick={() => go("organization/government-forms")}
+                      >
+                        📄 Statutory Forms
+                      </button>
                       {Object.values(FORMS_CONFIG).map((form) => (
                         <button
                           key={form.id}
@@ -401,7 +388,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   )}
                 </div>
 
-                {/* Reports - Dynamic */}
+                {/* Software Reports Folder */}
                 <div className="submenu-section">
                   <button
                     type="button"
@@ -412,7 +399,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                       safeToggle(setReportsSubOpen, !reportsSubOpen);
                     }}
                   >
-                    <span>📊 Reports</span>
+                    <span>📊 REPORTS</span>
                     {!collapsed &&
                       (reportsSubOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
                   </button>

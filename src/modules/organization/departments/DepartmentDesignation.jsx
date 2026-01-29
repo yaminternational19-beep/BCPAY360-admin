@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from "react";
 import "../../../styles/DepartmentDesignation.css";
 import {
+    FaEdit,
+    FaTrash,
+    FaCheck,
+    FaTimes,
+    FaPlus,
+    FaEye,
+    FaEyeSlash,
+    FaChevronRight,
+    FaSearch
+} from "react-icons/fa";
+import {
     getBranches,
     getDepartments,
     createDepartment,
@@ -13,15 +24,11 @@ import {
     toggleDesignationStatus,
 } from "../../../api/master.api";
 
-
-
 export default function DepartmentDesignation({ user }) {
     const isAdmin = user?.role === "COMPANY_ADMIN";
     const isHR = user?.role === "HR";
 
-    /* ===============================
-       PERMISSIONS
-    ================================ */
+    // PERMISSIONS
     const canCreateDepartment = isAdmin;
     const canEditDepartment = isAdmin;
     const canDeleteDepartment = isAdmin;
@@ -30,9 +37,7 @@ export default function DepartmentDesignation({ user }) {
     const canEditDesignation = isAdmin || isHR;
     const canDeleteDesignation = isAdmin || isHR;
 
-    /* ===============================
-       STATE
-    ================================ */
+    // STATE
     const [branches, setBranches] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [designations, setDesignations] = useState([]);
@@ -52,15 +57,9 @@ export default function DepartmentDesignation({ user }) {
     const [editingDesigCode, setEditingDesigCode] = useState("");
 
     const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
 
-    /* ===============================
-       AUTH FETCH
-    ================================ */
-
-
-    /* ===============================
-       LOADERS
-    ================================ */
+    // LOADERS
     const loadBranches = async () => {
         try {
             const data = await getBranches();
@@ -103,12 +102,7 @@ export default function DepartmentDesignation({ user }) {
         loadBranches();
     }, []);
 
-    /* ===============================
-       DEPARTMENT ACTIONS
-    ================================ */
-    /* ===============================
-       DEPARTMENT ACTIONS
-    ================================ */
+    // DEPARTMENT ACTIONS
     const handleCreateDepartment = async () => {
         if (!canCreateDepartment || !newDept.trim() || !selectedBranch) return;
 
@@ -144,7 +138,7 @@ export default function DepartmentDesignation({ user }) {
 
     const handleDeleteDepartment = async (dept) => {
         if (!canDeleteDepartment) return;
-        if (!confirm("Delete this department?")) return;
+        if (!confirm(`Delete ${dept.department_name}?`)) return;
 
         try {
             await apiDeleteDepartment(dept.id);
@@ -154,12 +148,7 @@ export default function DepartmentDesignation({ user }) {
         }
     };
 
-    /* ===============================
-       DESIGNATION ACTIONS
-    ================================ */
-    /* ===============================
-       DESIGNATION ACTIONS
-    ================================ */
+    // DESIGNATION ACTIONS
     const handleCreateDesignation = async () => {
         if (
             !canCreateDesignation ||
@@ -208,7 +197,7 @@ export default function DepartmentDesignation({ user }) {
 
     const handleDeleteDesignation = async (desig) => {
         if (!canDeleteDesignation) return;
-        if (!confirm("Delete this designation?")) return;
+        if (!confirm(`Delete ${desig.designation_name}?`)) return;
 
         try {
             await apiDeleteDesignation(desig.id);
@@ -227,19 +216,18 @@ export default function DepartmentDesignation({ user }) {
         }
     };
 
-    /* ===============================
-       RENDER
-    ================================ */
-    return (
-        <div className="dd-page">
-            <div className="dd-content">
-                <div className="dd-header">
-                    <h2>Departments & Designations</h2>
-                </div>
+    const filteredDepartments = departments.filter(d =>
+        d.department_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-                {/* BRANCH SELECTOR */}
-                <div className="branch-selector">
-                    <label>Select Working Branch</label>
+    return (
+        <div className="dd-container">
+            <div className="dd-header-main">
+                <div className="header-left">
+                    <h1>Departments & Designations</h1>
+                    <p>Manage organizational hierarchy and roles</p>
+                </div>
+                <div className="branch-nav">
                     <select
                         value={selectedBranch}
                         onChange={(e) => {
@@ -247,8 +235,9 @@ export default function DepartmentDesignation({ user }) {
                             setSelectedBranch(id);
                             loadDepartments(id);
                         }}
+                        className="branch-dropdown"
                     >
-                        <option value="">— Select Branch —</option>
+                        <option value="">Select Branch</option>
                         {branches.map((b) => (
                             <option key={b.id} value={b.id}>
                                 {b.branch_name}
@@ -256,238 +245,225 @@ export default function DepartmentDesignation({ user }) {
                         ))}
                     </select>
                 </div>
+            </div>
 
-                {!selectedBranch && (
-                    <div className="hint warning">
-                        Please select a branch to continue.
+            {!selectedBranch ? (
+                <div className="dd-empty-state">
+                    <div className="empty-box">
+                        <FaPlus className="empty-icon" />
+                        <h3>No Branch Selected</h3>
+                        <p>Please select a branch from the dropdown above to manage its departments.</p>
                     </div>
-                )}
-
-                {selectedBranch && (
-                    <div className="dd-grid">
-                        {/* LEFT - DEPARTMENTS PANEL */}
-                        <div className="card dept-panel">
-                            <div className="panel-header">
+                </div>
+            ) : (
+                <div className="dd-layout-wrapper">
+                    {/* MASTER PANEL - DEPARTMENTS */}
+                    <div className="dd-master-panel">
+                        <div className="detail-header">
+                            <div className="header-info">
                                 <h3>Departments</h3>
+                                <span>Total: {filteredDepartments.length}</span>
+                            </div>
+                            <div className="header-actions-row">
+                                <div className="search-bar-dept">
+                                    <FaSearch className="search-icon" />
+                                    <input
+                                        placeholder="Search..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
                                 {canCreateDepartment && (
-                                    <div className="add-section">
+                                    <div className="add-desig-row">
                                         <input
-                                            placeholder="New Department"
+                                            placeholder="New Dept"
                                             value={newDept}
                                             onChange={(e) => setNewDept(e.target.value)}
                                             onKeyPress={(e) => e.key === "Enter" && handleCreateDepartment()}
+                                            className="input-name"
+                                            style={{ width: '140px' }}
                                         />
                                         <button
                                             onClick={handleCreateDepartment}
                                             disabled={loading || !newDept.trim()}
-                                            className="btn-add"
+                                            className="btn-add-desig"
                                         >
-                                            Add
+                                            <FaPlus /> Add
                                         </button>
                                     </div>
                                 )}
                             </div>
-
-                            <div className="panel-content">
-                                <ul className="dept-list">
-                                    {departments.length === 0 ? (
-                                        <li className="empty-item">No departments found</li>
-                                    ) : (
-                                        departments.map((d, index) => (
-                                            <li
-                                                key={d.id}
-                                                className={`dept-item ${selectedDept?.id === d.id ? "active" : ""}`}
-                                                onClick={() => loadDesignations(d, selectedBranch)}
-                                                style={{ '--item-index': index }}
-                                            >
-                                                {editingDeptId === d.id ? (
-                                                    <div className="edit-mode">
-                                                        <input
-                                                            value={editingDeptName}
-                                                            onChange={(e) => setEditingDeptName(e.target.value)}
-                                                            autoFocus
-                                                            onKeyPress={(e) => e.key === "Enter" && handleUpdateDepartment(d.id)}
-                                                        />
-                                                        <div className="action-buttons">
-                                                            <button
-                                                                onClick={() => handleUpdateDepartment(d.id)}
-                                                                className="btn-save"
-                                                            >
-                                                                Save
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingDeptId(null);
-                                                                    setEditingDeptName("");
-                                                                }}
-                                                                className="btn-cancel"
-                                                            >
-                                                                Cancel
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <span className="dept-name">{d.department_name}</span>
-                                                        <div className="action-buttons">
-                                                            {canEditDepartment && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setEditingDeptId(d.id);
-                                                                        setEditingDeptName(d.department_name);
-                                                                    }}
-                                                                    className="btn-edit"
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                            )}
-                                                            {canDeleteDepartment && (
-                                                                <button
-                                                                    className="btn-delete"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDeleteDepartment(d);
-                                                                    }}
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </li>
-                                        ))
-                                    )}
-                                </ul>
-                            </div>
                         </div>
 
-                        {/* RIGHT - DESIGNATIONS PANEL */}
-                        <div className="card desig-panel">
-                            {!selectedDept ? (
-                                <div className="panel-placeholder">
-                                    <div className="placeholder-icon">←</div>
-                                    <p>Select a department to view designations</p>
-                                </div>
+                        <div className="panel-list-scroll">
+                            {filteredDepartments.length === 0 ? (
+                                <div className="no-data-msg">No departments available</div>
                             ) : (
-                                <>
-                                    <div className="panel-header">
-                                        <h3>{selectedDept.department_name} - Designations</h3>
-                                        {canCreateDesignation && (
-                                            <div className="add-section">
-                                                <input
-                                                    placeholder="Designation Name"
-                                                    value={newDesignation}
-                                                    onChange={(e) => setNewDesignation(e.target.value)}
-                                                />
-                                                <input
-                                                    placeholder="Role Code"
-                                                    value={newDesignationCode}
-                                                    onChange={(e) => setNewDesignationCode(e.target.value)}
-                                                    onKeyPress={(e) => e.key === "Enter" && handleCreateDesignation()}
-                                                />
-                                                <button
-                                                    onClick={handleCreateDesignation}
-                                                    disabled={loading || !newDesignation.trim() || !newDesignationCode.trim()}
-                                                    className="btn-add"
-                                                >
-                                                    Add
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="panel-content">
-                                        <div className="desig-list">
-                                            {designations.length === 0 ? (
-                                                <div className="empty-item">No designations found</div>
+                                <div className="dept-list-modern">
+                                    {filteredDepartments.map((d) => (
+                                        <div
+                                            key={d.id}
+                                            className={`dept-card-item ${selectedDept?.id === d.id ? "active" : ""}`}
+                                            onClick={() => loadDesignations(d, selectedBranch)}
+                                        >
+                                            {editingDeptId === d.id ? (
+                                                <div className="inline-edit-dept">
+                                                    <input
+                                                        value={editingDeptName}
+                                                        onChange={(e) => setEditingDeptName(e.target.value)}
+                                                        autoFocus
+                                                        onKeyPress={(e) => e.key === "Enter" && handleUpdateDepartment(d.id)}
+                                                    />
+                                                    <div className="inline-actions">
+                                                        <button onClick={() => handleUpdateDepartment(d.id)} className="btn-tick"><FaCheck /></button>
+                                                        <button onClick={() => setEditingDeptId(null)} className="btn-cross"><FaTimes /></button>
+                                                    </div>
+                                                </div>
                                             ) : (
-                                                designations.map((d, index) => (
-                                                    <div
-                                                        key={d.id}
-                                                        className="desig-item"
-                                                        style={{ '--item-index': index }}
-                                                    >
-                                                        {editingDesigId === d.id ? (
-                                                            <div className="edit-mode">
-                                                                <input
-                                                                    value={editingDesigName}
-                                                                    onChange={(e) => setEditingDesigName(e.target.value)}
-                                                                    autoFocus
-                                                                    placeholder="Name"
-                                                                />
-                                                                <input
-                                                                    value={editingDesigCode}
-                                                                    onChange={(e) => setEditingDesigCode(e.target.value)}
-                                                                    placeholder="Code"
-                                                                    onKeyPress={(e) => e.key === "Enter" && handleUpdateDesignation(d.id)}
-                                                                />
-                                                                <div className="action-buttons">
-                                                                    <button
-                                                                        onClick={() => handleUpdateDesignation(d.id)}
-                                                                        className="btn-save"
-                                                                    >
-                                                                        Save
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setEditingDesigId(null);
-                                                                            setEditingDesigName("");
-                                                                        }}
-                                                                        className="btn-cancel"
-                                                                    >
-                                                                        Cancel
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <>
-                                                                <span className="desig-name">
-                                                                    {d.designation_name} <small>({d.designation_code})</small>
-                                                                </span>
-                                                                <div className="action-buttons">
-                                                                    <button
-                                                                        className={`btn-delete ${d.is_active ? "warning" : "success"}`}
-                                                                        onClick={() => handleToggleStatus(d)}
-                                                                        style={{ marginLeft: 5 }}
-                                                                    >
-                                                                        {d.is_active ? "D" : "E"}
-                                                                    </button>
-                                                                    {canEditDesignation && (
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                setEditingDesigId(d.id);
-                                                                                setEditingDesigName(d.designation_name);
-                                                                                setEditingDesigCode(d.designation_code || "");
-                                                                            }}
-                                                                            className="btn-edit"
-                                                                        >
-                                                                            Edit
-                                                                        </button>
-                                                                    )}
-                                                                    {canDeleteDesignation && (
-                                                                        <button
-                                                                            className="btn-delete"
-                                                                            onClick={() => handleDeleteDesignation(d)}
-                                                                        >
-                                                                            Delete
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            </>
+                                                <>
+                                                    <div className="dept-info">
+                                                        <span className="d-name">{d.department_name}</span>
+                                                    </div>
+                                                    <div className="dept-actions">
+                                                        {canEditDepartment && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingDeptId(d.id);
+                                                                    setEditingDeptName(d.department_name);
+                                                                }}
+                                                                title="Edit"
+                                                            >
+                                                                <FaEdit />
+                                                            </button>
+                                                        )}
+                                                        {canDeleteDepartment && (
+                                                            <button
+                                                                className="btn-trash"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteDepartment(d);
+                                                                }}
+                                                                title="Delete"
+                                                            >
+                                                                <FaTrash />
+                                                            </button>
                                                         )}
                                                     </div>
-                                                ))
+                                                </>
                                             )}
                                         </div>
-                                    </div>
-                                </>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
-                )}
-            </div>
+
+                    {/* DETAIL PANEL - DESIGNATIONS */}
+                    <div className="dd-detail-panel">
+                        {!selectedDept ? (
+                            <div className="detail-placeholder">
+                                <p>Select a department from the left to manage designations.</p>
+                            </div>
+                        ) : (
+                            <div className="detail-content-area">
+                                <div className="detail-header">
+                                    <div className="header-info">
+                                        <h3>{selectedDept.department_name}</h3>
+                                        <span>Total Designations: {designations.length}</span>
+                                    </div>
+                                    {canCreateDesignation && (
+                                        <div className="add-desig-row">
+                                            <input
+                                                placeholder="Designation Name"
+                                                value={newDesignation}
+                                                onChange={(e) => setNewDesignation(e.target.value)}
+                                                className="input-name"
+                                            />
+                                            <input
+                                                placeholder="Code"
+                                                value={newDesignationCode}
+                                                onChange={(e) => setNewDesignationCode(e.target.value)}
+                                                onKeyPress={(e) => e.key === "Enter" && handleCreateDesignation()}
+                                                className="input-code"
+                                            />
+                                            <button
+                                                onClick={handleCreateDesignation}
+                                                disabled={loading || !newDesignation.trim() || !newDesignationCode.trim()}
+                                                className="btn-add-desig"
+                                            >
+                                                <FaPlus /> Add Role
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="desig-grid-container">
+                                    {designations.length === 0 ? (
+                                        <div className="no-data-msg">No designations found for this department.</div>
+                                    ) : (
+                                        <div className="desig-list-modern">
+                                            {designations.map((d) => (
+                                                <div key={d.id} className={`desig-card-item ${!d.is_active ? "inactive" : ""}`}>
+                                                    {editingDesigId === d.id ? (
+                                                        <div className="desig-edit-row">
+                                                            <input
+                                                                value={editingDesigName}
+                                                                onChange={(e) => setEditingDesigName(e.target.value)}
+                                                                placeholder="Name"
+                                                            />
+                                                            <input
+                                                                value={editingDesigCode}
+                                                                onChange={(e) => setEditingDesigCode(e.target.value)}
+                                                                placeholder="Code"
+                                                                onKeyPress={(e) => e.key === "Enter" && handleUpdateDesignation(d.id)}
+                                                            />
+                                                            <div className="edit-controls">
+                                                                <button onClick={() => handleUpdateDesignation(d.id)} className="btn-save-sm"><FaCheck /></button>
+                                                                <button onClick={() => setEditingDesigId(null)} className="btn-cancel-sm"><FaTimes /></button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="desig-info">
+                                                                <span className="d-name">{d.designation_name}</span>
+                                                                <span className="d-code">{d.designation_code}</span>
+                                                            </div>
+                                                            <div className="desig-actions">
+                                                                {canEditDesignation && (
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setEditingDesigId(d.id);
+                                                                            setEditingDesigName(d.designation_name);
+                                                                            setEditingDesigCode(d.designation_code || "");
+                                                                        }}
+                                                                        title="Edit"
+                                                                    >
+                                                                        <FaEdit />
+                                                                    </button>
+                                                                )}
+                                                                {canDeleteDesignation && (
+                                                                    <button
+                                                                        className="btn-trash"
+                                                                        onClick={() => handleDeleteDesignation(d)}
+                                                                        title="Delete"
+                                                                    >
+                                                                        <FaTrash />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

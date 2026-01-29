@@ -41,8 +41,8 @@ body {
 /* Main Container */
 .lm-root {
   padding: 24px;
-  background: var(--secondary-bg);
-  min-height: 100vh;
+  background: var(--bg-page);
+  min-height: 100%;
 }
 
 /* ===========================
@@ -494,7 +494,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 16px 18px;
-  background: var(--secondary-bg);
+  background: var(--white);
   border-bottom: 1px solid var(--gray-200);
 }
 
