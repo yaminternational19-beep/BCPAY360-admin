@@ -11,21 +11,19 @@ export default function PermissionProtectedRoute({
   if (!user) {
     return <Navigate to="/login" replace />;
   }
+  
 
-  // Company Admin: full access
   if (user.role === "COMPANY_ADMIN") {
     return children;
   }
 
-  // HR without permission
   if (user.role === "HR") {
     const allowed = hasPermission(permissions, moduleKey, action);
     if (!allowed) {
-      return <Navigate to="/admin/dashboard" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
     return children;
   }
 
-  // Fallback
   return <Navigate to="/login" replace />;
 }

@@ -260,6 +260,17 @@
     filter: grayscale(1);
 }
 
+/* Ensure icons inside buttons are visible */
+.btn-action svg,
+.gov-actions .btn-action svg {
+    width: 14px !important;
+    height: 14px !important;
+    display: inline-block !important;
+    color: inherit !important;
+    fill: currentColor !important;
+    opacity: 1 !important;
+}
+
 /* =========================================
    Premium Modal
 ========================================= */

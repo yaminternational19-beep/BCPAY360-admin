@@ -5,7 +5,7 @@ const FiltersBar = ({ search, onSearchChange, children }) => {
     return (
         <div className="filters-container">
             <div className="search-wrapper">
-                <FaSearch className="search-icon-inside" />
+
                 <input
                     type="text"
                     placeholder="Search..."

@@ -292,6 +292,7 @@ export default function Login({ onLogin }) {
      UI - ROLE SELECTION
   ============================= */
 
+  
   if (step === "ROLE") {
     return (
       <div className="login-root">

@@ -41,6 +41,7 @@
     right: -120px;
 }
 
+
 /* --- GLASS CARD --- */
 .glass-card {
     position: relative;
@@ -76,10 +77,24 @@
             transparent);
 }
 
+
+
+
+
 /* --- CARD HEADER --- */
 .card-header {
     text-align: center;
     margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: transparent;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.login-root .card-header {
+    background: transparent;
+    border-bottom: none;
 }
 
 .card-header h1,

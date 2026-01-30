@@ -5,11 +5,11 @@ import {
   toggleHRStatus,
   deleteHR,
   getBranches,
-  getDepartments,
 } from "../../../api/master.api";
 import HRForm from "./HRForm";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { FaEdit, FaUserLock, FaPowerOff, FaTrash } from "react-icons/fa";
 
 export default function HRList() {
   const user = JSON.parse(localStorage.getItem("auth_user"));
@@ -21,14 +21,12 @@ export default function HRList() {
 
   const [hrs, setHrs] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [departments, setDepartments] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingHR, setEditingHR] = useState(null);
 
   const [filters, setFilters] = useState({
     branch_id: "",
-    department_id: "",
     search: "",
     status: "ALL",
   });
@@ -37,8 +35,8 @@ export default function HRList() {
      LOAD DATA
   ========================= */
   const loadHRs = async () => {
-    const data = await getHRList();
-    setHrs(Array.isArray(data) ? data : []);
+    const res = await getHRList();
+    setHrs(res?.data || []);
   };
 
   useEffect(() => {
@@ -46,36 +44,28 @@ export default function HRList() {
     getBranches().then(setBranches);
   }, []);
 
-  useEffect(() => {
-    if (!filters.branch_id) {
-      setDepartments([]);
-      return;
-    }
-    getDepartments(filters.branch_id).then(setDepartments);
-  }, [filters.branch_id]);
-
   /* =========================
-     FILTERING (CLEAN)
+     FILTERING
   ========================= */
   const filteredHRs = useMemo(() => {
     return hrs.filter((hr) => {
       if (
         filters.branch_id &&
         Number(hr.branch_id) !== Number(filters.branch_id)
-      )
+      ) {
         return false;
+      }
 
-      if (
-        filters.department_id &&
-        Number(hr.department_id) !== Number(filters.department_id)
-      )
-        return false;
+      if (filters.search) {
+        const s = filters.search.toLowerCase();
+        const match =
+          hr.hr_code?.toLowerCase().includes(s) ||
+          hr.full_name?.toLowerCase().includes(s) ||
+          hr.email?.toLowerCase().includes(s) ||
+          hr.phone?.includes(s);
 
-      if (
-        filters.search &&
-        !hr.emp_id.toLowerCase().includes(filters.search.toLowerCase())
-      )
-        return false;
+        if (!match) return false;
+      }
 
       if (filters.status !== "ALL") {
         const active = filters.status === "ACTIVE";
@@ -91,10 +81,13 @@ export default function HRList() {
   ========================= */
   const exportToExcel = () => {
     const rows = filteredHRs.map((hr) => ({
-      "Emp ID": hr.emp_id,
+      "HR Code": hr.hr_code,
+      "Full Name": hr.full_name,
+      Email: hr.email,
+      Phone: hr.phone,
       Branch: hr.branch_name,
-      Department: hr.department_name,
       Status: hr.is_active ? "Active" : "Inactive",
+      "Joining Date": hr.joining_date,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -129,11 +122,7 @@ export default function HRList() {
         <select
           value={filters.branch_id}
           onChange={(e) =>
-            setFilters((p) => ({
-              ...p,
-              branch_id: e.target.value,
-              department_id: "",
-            }))
+            setFilters((p) => ({ ...p, branch_id: e.target.value }))
           }
         >
           <option value="">All Branches</option>
@@ -144,23 +133,8 @@ export default function HRList() {
           ))}
         </select>
 
-        <select
-          value={filters.department_id}
-          disabled={!filters.branch_id}
-          onChange={(e) =>
-            setFilters((p) => ({ ...p, department_id: e.target.value }))
-          }
-        >
-          <option value="">All Departments</option>
-          {departments.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.department_name}
-            </option>
-          ))}
-        </select>
-
         <input
-          placeholder="Search by Emp ID"
+          placeholder="Search HR code / name / email / phone"
           value={filters.search}
           onChange={(e) =>
             setFilters((p) => ({ ...p, search: e.target.value }))
@@ -183,20 +157,48 @@ export default function HRList() {
       <table className="table">
         <thead>
           <tr>
-            <th>Emp ID</th>
+            <th>
+              <input type="checkbox" disabled />
+            </th>
+            <th>HR Code</th>
+            <th>Name</th>
             <th>Branch</th>
-            <th>Department</th>
-            <th>Status</th>
+            <th>Joining Date</th>
+            <th>Phone</th>
             <th>Actions</th>
           </tr>
         </thead>
+
         <tbody>
           {filteredHRs.map((hr) => (
             <tr key={hr.id}>
-              <td>{hr.emp_id}</td>
+              {/* Checkbox */}
+              <td>
+                <input type="checkbox" />
+              </td>
+
+              {/* HR Code */}
+              <td>
+                {hr.hr_code || <span className="muted">—</span>}
+              </td>
+
+              {/* Name */}
+              <td>{hr.full_name}</td>
+
+              {/* Branch */}
               <td>{hr.branch_name}</td>
-              <td>{hr.department_name}</td>
-              <td>{hr.is_active ? "Active" : "Inactive"}</td>
+
+              {/* Joining Date */}
+              <td>
+                {hr.joining_date
+                  ? new Date(hr.joining_date).toLocaleDateString()
+                  : "—"}
+              </td>
+
+              {/* Phone */}
+              <td>{hr.phone}</td>
+
+              {/* Actions */}
               <td className="row-actions">
                 <button
                   onClick={() => {
@@ -204,16 +206,16 @@ export default function HRList() {
                     setShowForm(true);
                   }}
                 >
-                  Edit
+                  <FaEdit /> Edit
                 </button>
 
                 <button
-                  onClick={() =>
-                    navigate(`/admin/hr/${hr.id}/permissions`)
-                  }
-                >
-                  Permissions
-                </button>
+  onClick={() => navigate(`/hr-management/${hr.id}/permissions`)}
+
+>
+  <FaUserLock /> Permissions
+</button>
+
 
                 <button
                   onClick={async () => {
@@ -221,7 +223,7 @@ export default function HRList() {
                     loadHRs();
                   }}
                 >
-                  {hr.is_active ? "Disable" : "Enable"}
+                  <FaPowerOff /> {hr.is_active ? "Disable" : "Enable"}
                 </button>
 
                 <button
@@ -232,20 +234,22 @@ export default function HRList() {
                     loadHRs();
                   }}
                 >
-                  Delete
+                  <FaTrash /> Delete
                 </button>
               </td>
             </tr>
           ))}
+
           {!filteredHRs.length && (
             <tr>
-              <td colSpan={5} className="empty-state">
+              <td colSpan={7} className="empty-state">
                 No HRs found
               </td>
             </tr>
           )}
         </tbody>
       </table>
+
 
       {/* FORM MODAL */}
       {showForm && (

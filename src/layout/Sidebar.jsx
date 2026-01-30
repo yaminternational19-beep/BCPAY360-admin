@@ -202,6 +202,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 >
                   <FaIdCard /> Add HR
                 </button>
+                
                 <button
                   type="button"
                   className="submenu-item"
@@ -363,13 +364,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
                   {formsSubOpen && (
                     <div className="submenu-nested">
-                      <button
-                        type="button"
-                        className="submenu-item-nested"
-                        onClick={() => go("organization/government-forms")}
-                      >
-                        📄 Statutory Forms
-                      </button>
+
                       {Object.values(FORMS_CONFIG).map((form) => (
                         <button
                           key={form.id}

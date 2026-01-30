@@ -186,14 +186,8 @@ const AdminLayout = ({ user, setUser }) => {
                 </RoleProtectedRoute>
               }
             />
-            <Route
-              path="hr/:hrId/permissions"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <HRPermissions user={user} />
-                </RoleProtectedRoute>
-              }
-            />
+            
+
 
 
             <Route
@@ -239,7 +233,15 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route
-              path="hr-management"
+              path="hr-management/:hrId/permissions"
+              element={
+                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                  <HRPermissions />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="hr-management/*"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
                   <HRList />
@@ -247,7 +249,7 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route path="employees/:id" element={<EmployeeProfile />} />
-            <Route path="*" element={<Navigate to="dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
       </div>

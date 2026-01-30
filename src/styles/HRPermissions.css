@@ -1,63 +1,410 @@
-:root { --primary-color: #007bff; --secondary-color: #6c757d; --success-color: #28a745; --warning-color: #ffc107; --danger-color: #dc3545; --light-bg: #f8f9fa; --dark-bg: #343a40; --text-color: #212529; --border-color: #dee2e6; --shadow: 0 2px 4px rgba(0, 0, 0, 0.1); --transition: all 0.2s ease; --border-radius: 12px; --spacing: 1.5rem; }
+/* =====================================================
+   HR PERMISSIONS – MODERN PREMIUM DESIGN
+   ===================================================== */
 
-/* Main Page Container */ .hr-permissions-page { min-height: 100vh; background: linear-gradient(135deg, var(--light-bg) 0%, #e9ecef 100%); padding: var(--spacing); font-family: 'Arial', sans-serif; color: var(--text-color); display: flex; flex-direction: column; align-items: center; animation: fadeIn 0.5s ease-in; }
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-color: #667eea;
+    --primary-dark: #5568d3;
+    --secondary-color: #6c757d;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
 
-.hr-permissions-page h2 { margin: 0 0 0.5rem 0; font-size: 2rem; font-weight: 700; color: var(--text-color); text-align: center; animation: slideDown 0.6s ease-out; }
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 
-@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --border-radius: 16px;
+    --spacing: 1.5rem;
+}
 
-.hint { margin-bottom: var(--spacing); text-align: center; font-weight: 500; font-size: 1rem; color: var(--secondary-color); animation: fadeIn 0.7s ease-out; }
+/* =====================================================
+   MAIN PAGE CONTAINER
+   ===================================================== */
 
-/* HR Selector */ .hr-selector { margin-bottom: var(--spacing); width: 100%; max-width: 600px; animation: slideUp 0.6s ease-out; }
+.hr-permissions-page {
+    min-height: 100vh;
+    background: var(--bg-gradient);
+    padding: var(--spacing);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeIn 0.5s ease-in;
+}
 
-@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
 
-.hr-selector select { width: 100%; padding: 0.875rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 1rem; transition: var(--transition); background: white; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
-.hr-selector select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); }
+.hr-permissions-page h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    text-align: center;
+    animation: slideDown 0.6s ease-out;
+}
 
-/* HR Context */ .hr-context { margin-bottom: var(--spacing); padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.1) 100%); border: 1px solid rgba(0, 123, 255, 0.2); border-radius: var(--border-radius); font-size: 0.95rem; color: var(--primary-color); text-align: center; width: 100%; max-width: 600px; animation: fadeIn 0.8s ease-out; }
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
 
-/* Table Wrapper */ .table-wrapper { width: 100%; max-width: 1200px; overflow-x: auto; /* Horizontal scroll for wide tables */ overflow-y: auto; /* Vertical scroll if needed */ max-height: 70vh; /* Limit height to prevent blocking, enable smooth scrolling */ border-radius: var(--border-radius); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); animation: slideUp 0.6s ease-out; }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
-/* Permission Table */ .permission-table { width: 100%; min-width: 800px; /* Ensure table doesn't shrink too much */ border-collapse: collapse; background: white; border: 1px solid var(--border-color); border-radius: var(--border-radius); overflow: hidden; }
+.hint {
+    margin-bottom: var(--spacing);
+    text-align: center;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--text-muted);
+    animation: fadeIn 0.7s ease-out;
+}
 
-.permission-table th, .permission-table td { padding: 1rem; text-align: center; border-bottom: 1px solid var(--border-color); }
+/* =====================================================
+   HR CONTEXT BANNER
+   ===================================================== */
 
-.permission-table th { background: linear-gradient(135deg, var(--light-bg) 0%, #e9ecef 100%); font-weight: 700; font-size: 1.1rem; color: var(--text-color); position: sticky; /* Make header sticky for better scroll experience */ top: 0; z-index: 1; }
+.hr-context {
+    margin-bottom: var(--spacing);
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+    border: 1px solid #c7d2fe;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+    width: 100%;
+    max-width: 900px;
+    animation: fadeIn 0.8s ease-out;
+    box-shadow: var(--shadow-sm);
+}
 
-.permission-table tbody tr { transition: var(--transition); animation: slideIn 0.4s ease-out; animation-fill-mode: both; }
+.hr-context strong {
+    color: var(--primary-dark);
+    font-weight: 700;
+}
 
-.permission-table tbody tr:nth-child(even) { background: rgba(248, 249, 250, 0.3); }
+/* =====================================================
+   TABLE WRAPPER
+   ===================================================== */
 
-.permission-table tbody tr:hover { background: linear-gradient(135deg, var(--light-bg) 0%, rgba(0, 123, 255, 0.05) 100%); transform: translateY(-2px); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.table-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.6s ease-out;
+    position: relative;
+}
 
-@keyframes slideIn { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
 
-.permission-table tbody tr:nth-child(1) { animation-delay: 0.1s; } .permission-table tbody tr:nth-child(2) { animation-delay: 0.2s; } .permission-table tbody tr:nth-child(3) { animation-delay: 0.3s; } .permission-table tbody tr:nth-child(4) { animation-delay: 0.4s; } .permission-table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
-/* Checkboxes */ .permission-table input[type="checkbox"] { width: 1.2rem; height: 1.2rem; cursor: pointer; transition: var(--transition); accent-color: var(--primary-color); /* Modern checkbox styling */ }
+/* =====================================================
+   PERMISSION TABLE
+   ===================================================== */
 
-.permission-table input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.5; }
+.permission-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    position: relative;
+}
 
-/* Actions */ .actions { display: flex; justify-content: center; width: 100%; max-width: 600px; margin-top: var(--spacing); animation: fadeIn 0.9s ease-out; }
+/* Gradient top border */
+.permission-table::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+    z-index: 2;
+}
 
-.primary { background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%); color: white; border: none; padding: 0.875rem 2rem; border-radius: var(--border-radius); cursor: pointer; font-size: 1rem; font-weight: 600; transition: var(--transition); box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2); }
+.permission-table th,
+.permission-table td {
+    padding: 1.25rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #f1f5f9;
+}
 
-.primary:hover:not(:disabled) { background: linear-gradient(135deg, #0056b3 0%, var(--primary-color) 100%); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3); }
+.permission-table th {
+    background: #f8fafc;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 2px solid var(--border-color);
+}
 
-.primary:disabled { background: var(--secondary-color); cursor: not-allowed; box-shadow: none; }
+.permission-table th:first-child {
+    text-align: left;
+    padding-left: 1.5rem;
+}
 
-/* Responsive Adjustments */ @media (max-width: 768px) { .hr-permissions-page { padding: 1rem; }
+.permission-table tbody tr {
+    transition: var(--transition);
+    animation: slideIn 0.4s ease-out;
+    animation-fill-mode: both;
+}
 
-.hr-permissions-page h2 { font-size: 1.5rem; }
+.permission-table tbody tr:nth-child(even) {
+    background: #fafbfc;
+}
 
-.permission-table th, .permission-table td { padding: 0.75rem 0.5rem; font-size: 0.9rem; }
+.permission-table tbody tr:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
 
-.table-wrapper { max-height: 60vh; /* Adjust for mobile */ }
+@keyframes slideIn {
+    from {
+        transform: translateY(15px);
+        opacity: 0;
+    }
 
-.actions { flex-direction: column; align-items: center; }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
-.primary { width: 100%; max-width: 300px; } }
+.permission-table tbody tr:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.permission-table tbody tr:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.permission-table tbody tr:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.permission-table tbody tr:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.permission-table tbody tr:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.permission-table tbody td:first-child {
+    text-align: left;
+    padding-left: 1.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+/* =====================================================
+   CUSTOM CHECKBOX STYLING
+   ===================================================== */
+
+.permission-table input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+    background: white;
+    margin: 0;
+}
+
+.permission-table input[type="checkbox"]:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.permission-table input[type="checkbox"]:checked {
+    background: var(--primary-gradient);
+    border-color: var(--primary-color);
+}
+
+.permission-table input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.permission-table input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.permission-table input[type="checkbox"]:disabled:checked {
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+}
+
+.permission-table input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+/* =====================================================
+   ACTION BUTTONS
+   ===================================================== */
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 900px;
+    margin-top: var(--spacing);
+    animation: fadeIn 0.9s ease-out;
+}
+
+.actions button {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-md);
+}
+
+.actions button svg {
+    font-size: 1.1rem;
+}
+
+.actions .primary {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.actions .primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.actions .primary:disabled {
+    background: var(--secondary-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
+}
+
+.actions .secondary {
+    background: white;
+    color: var(--text-dark);
+    border: 1px solid var(--border-color);
+}
+
+.actions .secondary:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+/* =====================================================
+   RESPONSIVE DESIGN
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .hr-permissions-page {
+        padding: 1rem;
+    }
+
+    .hr-permissions-page h2 {
+        font-size: 1.5rem;
+    }
+
+    .hr-context {
+        font-size: 0.85rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .permission-table th,
+    .permission-table td {
+        padding: 0.875rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .permission-table th:first-child,
+    .permission-table tbody td:first-child {
+        padding-left: 0.75rem;
+    }
+
+    .permission-table input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    .table-wrapper {
+        max-height: 60vh;
+    }
+
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}

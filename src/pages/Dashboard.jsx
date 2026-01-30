@@ -2,17 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/Dashboard.css";
 import { API_BASE } from "../utils/apiBase";
+
 import {
   FaUsers,
   FaCalendarCheck,
-  FaCheckCircle,
   FaMoneyCheckAlt,
   FaArrowRight,
-  FaShieldAlt,
-  FaFileInvoiceDollar,
-  FaChartBar,
-  FaUserFriends,
   FaClipboardList,
+  FaUserFriends,
   FaFileContract
 } from "react-icons/fa";
 
@@ -21,39 +18,41 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
-  Title,
   Tooltip,
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+
+const PERIODS = ["TODAY", "WEEK", "MONTH", "YEAR"];
 
 const Dashboard = () => {
+  const [period, setPeriod] = useState("TODAY");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  /* ===============================
+     LOAD DASHBOARD
+  =============================== */
   useEffect(() => {
     const controller = new AbortController();
 
     const loadDashboard = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/api/dashboard`, {
-          signal: controller.signal,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await fetch(
+          `${API_BASE}/api/dashboard?period=${period}`,
+          {
+            signal: controller.signal,
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
 
-        if (!res.ok) throw new Error("Failed to load dashboard from server");
+        if (!res.ok) throw new Error("Failed to load dashboard");
 
         const json = await res.json();
         setData(json);
@@ -66,210 +65,225 @@ const Dashboard = () => {
 
     loadDashboard();
     return () => controller.abort();
-  }, []);
+  }, [period]);
 
-  const trendChart = useMemo(() => {
-    if (!data) return null;
+  /* ===============================
+     SAFE DERIVED DATA
+  =============================== */
+  const employeesBranches = data?.employees?.branches ?? [];
+  const attendanceBranches = data?.attendance?.branches ?? [];
 
-    // Static trend labels as per reference request
-    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  /* ===============================
+     CHART DATA
+  =============================== */
+  const attendanceChart = useMemo(() => {
+    if (!attendanceBranches.length) return null;
 
     return {
-      labels,
+      labels: attendanceBranches.map(b => b.branch_name),
       datasets: [
         {
           label: "Present",
-          data: [150, 180, 160, 215, 190, 80, 20],
-          backgroundColor: "#3b82f6",
-          borderRadius: 6,
+          data: attendanceBranches.map(b => b.present ?? 0),
+          backgroundColor: "rgba(16, 185, 129, 0.8)",
+          borderRadius: 8,
         },
         {
           label: "Absent",
-          data: [10, 5, 8, 18, 5, 2, 0],
-          backgroundColor: "#f97316",
-          borderRadius: 6,
+          data: attendanceBranches.map(b => b.absent ?? 0),
+          backgroundColor: "rgba(239, 68, 68, 0.8)",
+          borderRadius: 8,
         },
         {
-          label: "Late",
-          data: [5, 2, 4, 6, 8, 1, 0],
-          backgroundColor: "#10b981",
-          borderRadius: 6,
-        },
-        {
-          label: "Leave",
-          data: [2, 1, 3, 5, 4, 0, 0],
-          backgroundColor: "#6366f1",
-          borderRadius: 6,
+          label: "Unmarked",
+          data: attendanceBranches.map(b => b.unmarked ?? 0),
+          backgroundColor: "rgba(148, 163, 184, 0.8)",
+          borderRadius: 8,
         },
       ],
     };
-  }, [data]);
+  }, [attendanceBranches]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "bottom", labels: { usePointStyle: true, padding: 20, font: { weight: '600' } } },
+      legend: {
+        position: "bottom",
+        labels: { font: { size: 12, weight: "600" } },
+      },
     },
     scales: {
-      x: { grid: { display: false } },
-      y: { grid: { color: "#f1f5f9" }, ticks: { callback: (v) => `${v >= 1000 ? v / 1000 + "k" : v}` } },
+      y: { beginAtZero: true },
     },
   };
 
-  if (loading) return <div className="dash-loading">Initializing System Dashboard...</div>;
-  if (error) return <div className="dash-error">Error: {error}</div>;
-  if (!data) return <div className="dash-empty">No dashboard telemetry available.</div>;
+  if (loading) return <div className="dash-loading">Loading dashboard…</div>;
+  if (error) return <div className="dash-error">{error}</div>;
+  if (!data) return null;
 
-  const { employees, attendance, approvals, payroll, cost, compliance } = data;
+  const {
+    company,
+    logged_in,
+    employees,
+    attendance,
+    leave_pending,
+    salary
+  } = data;
 
+  /* ===============================
+     RENDER
+  =============================== */
   return (
     <div className="dashboard">
 
+      {/* HEADER */}
+      <div className="dash-header">
+        <div>
+          <h2>{company?.name}</h2>
+          <span className="dash-sub">
+            Logged in as <strong>{logged_in?.role}</strong>
+          </span>
+        </div>
+
+        <div className="dash-period-toggle">
+          {PERIODS.map(p => (
+            <button
+              key={p}
+              className={period === p ? "active" : ""}
+              onClick={() => setPeriod(p)}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* KPI ROW */}
       <div className="kpi-row">
+
         <div className="kpi-card">
           <h4>Total Employees</h4>
           <div className="metric-box">
-            <span className="metric-value">{employees.total}</span>
-            <span className={`status-indicator success`}>{employees.inactive} Inactive</span>
+            <span className="metric-value">
+              {employees?.company_total?.total ?? 0}
+            </span>
           </div>
-          <Link to="employees" className="btn-go">
-            View All <FaArrowRight />
+          <p className="metric-sub">
+            Active: {employees?.company_total?.active ?? 0} ·
+            Inactive: {employees?.company_total?.inactive ?? 0}
+          </p>
+          <Link to="/employees" className="btn-go">
+            View Employees <FaArrowRight />
           </Link>
         </div>
 
         <div className="kpi-card">
-          <h4>Today's Attendance</h4>
-          <div className="metric-box" style={{ background: "#eff6ff" }}>
-            <div className="multi-stat">
-              <p className="metric-sub">Present: <strong>{attendance.present}</strong></p>
-              <p className="metric-sub">Absent: <strong>{attendance.absent}</strong></p>
-              <p className="metric-sub">Late: <strong>{attendance.late}</strong> OT: <strong>{attendance.overtime}</strong></p>
-            </div>
+          <h4>Attendance</h4>
+          <div className="metric-box">
+            <span className="metric-value">
+              {attendance?.company_total?.present ?? 0}
+            </span>
           </div>
-          <Link to="attendance" className="btn-go">
-            View Details <FaArrowRight />
+          <p className="metric-sub">
+            Absent: {attendance?.company_total?.absent ?? 0} ·
+            Unmarked: {attendance?.company_total?.unmarked ?? 0}
+          </p>
+          <Link to="/attendance" className="btn-go">
+            Attendance <FaArrowRight />
           </Link>
         </div>
 
         <div className="kpi-card">
-          <h4>Pending Approvals</h4>
-          <div className="metric-box" style={{ background: "#fff7ed" }}>
-            <div className="multi-stat">
-              <p className="metric-sub">Leaves: <strong>{approvals.leave}</strong></p>
-              <p className="metric-sub">F&F: <strong>2</strong></p>
-            </div>
+          <h4>Pending Leaves</h4>
+          <div className="metric-box">
+            <span className="metric-value">
+              {leave_pending?.company_total ?? 0}
+            </span>
           </div>
-          <Link to="leavemanagement" className="btn-go" style={{ background: "#f97316" }}>
+          <Link to="/leavemanagement" className="btn-go">
             Review <FaArrowRight />
           </Link>
         </div>
 
         <div className="kpi-card">
-          <h4>Salary Process</h4>
-          <div className="status-indicator running">Running</div>
-          <Link to="payroll" className="btn-go">
-            View Status <FaArrowRight />
+          <h4>Salary Payout</h4>
+          <div className="metric-box">
+            <span className="metric-value">
+              ₹ {(salary?.company_total?.total_salary ?? 0).toLocaleString()}
+            </span>
+          </div>
+          <p className="metric-sub">
+            Employees Paid: {salary?.company_total?.employees_paid ?? 0}
+          </p>
+          <Link to="/payroll" className="btn-go">
+            Payroll <FaArrowRight />
           </Link>
         </div>
+
       </div>
 
-      {/* DATA BOARDS */}
-      <div className="dash-row-grid">
-        <div className="board-card">
-          <div className="board-header">
-            <h3>Compliance Alerts</h3>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <span className="dot" style={{ background: "#cbd5e1", width: "8px", height: "8px", borderRadius: "50%" }}></span>
-              <span className="dot" style={{ background: "#cbd5e1", width: "8px", height: "8px", borderRadius: "50%" }}></span>
-              <span className="dot" style={{ background: "#cbd5e1", width: "8px", height: "8px", borderRadius: "50%" }}></span>
-            </div>
-          </div>
-          <div className="compliance-grid">
-            <div className="alert-item due">
-              <span className="status-dot dot-red"></span> ESI Due
-            </div>
-            <div className="alert-item info">
-              <span className="status-dot dot-orange"></span> PF Pending
-            </div>
-            <div className="alert-item pending">
-              <span className="status-dot dot-green"></span> PF Pending
-            </div>
-            <div className="alert-item info">
-              <span className="status-dot dot-orange"></span> Bonus Calculation
-            </div>
-            <div className="alert-item pending">
-              <span className="status-dot dot-green"></span> Bonus Calculation
-            </div>
-            <div className="alert-item pending">
-              <span className="status-dot dot-green"></span> Gratuity Reminder
-            </div>
-          </div>
-        </div>
+      {/* BRANCH TABLE */}
+      <div className="board-card">
+        <h3>Branch Overview</h3>
+        <table className="branch-table">
+          <thead>
+            <tr>
+              <th>Branch</th>
+              <th>Employees</th>
+              <th>Present</th>
+              <th>Salary (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employeesBranches.map((b) => {
+              const attendanceRow =
+                attendanceBranches.find(a => a.branch_id === b.branch_id) || {};
 
-        <div className="board-card">
-          <div className="board-header">
-            <h3>Monthly Cost Summary</h3>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <span className="dot" style={{ background: "#cbd5e1", width: "8px", height: "8px", borderRadius: "50%" }}></span>
-              <span className="dot" style={{ background: "#cbd5e1", width: "8px", height: "8px", borderRadius: "50%" }}></span>
-              <span className="dot" style={{ background: "#cbd5e1", width: "8px", height: "8px", borderRadius: "50%" }}></span>
-            </div>
-          </div>
-          <div className="cost-summary">
-            <div className="cost-item">
-              <span className="cost-label">Total Payroll</span>
-              <span className="cost-value">₹ {(cost.payroll / 100000).toFixed(2)} L</span>
-            </div>
-            <div className="cost-item">
-              <span className="cost-label">Overtime Cost</span>
-              <span className="cost-value">₹ {cost.overtime.toLocaleString()}</span>
-            </div>
-            <div className="cost-item">
-              <span className="cost-label">ESI / PF Cost</span>
-              <span className="cost-value">₹ {cost.pf.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
+              return (
+                <tr key={b.branch_id}>
+                  <td>{b.branch_name}</td>
+                  <td>{b.total ?? 0}</td>
+                  <td>{attendanceRow.present ?? 0}</td>
+                  <td>
+                    ₹ {(salary?.company_total?.total_salary ?? 0).toLocaleString()}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {/* ANALYTICS CHART */}
+      {/* CHART */}
       <div className="analytics-card">
         <div className="chart-header">
-          <h3>Attendance & Leave Reports</h3>
-          <span>Last 7 Days</span>
+          <h3>Attendance Distribution</h3>
+          <span>{period}</span>
         </div>
-        <div style={{ height: "300px", position: "relative" }}>
-          {trendChart && <Bar data={trendChart} options={chartOptions} />}
+        <div style={{ height: 320 }}>
+          {attendanceChart && (
+            <Bar data={attendanceChart} options={chartOptions} />
+          )}
         </div>
       </div>
 
-      {/* QUICK ACTION FOOTER */}
+      {/* QUICK ACTIONS */}
       <div className="dash-footer">
-        <Link to="payroll" className="action-btn primary">
-          <div className="icon-wrap">
-            <FaMoneyCheckAlt /> Generate Payroll
-          </div>
-          <FaArrowRight fontSize={12} />
+        <Link to="/employees" className="action-btn">
+          <FaUserFriends /> Employees
         </Link>
-        <Link to="employees" className="action-btn">
-          <div className="icon-wrap">
-            <FaUserFriends style={{ color: "#2563eb" }} /> Employee List
-          </div>
-          <FaArrowRight fontSize={12} style={{ color: "#cbd5e1" }} />
+        <Link to="/attendance" className="action-btn">
+          <FaClipboardList /> Attendance
         </Link>
-        <Link to="attendance" className="action-btn">
-          <div className="icon-wrap">
-            <FaClipboardList style={{ color: "#10b981" }} /> Attendance Reports
-          </div>
-          <FaArrowRight fontSize={12} style={{ color: "#cbd5e1" }} />
+        <Link to="/payroll" className="action-btn">
+          <FaMoneyCheckAlt /> Payroll
         </Link>
-        <Link to="complianceforms" className="action-btn">
-          <div className="icon-wrap">
-            <FaFileContract style={{ color: "#6366f1" }} /> Statutory Forms
-          </div>
-          <FaArrowRight fontSize={12} style={{ color: "#cbd5e1" }} />
+        <Link to="/organization/government-forms" className="action-btn">
+          <FaFileContract /> Government Forms
+        </Link>
+        <Link to="/organization/holidays" className="action-btn">
+          <FaFileContract /> Holidays
         </Link>
       </div>
 

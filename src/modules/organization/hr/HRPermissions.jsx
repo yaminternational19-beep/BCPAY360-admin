@@ -6,6 +6,7 @@ import {
   saveHRPermissions,
 } from "../../../api/master.api";
 import { useParams, useNavigate } from "react-router-dom";
+import { FaArrowLeft, FaSave } from "react-icons/fa";
 
 /* ============================
    MODULE DEFINITIONS
@@ -54,73 +55,70 @@ export default function HRPermissions() {
   /* ============================
      SAFETY GUARD
   ============================ */
-  useEffect(() => {
-    if (!hrId) {
-      navigate("/admin/hr-management", { replace: true });
-    }
-  }, [hrId, navigate]);
+ 
 
   /* ============================
      LOAD HR LIST
   ============================ */
   useEffect(() => {
-    const loadHRs = async () => {
-      const data = await getHRList();
-      const list = Array.isArray(data) ? data : [];
-      setHrList(list);
+  const loadHRs = async () => {
+    const res = await getHRList();
+    const list = Array.isArray(res?.data) ? res.data : [];
+    setHrList(list);
 
-      // 🔥 AUTO-SELECT HR FROM URL
-      const hr = list.find((h) => h.id === Number(hrId));
-      if (!hr) {
-        navigate("/admin/hr-management", { replace: true });
-        return;
-      }
-      setSelectedHR(hr);
-    };
+    const hr = list.find((h) => h.id === Number(hrId));
+    if (!hr) {
+      navigate("/admin/hr-management", { replace: true });
+      return;
+    }
+    setSelectedHR(hr);
+  };
 
-    loadHRs();
-  }, [hrId, navigate]);
+  loadHRs();
+}, [hrId, navigate]);
+
+
 
   /* ============================
      LOAD HR PERMISSIONS
   ============================ */
   useEffect(() => {
-      if (!selectedHR) return;
+    if (!selectedHR) return;
 
-      const loadPermissions = async () => {
-        setLoading(true);
-        try {
-          const data = await getHRPermissions(selectedHR.id);
+    const loadPermissions = async () => {
+      setLoading(true);
+      try {
+        const data = await getHRPermissions(selectedHR.id);
 
-          if (!Array.isArray(data) || data.length === 0) {
-            // default permissions
-            setPermissions((prev) =>
-              prev.map((p) =>
-                ["EMPLOYEE_MASTER", "ATTENDANCE", "LEAVE_MASTER"].includes(
-                  p.module_key
-                )
-                  ? { ...p, can_view: true }
-                  : p
-              )
-            );
-            return;
-          }
-
+        if (!Array.isArray(data) || data.length === 0) {
+          // default permissions
           setPermissions((prev) =>
-            prev.map((p) => {
-              const existing = data.find(
-                (x) => x.module_key === p.module_key
-              );
-              return existing ? { ...p, ...existing } : p;
-            })
+            prev.map((p) =>
+              ["EMPLOYEE_MASTER", "ATTENDANCE", "LEAVE_MASTER"].includes(
+                p.module_key
+              )
+                ? { ...p, can_view: true }
+                : p
+            )
           );
-        } finally {
-          setLoading(false);
+          return;
         }
-      };
 
-      loadPermissions();
-    }, [selectedHR]);
+        setPermissions((prev) =>
+          prev.map((p) => {
+            const existing = data.find(
+              (x) => x.module_key === p.module_key
+            );
+            return existing ? { ...p, ...existing } : p;
+          })
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPermissions();
+  }, [selectedHR]);
 
 
 
@@ -128,35 +126,35 @@ export default function HRPermissions() {
      TOGGLE PERMISSION
   ============================ */
   const toggle = (index, key) => {
-      setPermissions((prev) =>
-        prev.map((p, i) => {
-          if (i !== index) return p;
+    setPermissions((prev) =>
+      prev.map((p, i) => {
+        if (i !== index) return p;
 
-          // If VIEW is turned OFF → turn everything OFF
-          if (key === "can_view" && p.can_view) {
-            return {
-              ...p,
-              can_view: false,
-              can_create: false,
-              can_edit: false,
-              can_delete: false,
-              can_approve: false,
-            };
-          }
+        // If VIEW is turned OFF → turn everything OFF
+        if (key === "can_view" && p.can_view) {
+          return {
+            ...p,
+            can_view: false,
+            can_create: false,
+            can_edit: false,
+            can_delete: false,
+            can_approve: false,
+          };
+        }
 
-          // If any action is enabled → VIEW must be ON
-          if (key !== "can_view" && !p.can_view) {
-            return {
-              ...p,
-              can_view: true,
-              [key]: true,
-            };
-          }
+        // If any action is enabled → VIEW must be ON
+        if (key !== "can_view" && !p.can_view) {
+          return {
+            ...p,
+            can_view: true,
+            [key]: true,
+          };
+        }
 
-          return { ...p, [key]: !p[key] };
-        })
-      );
-    };
+        return { ...p, [key]: !p[key] };
+      })
+    );
+  };
 
 
   /* ============================
@@ -232,7 +230,7 @@ export default function HRPermissions() {
           onClick={() => navigate("/admin/hr-management")}
           disabled={loading}
         >
-          Back
+          <FaArrowLeft /> Back
         </button>
 
         <button
@@ -240,7 +238,7 @@ export default function HRPermissions() {
           onClick={save}
           disabled={loading}
         >
-          {loading ? "Saving..." : "Save Permissions"}
+          <FaSave /> {loading ? "Saving..." : "Save Permissions"}
         </button>
       </div>
 
