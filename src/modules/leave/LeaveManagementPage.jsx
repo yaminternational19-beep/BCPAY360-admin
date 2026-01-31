@@ -12,11 +12,16 @@ import PendingLeaveList from "./LeaveRequests/PendingLeaveList";
 import LeaveHistoryTable from "./LeaveHistory/LeaveHistoryTable";
 
 import "../../styles/LeaveManagement.css";
-import { getBranches, getDepartments } from "../../api/master.api";
+import { getDepartments } from "../../api/master.api";
+import { useBranch } from "../../hooks/useBranch"; // Import Hook
+import NoBranchState from "../../components/NoBranchState";
 
 export default function LeaveManagementPage() {
   const [activeTab, setActiveTab] = useState("approvals");
   const [showPolicyForm, setShowPolicyForm] = useState(false);
+
+  // Use Branch Hook
+  const { branches: branchList, selectedBranch, changeBranch, isSingleBranch, canProceed, isLoading: branchLoading } = useBranch();
 
   // Filter States
   const [filters, setFilters] = useState({
@@ -26,24 +31,25 @@ export default function LeaveManagementPage() {
   });
 
   // Master Data
-  const [branchList, setBranchList] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
 
   // Counts (In production, fetch these from a dedicated summary API)
   const [pendingCount, setPendingCount] = useState(0);
   const [loadingTab, setLoadingTab] = useState(null);
 
+  // Sync selected branch to filters
   useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const res = await getBranches();
-        setBranchList(res?.data || res || []);
-      } catch (err) {
-        console.error("Failed to fetch branches");
-      }
-    };
-    fetchBranches();
-  }, []);
+    if (selectedBranch) {
+      setFilters(prev => ({ ...prev, branchId: selectedBranch, departmentId: "" }));
+    }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    // If user changes branch manually in UI (for multi-branch)
+    if (filters.branchId && filters.branchId !== selectedBranch) {
+      changeBranch(filters.branchId);
+    }
+  }, [filters.branchId, selectedBranch, changeBranch]);
 
   useEffect(() => {
     if (filters.branchId) {
@@ -147,16 +153,19 @@ export default function LeaveManagementPage() {
           />
         </div>
 
-        <select
-          className="lm-select"
-          value={filters.branchId}
-          onChange={(e) => setFilters({ ...filters, branchId: e.target.value, departmentId: "" })}
-        >
-          <option value="">All Branches</option>
-          {branchList.map(b => (
-            <option key={b.id} value={b.id}>{b.branch_name}</option>
-          ))}
-        </select>
+        {/* Hide Branch Selector if Single Branch Mode */}
+        {!isSingleBranch && (
+          <select
+            className="lm-select"
+            value={filters.branchId}
+            onChange={(e) => setFilters({ ...filters, branchId: e.target.value, departmentId: "" })}
+          >
+            <option value="">All Branches</option>
+            {branchList.map(b => (
+              <option key={b.id} value={b.id}>{b.branch_name}</option>
+            ))}
+          </select>
+        )}
 
         <select
           className="lm-select"

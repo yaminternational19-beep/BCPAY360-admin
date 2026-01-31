@@ -1,7 +1,14 @@
 import "../../../styles/Attendance.css";
 
 
-const DailyAttendanceTable = ({ rows = [], loading, onViewHistory }) => {
+const DailyAttendanceTable = ({
+  rows = [],
+  loading,
+  onViewHistory,
+  selectedIds = [],
+  onSelectOne,
+  onSelectAll
+}) => {
   if (loading) {
     return (
       <div className="attendance-table-wrapper">
@@ -18,11 +25,22 @@ const DailyAttendanceTable = ({ rows = [], loading, onViewHistory }) => {
     );
   }
 
+  const isAllSelected = rows.length > 0 && rows.every(row => selectedIds.includes(row.employee_id));
+
   return (
     <div className="attendance-table-wrapper">
       <table className="attendance-table">
         <thead>
           <tr>
+            {onSelectAll && (
+              <th className="checkbox-cell" style={{ width: '40px' }}>
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => onSelectAll(e.target.checked ? rows.map(r => r.employee_id) : [])}
+                />
+              </th>
+            )}
             <th>#</th>
             <th>Profile</th>
             <th>Name</th>
@@ -40,75 +58,86 @@ const DailyAttendanceTable = ({ rows = [], loading, onViewHistory }) => {
         </thead>
 
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.employee_id}>
-              <td>{row.sl_no}</td>
+          {rows.map((row, index) => {
+            const isSelected = selectedIds.includes(row.employee_id);
+            return (
+              <tr key={row.employee_id} className={isSelected ? 'row-selected' : ''}>
+                {onSelectOne && (
+                  <td className="checkbox-cell">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onSelectOne(row.employee_id)}
+                    />
+                  </td>
+                )}
+                <td>{index + 1}</td>
 
-              {/* Profile */}
-              <td className="col-profile">
-                <img
-                  src={row.profile_photo_url || row.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}&background=EFF6FF&color=3B82F6&bold=true`}
-                  alt={row.name}
-                  className="attendance-avatar-sm"
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}&background=F1F5F9&color=64748B&bold=true`;
-                  }}
-                />
-              </td>
+                {/* Profile */}
+                <td className="col-profile">
+                  <img
+                    src={row.profile_photo_url || row.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                    alt={row.name}
+                    className="attendance-avatar-sm"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.name)}&background=F1F5F9&color=64748B&bold=true`;
+                    }}
+                  />
+                </td>
 
-              {/* Name */}
-              <td className="col-name">
-                <div className="employee-info">
-                  <span className="employee-name">{row.name}</span>
-                  <span className="employee-code">{row.employee_code}</span>
-                </div>
-              </td>
+                {/* Name */}
+                <td className="col-name">
+                  <div className="employee-info">
+                    <span className="employee-name">{row.name}</span>
+                    <span className="employee-code">{row.employee_code}</span>
+                  </div>
+                </td>
 
-              <td>{row.department}</td>
-              <td>{row.designation}</td>
+                <td>{row.department}</td>
+                <td>{row.designation}</td>
 
-              {/* Shift */}
-              <td>
-                <div className="shift-cell">
-                  <span>{row.shift_name}</span>
-                  {row.shift_start_time && row.shift_end_time && (
-                    <small>
-                      {row.shift_start_time} – {row.shift_end_time}
-                    </small>
-                  )}
-                </div>
-              </td>
+                {/* Shift */}
+                <td>
+                  <div className="shift-cell">
+                    <span>{row.shift_name}</span>
+                    {row.shift_start_time && row.shift_end_time && (
+                      <small>
+                        {row.shift_start_time} – {row.shift_end_time}
+                      </small>
+                    )}
+                  </div>
+                </td>
 
-              {/* Status */}
-              <td>
-                <span className={`status-badge ${row.status.toLowerCase()}`}>
-                  {row.status}
-                </span>
-              </td>
+                {/* Status */}
+                <td>
+                  <span className={`status-badge ${row.status.toLowerCase()}`}>
+                    {row.status}
+                  </span>
+                </td>
 
-              <td>{row.check_in_time || "-"}</td>
-              <td>{row.check_out_time || "-"}</td>
+                <td>{row.check_in_time || "-"}</td>
+                <td>{row.check_out_time || "-"}</td>
 
-              <td>{row.late_minutes || 0}</td>
-              <td>{row.early_checkout_minutes || 0}</td>
-              <td>{row.overtime_minutes || 0}</td>
+                <td>{row.late_minutes || 0}</td>
+                <td>{row.early_checkout_minutes || 0}</td>
+                <td>{row.overtime_minutes || 0}</td>
 
-              {/* Action */}
-              <td>
-                <button
-                  className="btn-history"
-                  onClick={() => onViewHistory(row.employee_id)}
-                >
-                  View History
-                </button>
-              </td>
-            </tr>
-          ))}
+                {/* Action */}
+                <td>
+                  <button
+                    className="btn-history"
+                    onClick={() => onViewHistory(row.employee_id)}
+                  >
+                    View History
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
-
 };
 
 export default DailyAttendanceTable;

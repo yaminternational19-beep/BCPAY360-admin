@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { FaBars, FaBell, FaSearch, FaSignOutAlt, FaCommentDots } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaBars, FaBell, FaSearch, FaSignOutAlt, FaCommentDots, FaUser } from "react-icons/fa";
 import "../styles/Navbar.css";
 
 const Navbar = ({ user, onToggleSidebar, onLogout }) => {
@@ -61,10 +62,8 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
 
         <div className="user-section">
           <div className="user-profile-trigger" onClick={() => setOpen(!open)}>
-            <div className="user-details">
-              <span className="user-name">{userName}</span>
-              <span className="user-role">{roleLabel}</span>
-            </div>
+            <div className="trigger-badge">ADMIN</div>
+            <div className="trigger-divider" />
             <div className="avatar-small">
               <img src={`https://ui-avatars.com/api/?name=${userName}&background=10b981&color=fff`} alt="User" />
             </div>
@@ -72,17 +71,22 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
 
           {open && (
             <div className="profile-menu">
-              <div className="profile-info">
-                <strong>{user.email || "—"}</strong>
-                <small>{user.company || "HR Management"}</small>
-              </div>
+              <div className="menu-spacer" />
+
+              <Link to="/profile" className="menu-item" onClick={() => setOpen(false)}>
+                <FaUser className="menu-icon" />
+                <span className="menu-text">My Profile</span>
+              </Link>
+
+              <div className="menu-divider" />
 
               <button
                 type="button"
                 className="logout-btn"
                 onClick={handleLogoutAction}
               >
-                <FaSignOutAlt style={{ marginRight: '8px' }} /> Sign Out
+                <FaSignOutAlt className="menu-icon" />
+                <span className="menu-text">Sign Out</span>
               </button>
             </div>
           )}

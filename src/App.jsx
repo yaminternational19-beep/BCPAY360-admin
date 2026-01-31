@@ -12,6 +12,7 @@ import LeaveManagement from "./modules/leave/LeaveManagementPage";
 import Companies from "./pages/Companies";
 import Accounts from "./pages/Accounts";
 import HRLogin from "./pages/HRLogin";
+import UserProfile from "./pages/UserProfile";
 
 
 // New module imports
@@ -28,6 +29,10 @@ import Navbar from "./layout/Navbar";
 import "./styles/Layout.css";
 import "./styles/theme.css";
 import PermissionProtectedRoute from "./components/PermissionProtectedRoute";
+import ManageContent from "./modules/module/ManageContent";
+import HelpSupport from "./modules/module/HelpSupport";
+import FAQ from "./modules/module/FAQ";
+import ManageBroadcast from "./modules/module/ManageBroadcast";
 
 
 const RoleProtectedRoute = ({ children, allowedRoles, user }) => {
@@ -186,7 +191,7 @@ const AdminLayout = ({ user, setUser }) => {
                 </RoleProtectedRoute>
               }
             />
-            
+
 
 
 
@@ -207,9 +212,9 @@ const AdminLayout = ({ user, setUser }) => {
                 </RoleProtectedRoute>
               }
             />
-            {/* Software Reports - Flattened for stability and consistency with Employee module */}
+            {/* Reports and Forms - Flattened Routes */}
             <Route
-              path="softwarereports"
+              path="reports"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
                   <SoftwareReportsDashboard />
@@ -217,7 +222,7 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route
-              path="softwarereports/reports/:reportType"
+              path="reports/:reportType"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
                   <SoftwareReportsPage />
@@ -225,13 +230,19 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route
-              path="softwarereports/forms/*"
+              path="forms/*"
               element={
                 <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
                   <FormsRouter />
                 </RoleProtectedRoute>
               }
             />
+
+            {/* New Module Routes */}
+            <Route path="manage-content" element={<ManageContent />} />
+            <Route path="help-support" element={<HelpSupport />} />
+            <Route path="faq" element={<FAQ />} />
+            <Route path="manage-broadcast" element={<ManageBroadcast />} />
             <Route
               path="hr-management/:hrId/permissions"
               element={
@@ -249,6 +260,7 @@ const AdminLayout = ({ user, setUser }) => {
               }
             />
             <Route path="employees/:id" element={<EmployeeProfile />} />
+            <Route path="profile" element={<UserProfile />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>

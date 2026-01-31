@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import "../../../styles/Attendance.css";
 
+/* Components */
 import AttendanceHeader from "../components/AttendanceHeader";
 import AttendanceSummary from "../components/AttendanceSummary";
 import DailyAttendanceTable from "../components/DailyAttendanceTable";
 import MonthlyAttendanceTable from "../components/MonthlyAttendanceTable";
 import HistoryAttendanceDrawer from "../components/HistoryAttendanceDrawer";
+import NoBranchState from "../../../components/NoBranchState";
+import { useBranch } from "../../../hooks/useBranch";
 
+/* API */
 import {
   fetchDailyAttendance,
   fetchHistoryAttendance,
@@ -21,7 +25,8 @@ import { exportMonthlyPDF } from "../../../utils/export/exportMonthlyPDF";
 import { exportHistoryExcel } from "../../../utils/export/exportHistoryExcel";
 import { exportHistoryPDF } from "../../../utils/export/exportHistoryPDF";
 
-const Attendance = () => {
+const AttendancePage = () => {
+  const { canProceed, isLoading: branchLoading } = useBranch();
   const today = new Date().toISOString().slice(0, 10);
 
   const [viewType, setViewType] = useState("DAILY");
@@ -45,6 +50,8 @@ const Attendance = () => {
     status: ""
   });
 
+  const [selectedIds, setSelectedIds] = useState([]);
+
   /* AUTO INIT MONTH */
   useEffect(() => {
     if (attendanceMode === "MONTHLY" && !monthRange) {
@@ -65,6 +72,7 @@ const Attendance = () => {
         .then(res => {
           setRows(res.data);
           setSummary(res.summary);
+          setSelectedIds([]); // Reset selection on new fetch
         })
         .finally(() => setLoading(false));
     }
@@ -75,7 +83,10 @@ const Attendance = () => {
     if (viewType === "DAILY" && attendanceMode === "MONTHLY" && monthRange) {
       setLoading(true);
       fetchMonthlyAttendance({ ...monthRange, ...filters })
-        .then(res => setMonthlyData(res.data))
+        .then(res => {
+          setMonthlyData(res.data);
+          setSelectedIds([]); // Reset selection on new fetch
+        })
         .finally(() => setLoading(false));
     }
   }, [attendanceMode, monthRange, filters, viewType]);
@@ -98,16 +109,36 @@ const Attendance = () => {
 
   /* EXPORT HANDLER (THIS MAKES DOWNLOAD WORK) */
   const handleExport = ({ type, context }) => {
+    // Helper to filter by selection
+    const filterData = (data, idKey = 'employee_id') => {
+      if (selectedIds.length > 0) {
+        return data.filter(item => selectedIds.includes(item[idKey]));
+      }
+      return data; // Export all if nothing selected? Or restrict? 
+      // User said "select export", usually implies "export what is selected".
+      // But typically if none selected, button is disabled in UI based on my implementation below.
+      // However, if I allow "Export All" when none selected, I should return data.
+      // Current Plan: Pass disabled state to Header, so this runs only when selectedIds > 0 (or if we default to all).
+      // Let's assume we export ONLY selected if selected > 0. If 0 selected, Header disables buttons.
+      return data;
+    };
+
     if (context === "DAILY") {
+      const dataToExport = filterData(rows);
+      if (!dataToExport.length) return alert("No data to export");
+
       type === "EXCEL"
-        ? exportDailyExcel(rows, date)
-        : exportDailyPDF(rows, date);
+        ? exportDailyExcel(dataToExport, date)
+        : exportDailyPDF(dataToExport, date);
     }
 
     if (context === "MONTHLY") {
+      const dataToExport = filterData(monthlyData);
+      if (!dataToExport.length) return alert("No data to export");
+
       type === "EXCEL"
-        ? exportMonthlyExcel(monthlyData, monthRange.fromDate, monthRange.toDate)
-        : exportMonthlyPDF(monthlyData, monthRange.fromDate, monthRange.toDate);
+        ? exportMonthlyExcel(dataToExport, monthRange.fromDate, monthRange.toDate)
+        : exportMonthlyPDF(dataToExport, monthRange.fromDate, monthRange.toDate);
     }
 
     if (context === "HISTORY" && historyData?.data?.length) {
@@ -116,6 +147,29 @@ const Attendance = () => {
         ? exportHistoryExcel(historyData.data, name)
         : exportHistoryPDF(historyData.data, name);
     }
+  };
+
+  /* ===================================================================================
+     RENDER
+     =================================================================================== */
+  if (branchLoading) return <div style={{ padding: 20 }}>Loading...</div>;
+
+  if (!canProceed) {
+    return (
+      <div className="attendance-page">
+        <h1 className="page-title">Attendance Management</h1>
+        <NoBranchState moduleName="Attendance" />
+      </div>
+    );
+  }
+
+  // Handle Selection Toggle
+  const handleSelectOne = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleSelectAll = (ids) => {
+    setSelectedIds(ids);
   };
 
   return (
@@ -134,6 +188,7 @@ const Attendance = () => {
         onMonthChange={setMonthRange}
         onFilterChange={setFilters}
         onExport={handleExport}
+        isExportDisabled={selectedIds.length === 0} // Disable if no selection
         onBack={() => {
           setViewType("DAILY");
           setHistoryData(null);
@@ -141,6 +196,7 @@ const Attendance = () => {
         onModeChange={(mode) => {
           setAttendanceMode(mode);
           setSummary(null);
+          setSelectedIds([]);
           if (mode === "DAILY") setMonthlyData([]);
           if (mode === "MONTHLY") setRows([]);
         }}
@@ -151,6 +207,9 @@ const Attendance = () => {
           rows={rows}
           loading={loading}
           onViewHistory={loadHistoryAttendance}
+          selectedIds={selectedIds}
+          onSelectOne={handleSelectOne}
+          onSelectAll={handleSelectAll}
         />
       )}
 
@@ -158,7 +217,13 @@ const Attendance = () => {
         <>
           {/* Optional: Add Monthly Summary here if API supports it, 
               or keep it consistent with Daily after swapping header */}
-          <MonthlyAttendanceTable data={monthlyData} loading={loading} />
+          <MonthlyAttendanceTable
+            data={monthlyData}
+            loading={loading}
+            selectedIds={selectedIds}
+            onSelectOne={handleSelectOne}
+            onSelectAll={handleSelectAll}
+          />
         </>
       )}
 
@@ -177,4 +242,4 @@ const Attendance = () => {
   );
 };
 
-export default Attendance;
+export default AttendancePage;

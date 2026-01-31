@@ -17,6 +17,16 @@ import {
   FaChartLine,
   FaUserTag,
   FaBusinessTime,
+  FaFileAlt,
+  FaQuestionCircle,
+  FaBullhorn,
+  FaWpforms,
+  FaMoneyCheckAlt,
+  FaBriefcaseMedical,
+  FaGift,
+  FaHardHat,
+  FaIndustry,
+  FaHandHoldingUsd,
 } from "react-icons/fa";
 import "../styles/Sidebar.css";
 import { FORMS_CONFIG } from "../modules/forms/config/forms.config";
@@ -39,7 +49,30 @@ const VALID_ROUTES = [
   "hr-management",
   "organization",
   "holidays",
+  "forms",
+  "reports",
+  "manage-content",
+  "help-support",
+  "faq",
+  "manage-broadcast",
 ];
+
+const FORM_ICONS = {
+  pf: <FaMoneyCheckAlt />,
+  esic: <FaBriefcaseMedical />,
+  "income-tax": <FaFileInvoiceDollar />,
+  bonus: <FaGift />,
+  labour: <FaHardHat />,
+  factories: <FaIndustry />,
+  gratuity: <FaHandHoldingUsd />
+};
+
+const REPORT_ICONS = {
+  employee: <FaUsers />,
+  attendance: <FaClock />,
+  leave: <FaUmbrellaBeach />,
+  salary: <FaMoneyBillWave />
+};
 
 const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: userProp }) => {
   const navigate = useNavigate();
@@ -66,9 +99,8 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
   const [orgOpen, setOrgOpen] = useState(false);
   const [hrOpen, setHrOpen] = useState(true);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [formsOpen, setFormsOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
-  const [reportsSubOpen, setReportsSubOpen] = useState(false);
-  const [formsSubOpen, setFormsSubOpen] = useState(false);
 
   const isValidRoute = (path) => {
     const clean = path.replace(/^\/admin\//, "").split("/")[0];
@@ -202,7 +234,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 >
                   <FaIdCard /> Add HR
                 </button>
-                
+
                 <button
                   type="button"
                   className="submenu-item"
@@ -334,92 +366,129 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                safeToggle(setFormsOpen, !formsOpen);
+              }}
+            >
+              <div className="menu-left">
+                <FaWpforms />
+                {!collapsed && <span>Forms</span>}
+              </div>
+              {!collapsed && (formsOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
+            </button>
+
+            {formsOpen && !collapsed && (
+              <div className="submenu">
+                {Object.values(FORMS_CONFIG).map((form) => (
+                  <button
+                    key={form.id}
+                    type="button"
+                    className="submenu-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      go(`forms/${form.id}`);
+                    }}
+                  >
+                    {FORM_ICONS[form.id] || <FaFileAlt />} {form.title}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="menu-item expandable"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 safeToggle(setReportsOpen, !reportsOpen);
               }}
             >
               <div className="menu-left">
                 <FaChartLine />
-                {!collapsed && <span>Software Reports</span>}
+                {!collapsed && <span>Reports</span>}
               </div>
               {!collapsed && (reportsOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
             </button>
 
             {reportsOpen && !collapsed && (
               <div className="submenu">
-                {/* Statutory Forms Folder */}
-                <div className="submenu-section">
+                {Object.values(REPORTS_CONFIG).map((report) => (
                   <button
+                    key={report.id}
                     type="button"
-                    className="submenu-header"
+                    className="submenu-item"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      safeToggle(setFormsSubOpen, !formsSubOpen);
+                      go(`reports/${report.id}`);
                     }}
                   >
-                    <span>📜 FORMS</span>
-                    {!collapsed &&
-                      (formsSubOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
+                    {REPORT_ICONS[report.id] || <FaChartLine />} {report.title}
                   </button>
-
-                  {formsSubOpen && (
-                    <div className="submenu-nested">
-
-                      {Object.values(FORMS_CONFIG).map((form) => (
-                        <button
-                          key={form.id}
-                          type="button"
-                          className="submenu-item-nested"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            go(`softwarereports/forms/${form.id}`);
-                          }}
-                        >
-                          {form.title}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Software Reports Folder */}
-                <div className="submenu-section">
-                  <button
-                    type="button"
-                    className="submenu-header"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      safeToggle(setReportsSubOpen, !reportsSubOpen);
-                    }}
-                  >
-                    <span>📊 REPORTS</span>
-                    {!collapsed &&
-                      (reportsSubOpen ? <FaChevronDown className="chevron-icon" /> : <FaChevronRight className="chevron-icon" />)}
-                  </button>
-
-                  {reportsSubOpen && (
-                    <div className="submenu-nested">
-                      {Object.values(REPORTS_CONFIG).map((report) => (
-                        <button
-                          key={report.id}
-                          type="button"
-                          className="submenu-item-nested"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            go(`softwarereports/reports/${report.id}`);
-                          }}
-                        >
-                          {report.title}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
             )}
+
+            <button
+              type="button"
+              className="menu-item"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                go("manage-content");
+              }}
+            >
+              <div className="menu-left">
+                <FaFileAlt />
+                {!collapsed && <span>Manage Content</span>}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="menu-item"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                go("help-support");
+              }}
+            >
+              <div className="menu-left">
+                <FaQuestionCircle />
+                {!collapsed && <span>Help & Support</span>}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="menu-item"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                go("faq");
+              }}
+            >
+              <div className="menu-left">
+                <FaQuestionCircle />
+                {!collapsed && <span>FAQ</span>}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="menu-item"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                go("manage-broadcast");
+              }}
+            >
+              <div className="menu-left">
+                <FaBullhorn />
+                {!collapsed && <span>Manage Broadcast</span>}
+              </div>
+            </button>
           </>
         )}
       </nav>

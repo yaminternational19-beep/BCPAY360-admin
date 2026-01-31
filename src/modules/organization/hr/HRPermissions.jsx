@@ -1,87 +1,114 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { FaArrowLeft, FaSave } from "react-icons/fa";
 import "../../../styles/HRPermissions.css";
 import {
   getHRList,
   getHRPermissions,
   saveHRPermissions,
 } from "../../../api/master.api";
-import { useParams, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaSave } from "react-icons/fa";
 
-/* ============================
-   MODULE DEFINITIONS
-============================ */
-const MODULES = [
-  { key: "EMPLOYEE_MASTER", label: "Employees" },
-  { key: "EMPLOYEE_DOCUMENTS", label: "Employee Documents" },
-  { key: "DEPARTMENT", label: "Departments" },
-  { key: "DESIGNATION", label: "Designations" },
-  { key: "BRANCH", label: "Branches" },
-  { key: "SHIFT", label: "Shifts" },
-  { key: "EMPLOYEE_TYPE", label: "Employee Types" },
-  { key: "ATTENDANCE", label: "Attendance" },
-  { key: "ATTENDANCE_REPORTS", label: "Attendance Reports" },
-  { key: "LEAVE_MASTER", label: "Leave Master" },
-  { key: "LEAVE_APPROVAL", label: "Leave Approval" },
-  { key: "PAYROLL", label: "Payroll" },
-  { key: "PAYSLIP", label: "Payslips" },
-  { key: "BONUS", label: "Bonus" },
-  { key: "FNF", label: "Full & Final" },
-  { key: "PF", label: "PF" },
-  { key: "ESI", label: "ESI" },
-  { key: "REPORTS", label: "Reports" },
+/* =====================================================
+   PERMISSION CONFIG (SINGLE SOURCE OF TRUTH)
+===================================================== */
+const PERMISSION_GROUPS = [
+  {
+  key: "CORE",
+  label: "Core Access",
+  children: [
+    { key: "DASHBOARD", label: "Dashboard Access" },
+  ],
+},
+ 
+  {
+    key: "ORGANIZATION",
+    label: "Organization",
+    children: [
+      { key: "DEPARTMENTS", label: "Departments" },
+      { key: "EMPLOYEE_TYPES", label: "Employee Types" },
+      { key: "SHIFTS", label: "Shifts" },
+      { key: "BRANCHES", label: "Branches" },
+      { key: "HR_MANAGEMENT", label: "Add HR" },
+      { key: "EMPLOYEE_CODE", label: "Employee Code" },
+      { key: "GOVERNMENT_FORMS", label: "Government Forms" },
+    ],
+  },
+  {
+    key: "HR_MODULE",
+    label: "HR Module",
+    children: [
+      { key: "EMPLOYEE_MASTER", label: "Employees" },
+      { key: "ATTENDANCE", label: "Attendance" },
+      { key: "LEAVE_MASTER", label: "Leaves" },
+      { key: "PAYROLL", label: "Payroll" },
+      { key: "HOLIDAYS", label: "Holidays" },
+    ],
+  },
+  {
+    key: "FORMS",
+    label: "Forms",
+    children: [
+      { key: "PF_FORMS", label: "Provident Fund (PF)" },
+      { key: "ESIC_FORMS", label: "ESIC Forms" },
+      { key: "FORM_16", label: "Income Tax (Form-16)" },
+      { key: "BONUS_ACT", label: "Bonus Act Forms" },
+      { key: "LABOUR_LAW", label: "Attendance / Labour Law" },
+      { key: "FACTORIES_ACT", label: "Factories Act Forms" },
+      { key: "GRATUITY_ACT", label: "Gratuity Act Forms" },
+    ],
+  },
+  {
+    key: "REPORTS",
+    label: "Reports",
+    children: [
+      { key: "EMPLOYEE_REPORTS", label: "Employee Reports" },
+      { key: "ATTENDANCE_REPORTS", label: "Attendance Reports" },
+      { key: "LEAVE_REPORTS", label: "Leave Reports" },
+      { key: "SALARY_REPORTS", label: "Salary Reports" },
+    ],
+  },
 ];
 
-const buildEmptyPermissions = () =>
-  MODULES.map((m) => ({
-    module_key: m.key,
-    label: m.label,
-    can_view: false,
-    can_create: false,
-    can_edit: false,
-    can_delete: false,
-    can_approve: false,
-  }));
+/* =====================================================
+   HELPERS
+===================================================== */
+const buildInitialState = () => {
+  const state = {};
+  PERMISSION_GROUPS.forEach((g) =>
+    g.children.forEach((c) => (state[c.key] = false))
+  );
+  return state;
+};
 
 export default function HRPermissions() {
   const { hrId } = useParams();
   const navigate = useNavigate();
 
-  const [hrList, setHrList] = useState([]);
   const [selectedHR, setSelectedHR] = useState(null);
-  const [permissions, setPermissions] = useState(buildEmptyPermissions());
+  const [permissions, setPermissions] = useState(buildInitialState());
   const [loading, setLoading] = useState(false);
 
-  /* ============================
-     SAFETY GUARD
-  ============================ */
- 
-
-  /* ============================
-     LOAD HR LIST
-  ============================ */
+  /* =====================================================
+     LOAD HR
+  ===================================================== */
   useEffect(() => {
-  const loadHRs = async () => {
-    const res = await getHRList();
-    const list = Array.isArray(res?.data) ? res.data : [];
-    setHrList(list);
+    const loadHR = async () => {
+      const res = await getHRList();
+      const list = Array.isArray(res?.data) ? res.data : [];
+      const hr = list.find((h) => h.id === Number(hrId));
 
-    const hr = list.find((h) => h.id === Number(hrId));
-    if (!hr) {
-      navigate("/admin/hr-management", { replace: true });
-      return;
-    }
-    setSelectedHR(hr);
-  };
+      if (!hr) {
+        navigate("/admin/hr-management", { replace: true });
+        return;
+      }
+      setSelectedHR(hr);
+    };
+    loadHR();
+  }, [hrId, navigate]);
 
-  loadHRs();
-}, [hrId, navigate]);
-
-
-
-  /* ============================
-     LOAD HR PERMISSIONS
-  ============================ */
+  /* =====================================================
+     LOAD PERMISSIONS
+  ===================================================== */
   useEffect(() => {
     if (!selectedHR) return;
 
@@ -89,29 +116,17 @@ export default function HRPermissions() {
       setLoading(true);
       try {
         const data = await getHRPermissions(selectedHR.id);
+        if (!Array.isArray(data)) return;
 
-        if (!Array.isArray(data) || data.length === 0) {
-          // default permissions
-          setPermissions((prev) =>
-            prev.map((p) =>
-              ["EMPLOYEE_MASTER", "ATTENDANCE", "LEAVE_MASTER"].includes(
-                p.module_key
-              )
-                ? { ...p, can_view: true }
-                : p
-            )
-          );
-          return;
-        }
-
-        setPermissions((prev) =>
-          prev.map((p) => {
-            const existing = data.find(
-              (x) => x.module_key === p.module_key
-            );
-            return existing ? { ...p, ...existing } : p;
-          })
-        );
+        setPermissions((prev) => {
+          const updated = { ...prev };
+          data.forEach((p) => {
+            if (updated.hasOwnProperty(p.module_key)) {
+              updated[p.module_key] = !!p.allowed;
+            }
+          });
+          return updated;
+        });
       } finally {
         setLoading(false);
       }
@@ -120,128 +135,128 @@ export default function HRPermissions() {
     loadPermissions();
   }, [selectedHR]);
 
-
-
-  /* ============================
-     TOGGLE PERMISSION
-  ============================ */
-  const toggle = (index, key) => {
-    setPermissions((prev) =>
-      prev.map((p, i) => {
-        if (i !== index) return p;
-
-        // If VIEW is turned OFF → turn everything OFF
-        if (key === "can_view" && p.can_view) {
-          return {
-            ...p,
-            can_view: false,
-            can_create: false,
-            can_edit: false,
-            can_delete: false,
-            can_approve: false,
-          };
-        }
-
-        // If any action is enabled → VIEW must be ON
-        if (key !== "can_view" && !p.can_view) {
-          return {
-            ...p,
-            can_view: true,
-            [key]: true,
-          };
-        }
-
-        return { ...p, [key]: !p[key] };
-      })
-    );
+  /* =====================================================
+     TOGGLES
+  ===================================================== */
+  const toggleItem = (key) => {
+    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const toggleGroup = (group, value) => {
+    setPermissions((prev) => {
+      const updated = { ...prev };
+      group.children.forEach((c) => {
+        updated[c.key] = value;
+      });
+      return updated;
+    });
+  };
 
-  /* ============================
-     SAVE PERMISSIONS
-  ============================ */
+  const toggleAll = (value) => {
+    setPermissions((prev) => {
+      const updated = {};
+      Object.keys(prev).forEach((k) => (updated[k] = value));
+      return updated;
+    });
+  };
+
+  /* =====================================================
+     CHECK STATES
+  ===================================================== */
+  const isGroupChecked = (group) =>
+    group.children.every((c) => permissions[c.key]);
+
+  const isGroupIndeterminate = (group) =>
+    group.children.some((c) => permissions[c.key]) &&
+    !isGroupChecked(group);
+
+  const isAllChecked = () =>
+    Object.values(permissions).every(Boolean);
+
+  /* =====================================================
+     SAVE
+  ===================================================== */
   const save = async () => {
-    if (!selectedHR) return;
+    const payload = Object.entries(permissions).map(
+      ([module_key, allowed]) => ({ module_key, allowed })
+    );
 
     await saveHRPermissions(selectedHR.id, {
       branch_id: selectedHR.branch_id,
       department_id: selectedHR.department_id,
-      permissions: permissions.map(({ label, ...rest }) => rest),
+      permissions: payload,
     });
 
     alert("Permissions saved successfully");
   };
 
+  /* =====================================================
+     UI
+  ===================================================== */
   return (
     <div className="hr-permissions-page">
       <h2>HR Permissions</h2>
 
       <div className="hr-context">
-        <strong>HR:</strong> {selectedHR?.emp_id} &nbsp; | &nbsp;
-        <strong>Branch:</strong> {selectedHR?.branch_name} &nbsp; | &nbsp;
-        <strong>Department:</strong> {selectedHR?.department_name}
+        <strong>HR:</strong> {selectedHR?.emp_id} |{" "}
+        <strong>Branch:</strong> {selectedHR?.branch_name} |{" "}
+
       </div>
 
-      <div className="table-wrapper">
-        <table className="permission-table">
-          <thead>
-            <tr>
-              <th>Module</th>
-              <th>View</th>
-              <th>Create</th>
-              <th>Edit</th>
-              <th>Delete</th>
-              <th>Approve</th>
-            </tr>
-          </thead>
-          <tbody>
-            {permissions.map((perm, idx) => (
-              <tr key={perm.module_key}>
-                <td>{perm.label}</td>
-                {[
-                  "can_view",
-                  "can_create",
-                  "can_edit",
-                  "can_delete",
-                  "can_approve",
-                ].map((key) => (
-                  <td key={key}>
-                    <input
-                      type="checkbox"
-                      checked={perm[key]}
-                      disabled={
-                        !selectedHR ||
-                        loading ||
-                        (key !== "can_view" && !perm.can_view)
-                      }
-                      onChange={() => toggle(idx, key)}
-                    />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="select-all">
+        <label>
+          <input
+            type="checkbox"
+            checked={isAllChecked()}
+            onChange={(e) => toggleAll(e.target.checked)}
+          />
+          Select All Permissions
+        </label>
       </div>
+
+      {PERMISSION_GROUPS.map((group) => (
+        <div className="permission-group" key={group.key}>
+          <label className="group-header">
+            <input
+              type="checkbox"
+              checked={isGroupChecked(group)}
+              ref={(el) => {
+                if (el) el.indeterminate = isGroupIndeterminate(group);
+              }}
+              onChange={(e) =>
+                toggleGroup(group, e.target.checked)
+              }
+            />
+            {group.label}
+          </label>
+
+          <div className="permission-grid">
+            {group.children.map((item) => (
+              <label key={item.key} className="permission-item">
+                <input
+                  type="checkbox"
+                  checked={permissions[item.key]}
+                  onChange={() => toggleItem(item.key)}
+                />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
 
       <div className="actions">
         <button
           className="secondary"
           onClick={() => navigate("/admin/hr-management")}
-          disabled={loading}
         >
           <FaArrowLeft /> Back
         </button>
 
-        <button
-          className="primary"
-          onClick={save}
-          disabled={loading}
-        >
-          <FaSave /> {loading ? "Saving..." : "Save Permissions"}
+        <button className="primary" onClick={save}>
+          <FaSave /> Save
         </button>
       </div>
-
     </div>
   );
 }

@@ -19,8 +19,8 @@ export default function PendingLeaveList({ onCountChange, filters }) {
   const filteredRequests = requests.filter(req => {
     const searchLow = filters.search.toLowerCase();
     const matchesSearch = !filters.search ||
-      req.name.toLowerCase().includes(searchLow) ||
-      req.employee_code.toLowerCase().includes(searchLow);
+      (req.name?.toLowerCase() || "").includes(searchLow) ||
+      (req.employee_code?.toLowerCase() || "").includes(searchLow);
 
     // Assuming API or hook returns branch_id and department_id in the request object
     const matchesBranch = !filters.branchId || String(req.branch_id) === String(filters.branchId);

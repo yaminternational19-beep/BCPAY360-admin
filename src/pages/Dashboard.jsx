@@ -10,7 +10,13 @@ import {
   FaArrowRight,
   FaClipboardList,
   FaUserFriends,
-  FaFileContract
+  FaFileContract,
+  FaBuilding,
+  FaSitemap,
+  FaUmbrellaBeach,
+  FaFileAlt,
+  FaChartPie,
+  FaCog
 } from "react-icons/fa";
 
 import {
@@ -221,70 +227,112 @@ const Dashboard = () => {
           </Link>
         </div>
 
+
+
       </div>
 
-      {/* BRANCH TABLE */}
-      <div className="board-card">
-        <h3>Branch Overview</h3>
-        <table className="branch-table">
-          <thead>
-            <tr>
-              <th>Branch</th>
-              <th>Employees</th>
-              <th>Present</th>
-              <th>Salary (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employeesBranches.map((b) => {
-              const attendanceRow =
-                attendanceBranches.find(a => a.branch_id === b.branch_id) || {};
-
-              return (
-                <tr key={b.branch_id}>
-                  <td>{b.branch_name}</td>
-                  <td>{b.total ?? 0}</td>
-                  <td>{attendanceRow.present ?? 0}</td>
-                  <td>
-                    ₹ {(salary?.company_total?.total_salary ?? 0).toLocaleString()}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* ORGANIZATION OVERVIEW */}
+      <div className="org-overview-row">
+        <Link to="/branches" className="org-card">
+          <div className="org-icon branch"><FaBuilding /></div>
+          <div className="org-info">
+            <h4>Total Branches</h4>
+            <span className="org-value">{data?.employees?.branches?.length || 0}</span>
+          </div>
+        </Link>
+        <Link to="/departments" className="org-card">
+          <div className="org-icon dept"><FaSitemap /></div>
+          <div className="org-info">
+            <h4>Departments</h4>
+            <span className="org-value">12</span>
+          </div>
+        </Link>
+        <Link to="/hr-management" className="org-card hr-card-accent">
+          <div className="org-icon hr"><FaUserFriends /></div>
+          <div className="org-info">
+            <h4>HR Management</h4>
+            <span className="org-value">HR Team</span>
+          </div>
+        </Link>
       </div>
 
-      {/* CHART */}
-      <div className="analytics-card">
-        <div className="chart-header">
-          <h3>Attendance Distribution</h3>
-          <span>{period}</span>
+      {/* BRANCH TABLE & CHART ROW */}
+      <div className="dashboard-grid-row">
+        {/* BRANCH TABLE */}
+        <div className="board-card">
+          <h3>Branch Overview</h3>
+          <table className="branch-table">
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th>Employees</th>
+                <th>Present</th>
+                <th>Salary (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {employeesBranches.map((b) => {
+                const attendanceRow =
+                  attendanceBranches.find(a => a.branch_id === b.branch_id) || {};
+
+                return (
+                  <tr key={b.branch_id}>
+                    <td>{b.branch_name}</td>
+                    <td>{b.total ?? 0}</td>
+                    <td>{attendanceRow.present ?? 0}</td>
+                    <td>
+                      ₹ {(salary?.company_total?.total_salary ?? 0).toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-        <div style={{ height: 320 }}>
-          {attendanceChart && (
-            <Bar data={attendanceChart} options={chartOptions} />
-          )}
+
+        {/* CHART */}
+        <div className="analytics-card">
+          <div className="chart-header">
+            <h3>Attendance Distribution</h3>
+            <span>{period}</span>
+          </div>
+          <div className="chart-container-inner">
+            {attendanceChart && (
+              <Bar data={attendanceChart} options={chartOptions} />
+            )}
+          </div>
         </div>
       </div>
 
       {/* QUICK ACTIONS */}
-      <div className="dash-footer">
-        <Link to="/employees" className="action-btn">
-          <FaUserFriends /> Employees
-        </Link>
-        <Link to="/attendance" className="action-btn">
-          <FaClipboardList /> Attendance
-        </Link>
-        <Link to="/payroll" className="action-btn">
-          <FaMoneyCheckAlt /> Payroll
-        </Link>
-        <Link to="/organization/government-forms" className="action-btn">
-          <FaFileContract /> Government Forms
-        </Link>
-        <Link to="/organization/holidays" className="action-btn">
-          <FaFileContract /> Holidays
-        </Link>
+      <div className="dash-quick-access">
+        <h3 className="section-title">Quick Access</h3>
+        <div className="dash-footer-upgraded">
+          <Link to="/employees" className="dash-action-card-mini employees">
+            <div className="action-icon-mini"><FaUserFriends /></div>
+            <span>Employees</span>
+          </Link>
+          <Link to="/holidays" className="dash-action-card-mini holidays">
+            <div className="action-icon-mini"><FaUmbrellaBeach /></div>
+            <span>Holidays</span>
+          </Link>
+          <Link to="/payroll" className="dash-action-card-mini payroll">
+            <div className="action-icon-mini"><FaMoneyCheckAlt /></div>
+            <span>Payroll</span>
+          </Link>
+          <Link to="/reports/employee" className="dash-action-card-mini reports">
+            <div className="action-icon-mini"><FaFileAlt /></div>
+            <span>Employee Report</span>
+          </Link>
+          <Link to="/reports/salary" className="dash-action-card-mini salary-reports">
+            <div className="action-icon-mini"><FaChartPie /></div>
+            <span>Salary Reports</span>
+          </Link>
+          <Link to="/manage-content" className="dash-action-card-mini settings">
+            <div className="action-icon-mini"><FaCog /></div>
+            <span>Settings</span>
+          </Link>
+        </div>
       </div>
 
     </div>

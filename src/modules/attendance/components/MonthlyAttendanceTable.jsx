@@ -16,7 +16,13 @@ const statusLabelMap = {
   "-": "N/A"
 };
 
-const MonthlyAttendanceTable = ({ data = [], loading }) => {
+const MonthlyAttendanceTable = ({
+  data = [],
+  loading,
+  selectedIds = [],
+  onSelectOne,
+  onSelectAll
+}) => {
   if (loading) {
     return <div className="attendance-table">Loading...</div>;
   }
@@ -26,12 +32,22 @@ const MonthlyAttendanceTable = ({ data = [], loading }) => {
   }
 
   const days = Object.keys(data[0].days || {});
+  const isAllSelected = data.length > 0 && data.every(emp => selectedIds.includes(emp.employee_id));
 
   return (
     <div className="attendance-table monthly">
       <table>
         <thead>
           <tr>
+            {onSelectAll && (
+              <th className="checkbox-cell" style={{ width: '40px' }}>
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={(e) => onSelectAll(e.target.checked ? data.map(d => d.employee_id) : [])}
+                />
+              </th>
+            )}
             <th>#</th>
             <th>Employee</th>
             <th>Department</th>
@@ -62,47 +78,59 @@ const MonthlyAttendanceTable = ({ data = [], loading }) => {
         </thead>
 
         <tbody>
-          {data.map((emp, index) => (
-            <tr key={emp.employee_id || index}>
-              <td>{index + 1}</td>
-
-              <td>
-                <div className="emp-name">{emp.name}</div>
-                <div className="emp-code">{emp.employee_code}</div>
-              </td>
-
-              <td>{emp.department}</td>
-              <td>{emp.shift}</td>
-
-              {/* DAY CELLS */}
-              {days.map(day => {
-                const value = emp.days[day];
-                return (
-                  <td
-                    key={day}
-                    className={`day-cell ${statusClassMap[value] || ""}`}
-                    title={statusLabelMap[value] || "Unknown"}
-                  >
-                    {value}
+          {data.map((emp, index) => {
+            const isSelected = selectedIds.includes(emp.employee_id);
+            return (
+              <tr key={emp.employee_id || index} className={isSelected ? 'row-selected' : ''}>
+                {onSelectOne && (
+                  <td className="checkbox-cell">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onSelectOne(emp.employee_id)}
+                    />
                   </td>
-                );
-              })}
+                )}
+                <td>{index + 1}</td>
 
-              {/* TOTALS */}
-              <td className="total-present" title="Total Present Days">
-                {emp.totals.present}
-              </td>
-              <td className="total-absent" title="Total Absent Days">
-                {emp.totals.absent}
-              </td>
-              <td className="total-unmarked" title="Total Unmarked Days">
-                {emp.totals.unmarked}
-              </td>
-              <td className="total-holiday" title="Total Holidays">
-                {emp.totals.holiday}
-              </td>
-            </tr>
-          ))}
+                <td>
+                  <div className="emp-name">{emp.name}</div>
+                  <div className="emp-code">{emp.employee_code}</div>
+                </td>
+
+                <td>{emp.department}</td>
+                <td>{emp.shift}</td>
+
+                {/* DAY CELLS */}
+                {days.map(day => {
+                  const value = emp.days[day];
+                  return (
+                    <td
+                      key={day}
+                      className={`day-cell ${statusClassMap[value] || ""}`}
+                      title={statusLabelMap[value] || "Unknown"}
+                    >
+                      {value}
+                    </td>
+                  );
+                })}
+
+                {/* TOTALS */}
+                <td className="total-present" title="Total Present Days">
+                  {emp.totals.present}
+                </td>
+                <td className="total-absent" title="Total Absent Days">
+                  {emp.totals.absent}
+                </td>
+                <td className="total-unmarked" title="Total Unmarked Days">
+                  {emp.totals.unmarked}
+                </td>
+                <td className="total-holiday" title="Total Holidays">
+                  {emp.totals.holiday}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

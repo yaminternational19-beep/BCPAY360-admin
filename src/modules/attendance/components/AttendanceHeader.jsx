@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import "../../../styles/Attendance.css";
 import ExportActions from "./ExportActions";
 import MonthlyAttendanceForm from "./MonthlyAttendanceForm";
-import { getBranches, getDepartments, getShifts } from "../../../api/master.api";
+import { getDepartments, getShifts } from "../../../api/master.api";
+import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 
 const AttendanceHeader = ({
   viewType,          // DAILY | HISTORY
@@ -23,26 +24,29 @@ const AttendanceHeader = ({
   /* COMMON */
   onBack,
 
+
   /* FILTERS */
   filters,
-  onFilterChange
+  onFilterChange,
+  isExportDisabled = false
 }) => {
-  const [branchList, setBranchList] = useState([]);
+  const { branches: branchList, selectedBranch, changeBranch, isSingleBranch } = useBranch();
   const [departmentList, setDepartmentList] = useState([]);
   const [shiftList, setShiftList] = useState([]);
 
-  // Fetch branches on mount
+  // Sync selected branch to filters
   useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const res = await getBranches();
-        setBranchList(res?.data || res || []);
-      } catch (error) {
-        console.error("Failed to fetch branches:", error);
-      }
-    };
-    fetchBranches();
-  }, []);
+    if (selectedBranch) {
+      onFilterChange({ ...filters, branchId: selectedBranch });
+    }
+  }, [selectedBranch]);
+
+  // Sync filter changes back to hook (if user changed it manually)
+  useEffect(() => {
+    if (filters.branchId && filters.branchId !== selectedBranch) {
+      changeBranch(filters.branchId);
+    }
+  }, [filters.branchId, selectedBranch, changeBranch]);
 
   // Fetch Departments & Shifts when branch changes
   useEffect(() => {
@@ -116,18 +120,21 @@ const AttendanceHeader = ({
               className="filter-input"
             />
 
-            <select
-              value={filters.branchId}
-              onChange={handleBranchChange}
-              className="filter-select"
-            >
-              <option value="">All Branches</option>
-              {branchList.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.branch_name}
-                </option>
-              ))}
-            </select>
+            {/* Hide Branch Selector if Single Branch Mode */}
+            {!isSingleBranch && (
+              <select
+                value={filters.branchId}
+                onChange={handleBranchChange}
+                className="filter-select"
+              >
+                <option value="">All Branches</option>
+                {branchList.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.branch_name}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <select
               value={filters.departmentId}
@@ -184,7 +191,7 @@ const AttendanceHeader = ({
             </button>
 
             <div className="header-divider" />
-            <ExportActions context="DAILY" onExport={onExport} />
+            <ExportActions context="DAILY" onExport={onExport} disabled={isExportDisabled} />
           </div>
         )}
 
@@ -203,18 +210,21 @@ const AttendanceHeader = ({
 
             <MonthlyAttendanceForm value={monthRange} onChange={onMonthChange} />
 
-            <select
-              value={filters.branchId}
-              onChange={handleBranchChange}
-              className="filter-select"
-            >
-              <option value="">All Branches</option>
-              {branchList.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.branch_name}
-                </option>
-              ))}
-            </select>
+            {/* Hide Branch Selector if Single Branch Mode */}
+            {!isSingleBranch && (
+              <select
+                value={filters.branchId}
+                onChange={handleBranchChange}
+                className="filter-select"
+              >
+                <option value="">All Branches</option>
+                {branchList.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.branch_name}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <select
               value={filters.departmentId}
@@ -257,7 +267,7 @@ const AttendanceHeader = ({
             </button>
 
             <div className="header-divider" />
-            <ExportActions context="MONTHLY" onExport={onExport} />
+            <ExportActions context="MONTHLY" onExport={onExport} disabled={isExportDisabled} />
           </div>
         )}
 
@@ -292,4 +302,3 @@ const AttendanceHeader = ({
 };
 
 export default AttendanceHeader;
-

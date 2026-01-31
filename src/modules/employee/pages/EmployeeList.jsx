@@ -11,19 +11,26 @@ import {
   activateEmployeeById,
   deleteEmployeeById,
 } from "../../../api/employees.api";
+
 import {
-  getBranches,
   getDepartments,
   getDesignations,
   getShifts,
   getEmployeeTypes
 } from "../../../api/master.api";
-import { Search, Download, Filter, RotateCcw } from "lucide-react";
+import { Search, Download, Filter, RotateCcw, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { useBranch } from "../../../hooks/useBranch"; // Import Hook
+import NoBranchState from "../../../components/NoBranchState"; // Import Empty State
+import { exportEmployeesExcel, exportEmployeesPDF } from "../../../utils/export/exportEmployees"; // Export Utils
+
 
 const EmployeeListPage = () => {
   const toast = useToast();
   const user = JSON.parse(localStorage.getItem("auth_user"));
   const isCompanyAdmin = user?.role === "COMPANY_ADMIN";
+
+  // Use Branch Hook
+  const { branches, selectedBranch, changeBranch, isSingleBranch, canProceed, isLoading: branchLoading } = useBranch();
 
   // Data State
   const [employees, setEmployees] = useState([]);
@@ -49,7 +56,6 @@ const EmployeeListPage = () => {
   const pageSize = 20;
 
   // Master Data Options
-  const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [shifts, setShifts] = useState([]);
@@ -62,11 +68,22 @@ const EmployeeListPage = () => {
   /* ===================================================================================
      INITIAL LOAD
      =================================================================================== */
+
+  // Sync selected branch to filters
   useEffect(() => {
-    getBranches()
-      .then(res => setBranches(Array.isArray(res) ? res : res.data || []))
-      .catch(err => console.error("Failed to load branches", err));
-  }, []);
+    if (selectedBranch) {
+      setBranchId(selectedBranch);
+    }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    // If user changes branch manually in UI (for multi-branch)
+    if (branchId && branchId !== selectedBranch) {
+      changeBranch(branchId);
+    }
+  }, [branchId, selectedBranch, changeBranch]);
+
+
 
   /* ===================================================================================
      CASCADING LOGIC & RESET
@@ -169,6 +186,8 @@ const EmployeeListPage = () => {
     setSelectedIds([]);
   }, [page]);
 
+
+
   /* ===================================================================================
      ACTION HANDLERS
      =================================================================================== */
@@ -183,6 +202,30 @@ const EmployeeListPage = () => {
     setSortBy("employee_code");
     setPage(1);
     setSelectedIds([]);
+  };
+
+  const getExportData = () => {
+    // If items are selected, export ONLY selected
+    if (selectedIds.length > 0) {
+      return employees.filter(emp => selectedIds.includes(emp.id));
+    }
+    // If nothing selected, export ALL (current view)
+    // Note: Ideally this should fetch ALL from backend if pagination is active, 
+    // but for now we export current page/view to match "what is visible" per requirements or basic implementation.
+    // However, user said "Export only the selected records" when selected.
+    return employees;
+  };
+
+  const handleExportExcel = () => {
+    if (selectedIds.length === 0) return toast.error("Please select employees to export");
+    exportEmployeesExcel(getExportData(), `Employees_Branch_${branchId || "All"}`);
+    setShowExportMenu(false);
+  };
+
+  const handleExportPDF = () => {
+    if (selectedIds.length === 0) return toast.error("Please select employees to export");
+    exportEmployeesPDF(getExportData(), `Employees_Branch_${branchId || "All"}`);
+    setShowExportMenu(false);
   };
 
   const handleSave = async (payload) => {
@@ -275,6 +318,9 @@ const EmployeeListPage = () => {
     inactive: status === "" ? employees.filter(e => String(e.employee_status).toUpperCase() !== "ACTIVE").length : (status === "INACTIVE" ? total : 0)
   }), [employees, total, status]);
 
+  if (branchLoading) return <div className="p-4">Loading branch data...</div>;
+  if (!canProceed) return <NoBranchState moduleName="Employees" />;
+
   return (
     <div className="employee-panel">
       {/* HEADER */}
@@ -310,10 +356,12 @@ const EmployeeListPage = () => {
               />
             </div>
 
-            <select value={branchId} onChange={e => setBranchId(e.target.value)}>
-              <option value="">All Branches</option>
-              {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
-            </select>
+            {!isSingleBranch && (
+              <select value={branchId} onChange={e => setBranchId(e.target.value)}>
+                <option value="">All Branches</option>
+                {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
+              </select>
+            )}
 
             <select value={deptId} onChange={e => setDeptId(e.target.value)} disabled={!branchId}>
               <option value="">All Departments</option>
@@ -351,9 +399,40 @@ const EmployeeListPage = () => {
               <button className="btn-reset" onClick={handleClearFilters} title="Reset All Filters">
                 <RotateCcw size={14} /> Clear
               </button>
-              <button className="btn-export-new" onClick={handleClearFilters} title="Export Employees">
-                <Download size={14} /> Export
-              </button>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  className="btn-export-new"
+                  onClick={handleExportExcel}
+                  title="Export to Excel"
+                  disabled={selectedIds.length === 0}
+                  style={{
+                    opacity: selectedIds.length === 0 ? 0.6 : 1,
+                    cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
+                    backgroundColor: '#10b981', // Green for Excel
+                    borderColor: '#10b981',
+                    color: 'white'
+                  }}
+                >
+                  <FileSpreadsheet size={14} /> Excel
+                </button>
+
+                <button
+                  className="btn-export-new"
+                  onClick={handleExportPDF}
+                  title="Export to PDF"
+                  disabled={selectedIds.length === 0}
+                  style={{
+                    opacity: selectedIds.length === 0 ? 0.6 : 1,
+                    cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
+                    backgroundColor: '#ef4444', // Red for PDF
+                    borderColor: '#ef4444',
+                    color: 'white'
+                  }}
+                >
+                  <FileText size={14} /> PDF
+                </button>
+              </div>
             </div>
           </div>
         </div>
