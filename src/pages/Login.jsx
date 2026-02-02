@@ -64,7 +64,7 @@ export default function Login({ onLogin }) {
         const data = await res.json();
         if (!ignore) setCompanies(data);
       } catch (e) {
-        console.error("Company load failed");
+        // silenced
       }
     };
 
@@ -292,7 +292,7 @@ export default function Login({ onLogin }) {
      UI - ROLE SELECTION
   ============================= */
 
-  
+
   if (step === "ROLE") {
     return (
       <div className="login-root">

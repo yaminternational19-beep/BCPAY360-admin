@@ -96,7 +96,7 @@ const EmployeeFormsPage = () => {
                 setDepartments([]);
             }
         } catch (error) {
-            console.error("Error fetching master data:", error);
+            alert("Error fetching master data: " + error.message);
         }
     };
 
@@ -121,7 +121,7 @@ const EmployeeFormsPage = () => {
                 params.month = MONTH_MAP[monthVal] || parseInt(monthVal);
 
                 if (!params.month || isNaN(params.month)) {
-                    console.error("Invalid month:", monthVal);
+                    alert(`Invalid month selected: ${monthVal}`);
                     return;
                 }
             } else if (selectedForm.periodType === "HALF_YEAR") {
@@ -135,7 +135,7 @@ const EmployeeFormsPage = () => {
             setSummary(response.summary || null);
             setSelectedIds(new Set());
         } catch (error) {
-            console.error("Error fetching form data:", error);
+            alert("Error fetching form data: " + error.message);
         } finally {
             setLoading(false);
         }
@@ -224,8 +224,7 @@ const EmployeeFormsPage = () => {
             await uploadEmployeeForm(uploadData);
             fetchData();
         } catch (error) {
-            console.error("Upload failed:", error);
-            alert("Upload failed. Please try again.");
+            alert("Upload failed: " + error.message);
         } finally {
             setUploading(false);
         }
@@ -257,8 +256,7 @@ const EmployeeFormsPage = () => {
             await replaceEmployeeForm(replaceData);
             fetchData(); // Refresh list
         } catch (error) {
-            console.error("Replace failed:", error);
-            alert("Replace failed. Please try again.");
+            alert("Replace failed: " + error.message);
         } finally {
             setUploading(false);
         }
@@ -288,8 +286,7 @@ const EmployeeFormsPage = () => {
             await deleteEmployeeForm(deleteData);
             fetchData(); // Refresh list
         } catch (error) {
-            console.error("Delete failed:", error);
-            alert("Delete failed. Please try again.");
+            alert("Delete failed: " + error.message);
         } finally {
             setUploading(false);
         }

@@ -31,7 +31,7 @@ export default function EmployeeTypeList({ user }) {
       const data = await getBranches();
       setBranches(data || []);
     } catch (error) {
-      console.error(error);
+      alert("Failed to load employee types: " + error.message);
     }
   };
 
@@ -64,7 +64,7 @@ export default function EmployeeTypeList({ user }) {
       setNewType("");
       loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      console.error("Failed to create employee type:", error);
+      alert("Failed to create employee type: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function EmployeeTypeList({ user }) {
       setEditingName("");
       loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      console.error("Failed to update employee type:", error);
+      alert("Failed to update employee type: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export default function EmployeeTypeList({ user }) {
       await apiDeleteEmployeeType(id);
       loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      console.error("Failed to delete employee type:", error);
+      alert("Failed to delete employee type: " + error.message);
     }
   };
 

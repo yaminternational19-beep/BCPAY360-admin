@@ -18,7 +18,6 @@ export const wrapApiCall = async (apiCall) => {
         const response = await apiCall();
         return await handleApiError(response);
     } catch (error) {
-        console.error("API Call Error:", error);
         throw error;
     }
 };

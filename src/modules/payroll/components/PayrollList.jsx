@@ -67,7 +67,7 @@ const PayrollList = () => {
       });
       setPayrollData(initialData);
     } catch (err) {
-      console.error(err);
+      alert("Failed to load employees: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ const PayrollList = () => {
       const branches = await getBranches();
       setBranchList(branches);
     } catch (err) {
-      console.error("Master data fetch failed:", err);
+      alert("Master data fetch failed: " + err.message);
     }
   };
 
@@ -90,7 +90,7 @@ const PayrollList = () => {
           const depts = await getDepartments(filterBranchId);
           setDepartmentList(depts || []);
         } catch (err) {
-          console.error("Failed to fetch departments:", err);
+          alert("Failed to fetch departments: " + err.message);
           setDepartmentList([]);
         }
       })();
@@ -219,8 +219,7 @@ const PayrollList = () => {
       await generatePayrollBatch(payload);
       navigate(`/payroll/confirm?month=${payMonth}&year=${payYear}`);
     } catch (err) {
-      console.error(err);
-      alert("Failed to generate payroll");
+      alert("Failed to generate payroll: " + err.message);
     }
   };
 

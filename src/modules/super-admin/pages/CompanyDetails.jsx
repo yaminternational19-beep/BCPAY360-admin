@@ -1,204 +1,189 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { API_BASE } from "../../../utils/apiBase";
+import { useParams, useNavigate } from "react-router-dom";
+import { superAdminApi } from "../../../api/superAdmin.api";
+import { Badge, Button, Loader } from "../../module/components";
 import StatCard from "../components/StatCard";
+import { FaEdit, FaCheck, FaTimes, FaPowerOff, FaUserShield } from "react-icons/fa";
 import "../styles/CompanyDetails.css";
+import "../styles/superadmin.css";
 
 export default function CompanyDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [summary, setSummary] = useState(null);
   const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const [editingName, setEditingName] = useState(false);
   const [companyName, setCompanyName] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const tokenHeader = {
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-    "Content-Type": "application/json",
-  };
-
-  /* =========================
-     LOAD COMPANY SUMMARY
-  ========================== */
-  const loadSummary = () => {
-    fetch(`${API_BASE}/api/super-admin/companies/${id}/summary`, {
-      headers: tokenHeader,
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to load summary");
-        return res.json();
-      })
-      .then(data => {
-        setSummary(data);
-        setCompanyName(data.company.name);
-      })
-      .catch(console.error);
-  };
-
-  /* =========================
-     LOAD COMPANY ADMINS
-  ========================== */
-  const loadAdmins = () => {
-    fetch(`${API_BASE}/api/super-admin/companies/${id}/admins`, {
-      headers: tokenHeader,
-    })
-      .then(res => res.json())
-      .then(setAdmins)
-      .catch(console.error);
-  };
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    loadSummary();
-    loadAdmins();
+    fetchData();
   }, [id]);
 
-  /* =========================
-     UPDATE COMPANY NAME
-  ========================== */
-  const saveCompanyName = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    await fetch(`${API_BASE}/api/super-admin/companies/${id}`, {
-      method: "PUT",
-      headers: tokenHeader,
-      body: JSON.stringify({ name: companyName }),
-    });
-    setEditingName(false);
-    setLoading(false);
-    loadSummary();
+    try {
+      const [summaryData, adminsData] = await Promise.all([
+        superAdminApi.getCompanySummary(id),
+        superAdminApi.getCompanyAdmins(id)
+      ]);
+      setSummary(summaryData);
+      setAdmins(adminsData || []);
+      setCompanyName(summaryData.company.name);
+    } catch (error) {
+      // silenced error
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* =========================
-     ACTIVATE / DEACTIVATE COMPANY
-  ========================== */
+  const saveCompanyName = async () => {
+    setIsSaving(true);
+    try {
+      await superAdminApi.updateCompany(id, { name: companyName });
+      setEditingName(false);
+      await fetchData();
+    } catch (error) {
+      alert("Failed to update name: " + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const toggleCompanyStatus = async () => {
     const nextStatus = summary.company.is_active ? 0 : 1;
+    if (!window.confirm(nextStatus ? "Activate this company?" : "Deactivate this company? Admins & HR will be blocked.")) return;
 
-    if (
-      !window.confirm(
-        nextStatus
-          ? "Activate this company?"
-          : "Deactivate this company? Admins & HR will be blocked."
-      )
-    )
-      return;
-
-    await fetch(`${API_BASE}/api/super-admin/companies/${id}/status`, {
-      method: "PATCH",
-      headers: tokenHeader,
-      body: JSON.stringify({ is_active: nextStatus }),
-    });
-
-    loadSummary();
+    setDetailLoading(true);
+    try {
+      await superAdminApi.toggleCompanyStatus(id, nextStatus);
+      await fetchData();
+    } catch (error) {
+      alert("Error toggling status: " + error.message);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
-  /* =========================
-     DEACTIVATE / ACTIVATE ADMIN
-  ========================== */
   const toggleAdminStatus = async (adminId, isActive) => {
-    await fetch(`${API_BASE}/api/super-admin/company-admins/${adminId}/status`, {
-      method: "PATCH",
-      headers: tokenHeader,
-      body: JSON.stringify({ is_active: isActive ? 0 : 1 }),
-    });
-    loadAdmins();
+    setDetailLoading(true);
+    try {
+      await superAdminApi.toggleAdminStatus(adminId, !isActive);
+      // Refresh admins list
+      const updatedAdmins = await superAdminApi.getCompanyAdmins(id);
+      setAdmins(updatedAdmins || []);
+    } catch (error) {
+      alert("Error toggling admin status: " + error.message);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
-  if (!summary) return <p>Loading company details...</p>;
+  if (loading) return (
+    <div className="super-admin-page" style={{ height: "400px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Loader />
+    </div>
+  );
+
+  if (!summary) return <div className="sa-empty-state">Company not found.</div>;
 
   const { company } = summary;
 
   return (
+    <div className="super-admin-page">
+      {detailLoading && <Loader overlay />}
 
-    <div className="super-admin-content">
-      <div className="company-details">
-      {/* ================= COMPANY HEADER ================= */}
-      <div className="company-header">
-        {editingName ? (
-          <>
-            <input
-              value={companyName}
-              onChange={e => setCompanyName(e.target.value)}
-            />
-            <button onClick={saveCompanyName} disabled={loading}>
-              Save
-            </button>
-            <button onClick={() => setEditingName(false)}>Cancel</button>
-          </>
-        ) : (
-          <>
-            <h2>{company.name}</h2>
-            <button onClick={() => setEditingName(true)}>Edit</button>
-          </>
-        )}
-
-        <span
-          className={`status-badge ${
-            company.is_active ? "active" : "inactive"
-          }`}
-        >
-          {company.is_active ? "Active" : "Inactive"}
-        </span>
-
-        <button
-          className={company.is_active ? "danger" : "success"}
-          onClick={toggleCompanyStatus}
-        >
-          {company.is_active ? "Deactivate Company" : "Activate Company"}
-        </button>
-      </div>
-
-      {/* ================= STATS ================= */}
-      <div className="stat-grid">
-        <StatCard label="Admins" value={summary.adminCount} />
-        <StatCard label="Departments" value={summary.departmentCount} />
-        <StatCard label="Employees" value={summary.employeeCount} />
-      </div>
-
-      {/* ================= ADMINS LIST ================= */}
-      <h3>Company Admins</h3>
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {admins.map(admin => (
-            <tr key={admin.id}>
-              <td>{admin.email}</td>
-              <td>
-                {admin.is_active ? (
-                  <span className="active">Active</span>
-                ) : (
-                  <span className="inactive">Inactive</span>
-                )}
-              </td>
-              <td>
-                <button
-                  onClick={() =>
-                    toggleAdminStatus(admin.id, admin.is_active)
-                  }
-                >
-                  {admin.is_active ? "Deactivate" : "Activate"}
-                </button>
-              </td>
-            </tr>
-          ))}
-          {!admins.length && (
-            <tr>
-              <td colSpan="3">No admins found</td>
-            </tr>
+      <div className="sa-dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+        <div>
+          <p style={{ marginBottom: "8px" }}>Company Profile</p>
+          {editingName ? (
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <input
+                className="sa-input"
+                style={{ margin: 0, fontSize: "24px", fontWeight: "800", width: "400px" }}
+                value={companyName}
+                onChange={e => setCompanyName(e.target.value)}
+              />
+              <Button variant="primary" size="small" onClick={saveCompanyName} isLoading={isSaving}><FaCheck /></Button>
+              <Button variant="ghost" size="small" onClick={() => setEditingName(false)}><FaTimes /></Button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <h1 style={{ margin: 0 }}>{company.name}</h1>
+              <Button variant="ghost" size="small" onClick={() => setEditingName(true)} style={{ color: "var(--muted)" }}><FaEdit /></Button>
+            </div>
           )}
-        </tbody>
-      </table>
-    </div>
-    </div>
+        </div>
 
-    
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <Badge variant={company.is_active ? "success" : "neutral"} style={{ padding: "6px 16px", borderRadius: "8px" }}>
+            {company.is_active ? "FULLY ACTIVE" : "DEACTIVATED"}
+          </Badge>
+          <Button
+            variant={company.is_active ? "danger" : "primary"}
+            startIcon={<FaPowerOff />}
+            onClick={toggleCompanyStatus}
+          >
+            {company.is_active ? "Deactivate" : "Activate"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="sa-stat-grid">
+        <StatCard label="Organization Admins" value={summary.adminCount || 0} />
+        <StatCard label="Total Departments" value={summary.departmentCount || 0} />
+        <StatCard label="Total Employees" value={summary.employeeCount || 0} />
+      </div>
+
+      <div className="sa-glass-card sa-table-container">
+        <div style={{ padding: "20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h3 style={{ margin: 0, fontWeight: "700", display: "flex", alignItems: "center", gap: "10px" }}>
+            <FaUserShield style={{ color: "var(--primary)" }} /> Access Control (Admins)
+          </h3>
+          <Button variant="primary" size="small" onClick={() => navigate("/super-admin/create-admin")}>Add New Admin</Button>
+        </div>
+        <table className="sa-table">
+          <thead>
+            <tr>
+              <th>Administrator Email</th>
+              <th>Account Status</th>
+              <th style={{ textAlign: "right" }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {admins.map(admin => (
+              <tr key={admin.id}>
+                <td style={{ fontWeight: "600" }}>{admin.email}</td>
+                <td>
+                  <span className={`sa-badge sa-badge-${admin.is_active ? "success" : "danger"}`}>
+                    {admin.is_active ? "Active" : "Disabled"}
+                  </span>
+                </td>
+                <td style={{ textAlign: "right" }}>
+                  <Button
+                    variant="ghost"
+                    size="small"
+                    onClick={() => toggleAdminStatus(admin.id, admin.is_active)}
+                    style={{ color: admin.is_active ? "var(--danger)" : "var(--success)" }}
+                  >
+                    {admin.is_active ? "Disable Access" : "Grant Access"}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+            {!admins.length && (
+              <tr>
+                <td colSpan="3" className="sa-empty-state">No administrators linked to this organization.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { API_BASE } from "../../../utils/apiBase";
+import { superAdminApi } from "../../../api/superAdmin.api";
+import { Loader } from "../../module/components";
 import "../../../styles/Forms.css";
+import "../styles/superadmin.css";
 
 export default function CreateCompanyAdmin() {
   const [companies, setCompanies] = useState([]);
@@ -10,90 +12,113 @@ export default function CreateCompanyAdmin() {
     password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👈 NEW
+  const [fetchingCompanies, setFetchingCompanies] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/companies`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then(res => res.json())
-      .then(setCompanies);
+    fetchCompanies();
   }, []);
 
-  const submit = async e => {
-    e.preventDefault();
-    if (!form.company_id || !form.email || !form.password)
-      return alert("All fields required");
-
-    setLoading(true);
-
-    const res = await fetch(`${API_BASE}/api/company-admins`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify(form),
-    });
-
-    setLoading(false);
-
-    if (res.ok) {
-      alert("Admin created");
-      setForm({ company_id: "", email: "", password: "" });
-      setShowPassword(false);
-    } else {
-      alert("Failed to create admin");
+  const fetchCompanies = async () => {
+    setFetchingCompanies(true);
+    try {
+      const data = await superAdminApi.getCompanies();
+      setCompanies(data || []);
+    } catch (error) {
+      alert("Failed to fetch companies: " + error.message);
+    } finally {
+      setFetchingCompanies(false);
     }
   };
 
- return (
-    <form className="card fade-in" onSubmit={submit}>
-      <h3 className="form-title">Create Company Admin</h3>
+  const submit = async e => {
+    e.preventDefault();
+    if (!form.company_id || !form.email || !form.password) {
+      return setMessage({ type: "error", text: "Please fill in all fields" });
+    }
 
-      <select
-        className="form-input"
-        value={form.company_id}
-        onChange={e => setForm({ ...form, company_id: e.target.value })}
-      >
-        <option value="">Select Company</option>
-        {companies.map(c => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+    setLoading(true);
+    setMessage({ type: "", text: "" });
 
-      <input
-        className="form-input"
-        placeholder="Admin Email"
-        value={form.email}
-        onChange={e => setForm({ ...form, email: e.target.value })}
-      />
+    try {
+      await superAdminApi.createCompanyAdmin(form);
+      setMessage({ type: "success", text: "Company Admin created successfully!" });
+      setForm({ company_id: "", email: "", password: "" });
+      setShowPassword(false);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message || "Failed to create admin" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      {/* 🔐 PASSWORD WITH EYE TOGGLE (unchanged) */}
-      <div className="password-field">
-        <input
-          className="form-input"
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={form.password}
-          onChange={e => setForm({ ...form, password: e.target.value })}
-        />
-
-        <button
-          type="button"
-          className="eye-toggle"
-          onClick={() => setShowPassword(p => !p)}
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? "🙈" : "👁️"}
-        </button>
+  return (
+    <div className="super-admin-page">
+      <div className="sa-dashboard-header">
+        <h1>Create Company Admin</h1>
+        <p>Assign a master administrator to a specific organization</p>
       </div>
 
-      <button className="form-button" disabled={loading}>
-        {loading ? "Creating..." : "Create Admin"}
-      </button>
-    </form>
+      <form className="sa-glass-card sa-form-container" onSubmit={submit}>
+        <h3 style={{ marginBottom: "24px", fontWeight: "700" }}>Admin Credentials</h3>
+
+        {message.text && (
+          <div className={`sa-badge sa-badge-${message.type === 'success' ? 'success' : 'danger'}`} style={{ width: "100%", padding: "12px", marginBottom: "20px", borderRadius: "8px" }}>
+            {message.text}
+          </div>
+        )}
+
+        <div className="sa-form-group">
+          <label className="section-label">Target Organization</label>
+          <select
+            className="sa-input"
+            value={form.company_id}
+            onChange={e => setForm({ ...form, company_id: e.target.value })}
+            disabled={fetchingCompanies}
+          >
+            <option value="">{fetchingCompanies ? "Loading companies..." : "Select Company"}</option>
+            {companies.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sa-form-group">
+          <label className="section-label">Administrator Email</label>
+          <input
+            className="sa-input"
+            type="email"
+            placeholder="admin@company.com"
+            value={form.email}
+            onChange={e => setForm({ ...form, email: e.target.value })}
+          />
+        </div>
+
+        <div className="sa-form-group" style={{ position: "relative" }}>
+          <label className="section-label">Secure Password</label>
+          <input
+            className="sa-input"
+            type={showPassword ? "text" : "password"}
+            placeholder="••••••••"
+            value={form.password}
+            onChange={e => setForm({ ...form, password: e.target.value })}
+          />
+          <button
+            type="button"
+            style={{ position: "absolute", right: "12px", top: "34px", background: "none", border: "none", cursor: "pointer", fontSize: "18px" }}
+            onClick={() => setShowPassword(p => !p)}
+          >
+            {showPassword ? "🙈" : "👁️"}
+          </button>
+        </div>
+
+        <button className="sa-btn sa-btn-primary" style={{ width: "100%", marginTop: "12px" }} disabled={loading}>
+          {loading ? <Loader size="small" /> : "Link Admin to Company"}
+        </button>
+      </form>
+    </div>
   );
 }

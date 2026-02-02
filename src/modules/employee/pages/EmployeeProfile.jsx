@@ -114,7 +114,6 @@ const EmployeeProfile = () => {
         }, {})
       });
     } catch (err) {
-      console.error("Profile load error:", err);
       setError(err.message || "Unable to load employee details");
     } finally {
       setLoading(false);

@@ -240,7 +240,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         }
       })
       .catch((err) => {
-        console.error("Failed to get employee code", err.message);
+        toast.error("Code Generation Error: " + err.message);
       });
   }, [employeeForm.branch_id, isEdit]);
 
@@ -261,7 +261,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         setCompanyForms(Array.isArray(res) ? res : res.data || []);
       })
       .catch((err) => {
-        console.error("Failed to load company forms", err);
+        toast.error("Forms Load Error: " + err.message);
         setCompanyForms([]);
       });
   }, []);
@@ -279,7 +279,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         }
       })
       .catch((err) => {
-        console.error("Failed to load branches", err);
+        toast.error("Branch Load Error: " + err.message);
         if (mounted) setBranches([]);
       });
 
@@ -303,7 +303,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         setDepartments(list);
       })
       .catch((err) => {
-        console.error("Failed to load departments", err);
+        toast.error("Dept Load Error: " + err.message);
         setDepartments([]);
       });
   }, [employeeForm.branch_id]);
@@ -325,7 +325,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         setDesignations(list);
       })
       .catch((err) => {
-        console.error("Failed to load designations", err);
+        toast.error("Desig Load Error: " + err.message);
         setDesignations([]);
       });
   }, [employeeForm.branch_id, employeeForm.department_id]);
@@ -345,7 +345,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         setEmployeeTypes(list);
       })
       .catch((err) => {
-        console.error("Failed to load employee types", err);
+        toast.error("EmpType Load Error: " + err.message);
         setEmployeeTypes([]);
       });
 
@@ -355,7 +355,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         setShifts(list);
       })
       .catch((err) => {
-        console.error("Failed to load shifts", err);
+        toast.error("Shifts Load Error: " + err.message);
         setShifts([]);
       });
   }, [employeeForm.branch_id]);
@@ -587,18 +587,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         }
       });
 
-      console.log("🚀 Submitting FormData for Employee...");
-      console.log("📦 documentsForm.files:", documentsForm.files);
-      console.log("📦 documentsMeta:", documentsMeta);
-
-      for (let pair of formData.entries()) {
-        console.log("🧾 FormData:", pair[0], pair[1]);
-      }
-
       await onSave(formData);
       // toast is handled in parent handleSave or can be handled here if we await it 
     } catch (err) {
-      console.error("Submit error:", err);
       toast.error(err.message || "Failed to save employee");
     } finally {
       setIsSaving(false);

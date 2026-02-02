@@ -65,7 +65,7 @@ export default function DepartmentDesignation({ user }) {
             const data = await getBranches();
             setBranches(data || []);
         } catch (error) {
-            console.error(error);
+            alert("Failed to load branches: " + error.message);
         }
     };
 
@@ -80,7 +80,7 @@ export default function DepartmentDesignation({ user }) {
             const data = await getDepartments(branchId);
             setDepartments(data || []);
         } catch (error) {
-            console.error(error);
+            alert("Failed to load departments: " + error.message);
         }
     };
 
@@ -94,7 +94,7 @@ export default function DepartmentDesignation({ user }) {
             const data = await getDesignations(branchId, dept.id);
             setDesignations(data || []);
         } catch (error) {
-            console.error(error);
+            alert("Failed to load designations: " + error.message);
         }
     };
 

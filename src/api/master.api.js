@@ -215,6 +215,8 @@ export const fetchMonthlyAttendance = ({
 
 
 
+
+
 /* ===================================================================================
    LEAVE MASTER (ADMIN)
    =================================================================================== */
@@ -356,10 +358,10 @@ export const deleteGovernmentForm = (id) =>
   });
 
 
-  /* ===================================================================================
-   HOLIDAYS (ADMIN)
-   Base: /api/admin/holidays/branch-holidays
-   =================================================================================== */
+/* ===================================================================================
+ HOLIDAYS (ADMIN)
+ Base: /api/admin/holidays/branch-holidays
+ =================================================================================== */
 
 
 export const getBranchHolidays = (params) =>
@@ -387,3 +389,95 @@ export const deleteBranchHolidays = (data) =>
     method: "DELETE",
     body: JSON.stringify(data)
   });
+
+
+
+
+
+/* ===================================================================================
+   COMPANY PAGES / CMS (ADMIN)
+   Base: /api/admin/pages
+   =================================================================================== */
+
+/**
+ * 🔹 Get all pages (Cards view)
+ * Auto-creates default pages if missing
+ */
+export const getCompanyPages = () =>
+  api("/api/admin/content/pages");
+
+
+/**
+ * 🔹 Get single page by slug (Edit page)
+ */
+export const getCompanyPageBySlug = (slug) =>
+  api(`/api/admin/content/pages/${slug}`);
+
+
+/**
+ * 🔹 Create new custom page
+ * Payload: { title }
+ */
+export const createCompanyPage = (data) =>
+  api("/api/admin/content/pages", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+
+/**
+ * 🔹 Update page content
+ * Payload: { title, content, content_type }
+ */
+export const updateCompanyPage = (id, data) =>
+  api(`/api/admin/content/pages/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+
+/**
+ * 🔹 Delete custom page (soft delete)
+ * System pages are protected by backend
+ */
+export const deleteCompanyPage = (id) =>
+  api(`/api/admin/content/pages/${id}`, {
+    method: "DELETE",
+  });
+
+
+
+  /* ===================================================================================
+   HELP & SUPPORT (ADMIN)
+   Base: /api/admin/support
+   =================================================================================== */
+
+/**
+ * 🔹 Get all support tickets
+ * Optional query params:
+ * branch_id, status (OPEN / CLOSED), search
+ */
+export const getSupportTickets = (params = {}) =>
+  api("/api/admin/support", {
+    params
+  });
+
+
+/**
+ * 🔹 Get single support ticket (Detail view)
+ */
+export const getSupportTicketById = (ticketId) =>
+  api(`/api/admin/support/${ticketId}`);
+
+
+/**
+ * 🔹 Respond to support ticket (Auto closes ticket)
+ * Payload: { response }
+ */
+export const respondToSupportTicket = (ticketId, data) =>
+  api(`/api/admin/support/${ticketId}/respond`, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+
+

@@ -35,7 +35,7 @@ export default function HRLogin({ onLogin }) {
         const data = await res.json();
         if (!ignore) setCompanies(data);
       } catch (err) {
-        console.error("Failed to load companies", err);
+        // silenced
       }
     };
     loadCompanies();

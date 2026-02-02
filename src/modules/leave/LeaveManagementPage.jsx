@@ -58,7 +58,7 @@ export default function LeaveManagementPage() {
           const res = await getDepartments(filters.branchId);
           setDepartmentList(res?.data || res || []);
         } catch (err) {
-          console.error("Failed to fetch departments");
+          // silenced
         }
       };
       fetchDepts();

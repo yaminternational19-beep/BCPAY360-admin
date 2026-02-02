@@ -60,7 +60,7 @@ const AttendanceHeader = ({
           setDepartmentList(deptRes?.data || deptRes || []);
           setShiftList(shiftRes?.data || shiftRes || []);
         } catch (error) {
-          console.error("Failed to fetch branch details:", error);
+          // silenced
         }
       };
       fetchData();

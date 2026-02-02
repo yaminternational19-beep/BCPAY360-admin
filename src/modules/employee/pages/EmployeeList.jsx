@@ -114,7 +114,7 @@ const EmployeeListPage = () => {
       setDepartments(Array.isArray(depts) ? depts : []);
       setShifts(Array.isArray(shfts) ? shfts : []);
       setEmployeeTypes(Array.isArray(types) ? types : []);
-    }).catch(err => console.error("Cascade Error Level 1:", err));
+    }).catch(err => toast.error("Cascade Error: " + err.message));
   }, [branchId]);
 
   // Dept -> Designations
@@ -129,7 +129,7 @@ const EmployeeListPage = () => {
 
     getDesignations(branchId, deptId)
       .then(res => setDesignations(Array.isArray(res) ? res : []))
-      .catch(err => console.error("Designations Error:", err));
+      .catch(err => toast.error("Designations Error: " + err.message));
   }, [deptId, branchId]);
 
   /* ===================================================================================

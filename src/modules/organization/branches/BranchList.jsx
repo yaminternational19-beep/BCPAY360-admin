@@ -52,7 +52,6 @@ export default function BranchList({ user }) {
         loadBranches();
       }
     } catch (error) {
-      console.error("Failed to save branch:", error);
       alert(error.message || "Failed to save branch. Please try again.");
     }
   };
@@ -73,7 +72,6 @@ export default function BranchList({ user }) {
       await toggleBranchStatus(id);
       loadBranches();
     } catch (error) {
-      console.error("Failed to update branch status:", error);
       alert("Failed to update branch status.");
     }
   };
@@ -85,7 +83,6 @@ export default function BranchList({ user }) {
       await deleteBranch(id);
       loadBranches();
     } catch (error) {
-      console.error("Failed to delete branch:", error);
       alert("Failed to delete branch.");
     }
   };

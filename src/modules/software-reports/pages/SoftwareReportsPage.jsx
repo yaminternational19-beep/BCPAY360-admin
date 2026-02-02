@@ -52,7 +52,7 @@ const SoftwareReportsPage = () => {
                     });
                 }
             } catch (error) {
-                console.error("Error fetching report metadata:", error);
+                // silenced
             } finally {
                 setFetchingMetadata(false);
             }
@@ -103,7 +103,7 @@ const SoftwareReportsPage = () => {
                 setDepartments([]);
             }
         } catch (error) {
-            console.error("Error fetching master data:", error);
+            alert("Error fetching master data: " + error.message);
         }
     };
 
@@ -128,7 +128,7 @@ const SoftwareReportsPage = () => {
                 params.month = MONTH_MAP[monthVal] || parseInt(monthVal);
 
                 if (!params.month || isNaN(params.month)) {
-                    console.error("Invalid month:", monthVal);
+                    alert(`Invalid month selected: ${monthVal}`);
                     return;
                 }
             } else if (reportMetadata.periodType === "HALF_YEAR") {
@@ -140,7 +140,7 @@ const SoftwareReportsPage = () => {
             setMissingList(response.missing || []);
             setSummary(response.summary || null);
         } catch (error) {
-            console.error("Error fetching report data:", error);
+            alert("Error fetching report data: " + error.message);
         } finally {
             setLoading(false);
         }
@@ -226,8 +226,7 @@ const SoftwareReportsPage = () => {
             await uploadEmployeeForm(uploadData);
             fetchData();
         } catch (error) {
-            console.error("Upload failed:", error);
-            alert("Upload failed. Please try again.");
+            alert("Upload failed: " + error.message);
         } finally {
             setUploading(false);
         }
@@ -259,8 +258,7 @@ const SoftwareReportsPage = () => {
             await replaceEmployeeForm(replaceData);
             fetchData();
         } catch (error) {
-            console.error("Replace failed:", error);
-            alert("Replace failed. Please try again.");
+            alert("Replace failed: " + error.message);
         } finally {
             setUploading(false);
         }
@@ -290,8 +288,7 @@ const SoftwareReportsPage = () => {
             await deleteEmployeeForm(deleteData);
             fetchData();
         } catch (error) {
-            console.error("Delete failed:", error);
-            alert("Delete failed. Please try again.");
+            alert("Delete failed: " + error.message);
         } finally {
             setUploading(false);
         }

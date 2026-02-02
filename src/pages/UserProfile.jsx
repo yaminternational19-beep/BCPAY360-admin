@@ -23,7 +23,6 @@ const UserProfile = () => {
 
     const updateProfile = () => {
         // API call → update company/admin info
-        console.log("Updating profile", profile);
     };
 
     const updatePassword = () => {
@@ -32,7 +31,6 @@ const UserProfile = () => {
             return;
         }
         // API call → update password
-        console.log("Updating password", password);
     };
 
     return (

@@ -32,7 +32,7 @@ export default function Shift({ user }) {
       const data = await getBranches();
       setBranches(data || []);
     } catch (error) {
-      console.error(error);
+      alert("Failed to load branches: " + error.message);
     }
   };
 
@@ -74,7 +74,7 @@ export default function Shift({ user }) {
       if (error.message && error.message.includes("already exists")) {
         alert(error.message);
       } else {
-        console.error("Failed to create shift:", error);
+        alert("Failed to create shift: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ export default function Shift({ user }) {
       if (error.message && error.message.includes("already exists")) {
         alert(error.message);
       } else {
-        console.error("Failed to update shift:", error);
+        alert("Failed to update shift: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -112,7 +112,7 @@ export default function Shift({ user }) {
       await apiDeleteShift(id);
       loadShifts(selectedBranch);
     } catch (error) {
-      console.error("Failed to delete shift:", error);
+      alert("Failed to delete shift: " + error.message);
     }
   };
 
@@ -121,7 +121,7 @@ export default function Shift({ user }) {
       await toggleShiftStatus(shift.id);
       loadShifts(selectedBranch);
     } catch (error) {
-      console.error("Failed to update status:", error);
+      alert("Failed to update status: " + error.message);
     }
   };
 

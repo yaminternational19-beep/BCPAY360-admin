@@ -39,8 +39,7 @@ const PayrollConfirm = () => {
       setSelected((data.employees || []).map(e => e.employee_id));
 
     } catch (err) {
-      console.error("LOAD PAYROLL ERROR:", err);
-      setError("Failed to load payroll batch");
+      setError("Failed to load payroll batch: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -117,7 +116,6 @@ const PayrollConfirm = () => {
       await loadBatch();
 
     } catch (err) {
-      console.error("CONFIRM PAYROLL ERROR:", err);
       setError(err.message || "Payroll confirmation failed");
     } finally {
       setConfirming(false);

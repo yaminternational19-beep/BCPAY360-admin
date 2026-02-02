@@ -23,23 +23,23 @@ export default function HRForm({ initialData = null, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
 
   const [form, setForm] = useState({
-  branch_id: initialData?.branch_id || "",
-  hr_code: initialData?.hr_code || "",   // ✅ ADD THIS
+    branch_id: initialData?.branch_id || "",
+    hr_code: initialData?.hr_code || "",   // ✅ ADD THIS
 
-  full_name: initialData?.full_name || "",
-  email: initialData?.email || "",
-  phone: initialData?.phone || "",
-  password: "",
+    full_name: initialData?.full_name || "",
+    email: initialData?.email || "",
+    phone: initialData?.phone || "",
+    password: "",
 
-  joining_date: initialData?.joining_date || "",
-  experience_years: initialData?.experience_years || "",
-  job_location: initialData?.job_location || "",
-  gender: initialData?.gender || "",
-  dob: initialData?.dob || "",
-  emergency_contact_name: initialData?.emergency_contact_name || "",
-  emergency_contact_number: initialData?.emergency_contact_number || "",
-  remarks: initialData?.remarks || "",
-});
+    joining_date: initialData?.joining_date || "",
+    experience_years: initialData?.experience_years || "",
+    job_location: initialData?.job_location || "",
+    gender: initialData?.gender || "",
+    dob: initialData?.dob || "",
+    emergency_contact_name: initialData?.emergency_contact_name || "",
+    emergency_contact_number: initialData?.emergency_contact_number || "",
+    remarks: initialData?.remarks || "",
+  });
 
 
   /* =========================
@@ -110,46 +110,40 @@ export default function HRForm({ initialData = null, onClose, onSuccess }) {
   ========================= */
   const submit = async () => {
     if (!validateAll()) {
-      console.log("Validation failed:", errors); // Debug: Log validation errors
       return;
     }
 
     setLoading(true);
     try {
       const payload = {
-          branch_id: Number(form.branch_id),
-          hr_code: form.hr_code.trim(),   // ✅ ADD THIS
+        branch_id: Number(form.branch_id),
+        hr_code: form.hr_code.trim(),   // ✅ ADD THIS
 
-          full_name: form.full_name.trim(),
-          email: form.email.trim().toLowerCase(),
-          phone: form.phone,
-          joining_date: form.joining_date,
+        full_name: form.full_name.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone,
+        joining_date: form.joining_date,
 
-          experience_years: form.experience_years
-            ? Number(form.experience_years)
-            : null,
-          job_location: form.job_location || null,
-          gender: form.gender || null,
-          dob: form.dob || null,
-          emergency_contact_name: form.emergency_contact_name || null,
-          emergency_contact_number: form.emergency_contact_number || null,
-          remarks: form.remarks || null,
-        };
+        experience_years: form.experience_years
+          ? Number(form.experience_years)
+          : null,
+        job_location: form.job_location || null,
+        gender: form.gender || null,
+        dob: form.dob || null,
+        emergency_contact_name: form.emergency_contact_name || null,
+        emergency_contact_number: form.emergency_contact_number || null,
+        remarks: form.remarks || null,
+      };
 
 
       if (!isEdit) payload.password = form.password;
-
-      console.log("Payload being sent:", payload); // Debug: Display the payload
-      console.log("Calling API:", isEdit ? "updateHR" : "createHR"); // Debug: Indicate which API
 
       isEdit
         ? await updateHR(initialData.id, payload)
         : await createHR(payload);
 
-      console.log("API call successful"); // Debug: Confirm success
       onSuccess?.();
     } catch (err) {
-      console.error("API Error:", err); // Debug: Log full error
       alert(err?.message || "Failed to save HR");
     } finally {
       setLoading(false);

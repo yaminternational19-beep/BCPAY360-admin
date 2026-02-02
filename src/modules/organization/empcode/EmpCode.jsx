@@ -19,7 +19,7 @@ const EmpCode = () => {
         const data = await getBranches();
         setBranches(data || []);
       } catch (err) {
-        console.error("Failed to fetch branches", err);
+        alert("Failed to fetch branches: " + err.message);
       }
     };
     fetchBranches();
@@ -51,7 +51,7 @@ const EmpCode = () => {
           setExists(false);
         }
       } catch (err) {
-        console.error("Failed to fetch employee code", err);
+        alert("Failed to fetch employee code: " + err.message);
         setEmployeeCode("");
         setExists(false);
       }
