@@ -27,7 +27,6 @@ export default function useLeaveMaster() {
 
       setLeaveTypes(res.data || []);
     } catch (err) {
-      console.error(err);
       setError(err.message || "Failed to load leave types");
     } finally {
       if (!silent) setLoading(false);

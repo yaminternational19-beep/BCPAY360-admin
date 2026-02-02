@@ -50,7 +50,7 @@ export function useBranch() {
                     }
                 }
             } catch (err) {
-                console.error("Failed to fetch branches", err);
+                // silenced
                 setBranchStatus("ERROR");
                 setCanProceed(false);
             } finally {

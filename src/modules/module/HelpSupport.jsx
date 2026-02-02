@@ -36,7 +36,7 @@ export default function HelpSupport() {
                 setBranches(response);
             }
         } catch (error) {
-            console.error("Failed to fetch branches:", error);
+            // silenced
         }
     };
 
@@ -53,7 +53,7 @@ export default function HelpSupport() {
                 setTickets(response.data || []);
             }
         } catch (error) {
-            console.error("Failed to fetch tickets:", error);
+            alert("Failed to fetch tickets: " + error.message);
         } finally {
             setLoading(false);
         }
@@ -68,7 +68,7 @@ export default function HelpSupport() {
                 setSelectedTicket(response.data);
             }
         } catch (error) {
-            console.error("Failed to fetch ticket details:", error);
+            alert("Failed to fetch ticket details: " + error.message);
         } finally {
             setDetailLoading(false);
         }
@@ -89,8 +89,7 @@ export default function HelpSupport() {
                 alert("Response sent and ticket closed successfully.");
             }
         } catch (error) {
-            console.error("Failed to respond to ticket:", error);
-            alert("Failed to send response. Please try again.");
+            alert("Failed to send response: " + error.message);
         }
     };
 

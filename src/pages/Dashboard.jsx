@@ -244,7 +244,7 @@ const Dashboard = () => {
           <div className="org-icon dept"><FaSitemap /></div>
           <div className="org-info">
             <h4>Departments</h4>
-            <span className="org-value">12</span>
+            <span className="org-value">{data?.employees?.branches?.departments?.length || 0}</span>
           </div>
         </Link>
         <Link to="/hr-management" className="org-card hr-card-accent">

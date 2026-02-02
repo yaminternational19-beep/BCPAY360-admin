@@ -66,7 +66,7 @@ export default function ManageContent() {
                 setSections(response.data || []);
             }
         } catch (error) {
-            console.error("Failed to fetch pages:", error);
+            // silenced
         } finally {
             setIsLoading(false);
         }
@@ -81,7 +81,7 @@ export default function ManageContent() {
                 setBranches(response);
             }
         } catch (error) {
-            console.error("Failed to fetch branches:", error);
+            // silenced
         }
     };
 
@@ -155,8 +155,7 @@ export default function ManageContent() {
                 }
             }
         } catch (error) {
-            console.error("Failed to fetch page content:", error);
-            alert("Failed to load page content.");
+            alert("Failed to load page content: " + error.message);
         } finally {
             setIsFetchingContent(false);
         }
@@ -229,8 +228,7 @@ export default function ManageContent() {
                 alert("Page updated successfully!");
             }
         } catch (error) {
-            console.error("Failed to update page:", error);
-            alert("Failed to save changes.");
+            alert("Failed to save changes: " + error.message);
         } finally {
             setIsSaving(false);
         }
@@ -275,8 +273,7 @@ export default function ManageContent() {
                 alert("Page created successfully!");
             }
         } catch (error) {
-            console.error("Failed to create page:", error);
-            alert(error.message || "Failed to create page.");
+            alert("Failed to create page: " + error.message);
         }
     };
 
@@ -294,8 +291,7 @@ export default function ManageContent() {
                 alert("Page deleted successfully!");
             }
         } catch (error) {
-            console.error("Failed to delete page:", error);
-            alert(error.message || "Failed to delete page.");
+            alert("Failed to delete page: " + error.message);
         } finally {
             setIsDeleting(false);
         }
