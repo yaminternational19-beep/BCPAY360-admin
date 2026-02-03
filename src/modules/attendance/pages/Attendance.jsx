@@ -9,6 +9,7 @@ import MonthlyAttendanceTable from "../components/MonthlyAttendanceTable";
 import HistoryAttendanceDrawer from "../components/HistoryAttendanceDrawer";
 import NoBranchState from "../../../components/NoBranchState";
 import { useBranch } from "../../../hooks/useBranch";
+import { useToast } from "../../../context/ToastContext";
 
 /* API */
 import {
@@ -26,6 +27,7 @@ import { exportHistoryExcel } from "../../../utils/export/exportHistoryExcel";
 import { exportHistoryPDF } from "../../../utils/export/exportHistoryPDF";
 
 const AttendancePage = () => {
+  const { info, success, error } = useToast();
   const { canProceed, isLoading: branchLoading, selectedBranch } = useBranch();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -85,6 +87,7 @@ const AttendancePage = () => {
       fetchMonthlyAttendance({ ...monthRange, ...filters, branch_id: selectedBranch })
         .then(res => {
           setMonthlyData(res.data);
+          setSummary(res.summary); // Ensure summary is set for monthly too
           setSelectedIds([]); // Reset selection on new fetch
         })
         .finally(() => setLoading(false));
@@ -174,7 +177,7 @@ const AttendancePage = () => {
 
   return (
     <div className="attendance-container">
-      {viewType === "DAILY" && attendanceMode === "DAILY" && (
+      {viewType === "DAILY" && (
         <AttendanceSummary summary={summary} loading={loading} />
       )}
 
@@ -188,7 +191,7 @@ const AttendancePage = () => {
         onMonthChange={setMonthRange}
         onFilterChange={setFilters}
         onExport={handleExport}
-        isExportDisabled={selectedIds.length === 0} // Disable if no selection
+        isSelectionEmpty={selectedIds.length === 0}
         onBack={() => {
           setViewType("DAILY");
           setHistoryData(null);
@@ -197,8 +200,14 @@ const AttendancePage = () => {
           setAttendanceMode(mode);
           setSummary(null);
           setSelectedIds([]);
-          if (mode === "DAILY") setMonthlyData([]);
-          if (mode === "MONTHLY") setRows([]);
+          if (mode === "DAILY") {
+            setMonthlyData([]);
+            info("Switched to Daily View");
+          }
+          if (mode === "MONTHLY") {
+            setRows([]);
+            info("Switched to Monthly View");
+          }
         }}
       />
 

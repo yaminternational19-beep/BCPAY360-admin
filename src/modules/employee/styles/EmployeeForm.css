@@ -147,24 +147,28 @@
     flex-direction: column;
 }
 
+/* Document Upload Section - Production Grade Layout */
 .document-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0 32px 0;
 }
 
-.document-grid>div {
+.document-item {
     display: flex;
     flex-direction: column;
+    gap: 12px;
 }
 
-.emp-form-section label {
-    display: block;
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
+.document-item label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: center;
+    margin-top: 8px;
 }
 
 .emp-modal .emp-form-section input:not([type="checkbox"]):not([type="file"]),
@@ -278,52 +282,7 @@
     height: 1.25rem;
 }
 
-.upload-inline {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border: 2px dashed var(--input-border);
-    border-radius: var(--radius-md);
-    margin-bottom: 1.5rem;
-    background-color: var(--bg-muted);
-    transition: all var(--transition-normal);
-    cursor: pointer;
-    position: relative;
-}
-
-.upload-inline:hover {
-    border-color: var(--text-muted);
-    background-color: var(--bg-hover);
-}
-
-.upload-inline svg {
-    width: 1.25rem;
-    height: 1.25rem;
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-
-.upload-inline input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-}
-
-.upload-inline span {
-    font-size: var(--text-sm);
-    color: var(--text-muted);
-}
-
-.file-info {
-    font-size: var(--text-sm);
-    color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+/* Old Upload styles removed in favor of production-grade FileField */
 
 .existing-file {
     color: var(--primary);
@@ -405,11 +364,55 @@
     background-color: var(--bg-card);
 }
 
+.footer-left,
+.footer-right {
+    display: flex;
+    gap: 12px;
+}
+
 /* Use .btn-primary, .btn-secondary in JSX instead of custom classes */
-.emp-form-footer button {
-    display: inline-flex;
+.emp-form-footer .btn-primary {
+    background: #2563eb;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    border: none;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.emp-form-footer .btn-primary:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+}
+
+.emp-form-footer .btn-secondary {
+    background: #ffffff;
+    color: #475569;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.emp-form-footer .btn-secondary:hover {
+    background: #f8fafc;
+    color: #1e293b;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
 }
 
 .emp-form-footer button svg {
@@ -541,107 +544,172 @@
     margin-bottom: 0.5rem;
 }
 
-/* File Field Components */
+/* File Field Components - Production Grade */
 .file-field-container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    background-color: var(--bg-card);
-    cursor: pointer;
-    transition: all var(--transition-normal);
     position: relative;
+    background: #ffffff;
+    border: 2px dashed #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    text-align: center;
 }
 
-.file-field-container:hover {
-    border-color: var(--primary);
-    background-color: var(--bg-hover);
+.file-field-container:hover,
+.file-field-container.dragging {
+    border-color: #3b82f6;
+    background: #f8faff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(59, 130, 246, 0.2);
+}
+
+.file-field-container.dragging {
+    border-style: solid;
+    background: #eff6ff;
+}
+
+.file-trigger-zone {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
 .file-field-icon {
-    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    background: #f1f5f9;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: #64748b;
+    transition: all 0.3s ease;
 }
 
-.file-field-content {
-    flex: 1;
-    min-width: 0;
+.file-field-container:hover .file-field-icon {
+    background: #eff6ff;
+    color: #3b82f6;
+    transform: scale(1.1);
 }
 
 .file-label {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-.file-details {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: var(--text-xs);
-}
-
-.file-name {
-    color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.file-name.existing {
-    color: var(--primary);
-    font-weight: var(--weight-medium);
-}
-
-.file-size {
-    color: var(--text-dim);
-    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 4px;
 }
 
 .file-placeholder {
-    font-size: var(--text-sm);
-    color: var(--text-dim);
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* Selected File State */
+.file-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.file-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    max-width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 11px;
+    font-weight: 800;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 3px 12px;
+    border-radius: 20px;
+}
+
+/* Actions in Card */
+.file-field-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.view-link,
+.replace-btn {
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
 }
 
 .view-link {
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: var(--weight-medium);
-    font-size: var(--text-xs);
+    background: #2563eb;
+    color: #ffffff;
 }
 
 .view-link:hover {
-    text-decoration: underline;
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-.hidden-file-input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
+.remove-btn-danger {
+    width: 38px;
+    height: 38px;
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    width: 100%;
-    height: 100%;
+    transition: all 0.2s ease;
+}
+
+.remove-btn-danger:hover {
+    background: #ffe4e6;
+    color: #be123c;
+    border-color: #fda4af;
+    transform: scale(1.05);
 }
 
 .replace-btn {
-    padding: 0.5rem 1rem;
-    background-color: var(--bg-muted);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    font-size: var(--text-xs);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    position: relative;
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
 }
 
 .replace-btn:hover {
-    background-color: var(--primary-light);
-    border-color: var(--primary);
-    color: var(--primary);
+    background: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+}
+
+.hidden-file-input {
+    display: none;
 }
 
 /* Profile Upload Box */
@@ -688,19 +756,21 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background-color: var(--primary);
-    color: var(--text-inverse);
-    border-radius: var(--radius-md);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
+    padding: 10px 18px;
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.2s ease;
     align-self: flex-start;
 }
 
 .file-upload-label:hover {
-    background-color: var(--primary-hover);
+    background-color: #e2e8f0;
+    color: #1e293b;
 }
 
 .file-ready-text {

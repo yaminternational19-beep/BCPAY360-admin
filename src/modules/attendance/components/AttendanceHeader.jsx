@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import "../../../styles/Attendance.css";
 import ExportActions from "./ExportActions";
 import MonthlyAttendanceForm from "./MonthlyAttendanceForm";
@@ -28,7 +29,7 @@ const AttendanceHeader = ({
   /* FILTERS */
   filters,
   onFilterChange,
-  isExportDisabled = false
+  isSelectionEmpty = true
 }) => {
   const { branches: branchList, selectedBranch, changeBranch, isSingleBranch } = useBranch();
   const [departmentList, setDepartmentList] = useState([]);
@@ -68,7 +69,7 @@ const AttendanceHeader = ({
   return (
     <div className="attendance-header">
       {/* 1. FILTERS & BACK (START) */}
-      <div className="attendance-header-main">
+      <div className="attendance-header-wrapper">
         {viewType === "HISTORY" && (
           <button className="btn-back" onClick={onBack}>
             ← Back
@@ -78,15 +79,17 @@ const AttendanceHeader = ({
         {/* DAILY FILTERS */}
         {viewType === "DAILY" && attendanceMode === "DAILY" && (
           <div className="attendance-filters">
-            <input
-              type="text"
-              placeholder="Search name / code"
-              value={filters.search}
-              onChange={(e) =>
-                onFilterChange({ ...filters, search: e.target.value })
-              }
-              className="filter-input"
-            />
+            <div className="filter-input-group">
+              <Search size={14} className="search-ico" />
+              <input
+                type="text"
+                placeholder="Search name / code"
+                value={filters.search}
+                onChange={(e) =>
+                  onFilterChange({ ...filters, search: e.target.value })
+                }
+              />
+            </div>
 
             <input
               type="date"
@@ -169,22 +172,24 @@ const AttendanceHeader = ({
             </button>
 
             <div className="header-divider" />
-            <ExportActions context="DAILY" onExport={onExport} disabled={isExportDisabled} />
+            <ExportActions context="DAILY" onExport={onExport} isSelectionEmpty={isSelectionEmpty} />
           </div>
         )}
 
         {/* MONTHLY FILTERS */}
         {viewType === "DAILY" && attendanceMode === "MONTHLY" && (
           <div className="attendance-filters">
-            <input
-              type="text"
-              placeholder="Search name / code"
-              value={filters.search}
-              onChange={(e) =>
-                onFilterChange({ ...filters, search: e.target.value })
-              }
-              className="filter-input"
-            />
+            <div className="filter-input-group">
+              <Search size={14} className="search-ico" />
+              <input
+                type="text"
+                placeholder="Search name / code"
+                value={filters.search}
+                onChange={(e) =>
+                  onFilterChange({ ...filters, search: e.target.value })
+                }
+              />
+            </div>
 
             <MonthlyAttendanceForm value={monthRange} onChange={onMonthChange} />
 
@@ -248,7 +253,7 @@ const AttendanceHeader = ({
             </button>
 
             <div className="header-divider" />
-            <ExportActions context="MONTHLY" onExport={onExport} disabled={isExportDisabled} />
+            <ExportActions context="MONTHLY" onExport={onExport} isSelectionEmpty={isSelectionEmpty} />
           </div>
         )}
 
@@ -270,8 +275,7 @@ const AttendanceHeader = ({
             Daily
           </button>
           <button
-            className={`mode-btn ${attendanceMode === "MONTHLY" ? "active" : ""
-              }`}
+            className={`mode-btn ${attendanceMode === "MONTHLY" ? "active" : ""}`}
             onClick={() => onModeChange("MONTHLY")}
           >
             Monthly

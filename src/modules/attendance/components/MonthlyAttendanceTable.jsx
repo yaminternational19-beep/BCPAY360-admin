@@ -48,8 +48,8 @@ const MonthlyAttendanceTable = ({
                 />
               </th>
             )}
-            <th>#</th>
-            <th>Employee</th>
+            <th className="col-profile">Profile</th>
+            <th className="col-name">Employee</th>
             <th>Department</th>
             <th>Shift</th>
 
@@ -91,14 +91,20 @@ const MonthlyAttendanceTable = ({
                     />
                   </td>
                 )}
-                <td>{index + 1}</td>
 
-                <td>
+                <td className="col-profile">
+                  <img
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                    alt={emp.name}
+                    className="attendance-avatar-sm"
+                  />
+                </td>
+                <td className="col-name">
                   <div className="emp-name">{emp.name}</div>
                   <div className="emp-code">{emp.employee_code}</div>
                 </td>
 
-                <td>{emp.department}</td>
+                <td className="col-dept">{emp.department}</td>
                 <td>{emp.shift}</td>
 
                 {/* DAY CELLS */}

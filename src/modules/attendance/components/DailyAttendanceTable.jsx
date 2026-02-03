@@ -41,19 +41,18 @@ const DailyAttendanceTable = ({
                 />
               </th>
             )}
-            <th>#</th>
-            <th>Profile</th>
-            <th>Name</th>
+            <th className="col-profile">Profile</th>
+            <th className="col-name">Name</th>
             <th>Department</th>
             <th>Designation</th>
             <th>Shift</th>
-            <th>Status</th>
-            <th>Check In</th>
-            <th>Check Out</th>
-            <th>Late (min)</th>
-            <th>Early Out (min)</th>
-            <th>Overtime (min)</th>
-            <th>Action</th>
+            <th className="text-center">Status</th>
+            <th className="text-center">Check In</th>
+            <th className="text-center">Check Out</th>
+            <th className="text-center">Late (min)</th>
+            <th className="text-center">Early Out (min)</th>
+            <th className="text-center">Overtime (min)</th>
+            <th className="text-center">Action</th>
           </tr>
         </thead>
 
@@ -71,7 +70,6 @@ const DailyAttendanceTable = ({
                     />
                   </td>
                 )}
-                <td>{index + 1}</td>
 
                 {/* Profile */}
                 <td className="col-profile">
@@ -93,7 +91,7 @@ const DailyAttendanceTable = ({
                   </div>
                 </td>
 
-                <td>{row.department}</td>
+                <td className="col-dept">{row.department}</td>
                 <td>{row.designation}</td>
 
                 {/* Shift */}
@@ -109,21 +107,21 @@ const DailyAttendanceTable = ({
                 </td>
 
                 {/* Status */}
-                <td>
+                <td className="text-center">
                   <span className={`status-badge ${row.status.toLowerCase()}`}>
                     {row.status}
                   </span>
                 </td>
 
-                <td>{row.check_in_time || "-"}</td>
-                <td>{row.check_out_time || "-"}</td>
+                <td className="text-center">{row.check_in_time || "-"}</td>
+                <td className="text-center">{row.check_out_time || "-"}</td>
 
-                <td>{row.late_minutes || 0}</td>
-                <td>{row.early_checkout_minutes || 0}</td>
-                <td>{row.overtime_minutes || 0}</td>
+                <td className="text-center">{row.late_minutes || 0}</td>
+                <td className="text-center">{row.early_checkout_minutes || 0}</td>
+                <td className="text-center">{row.overtime_minutes || 0}</td>
 
                 {/* Action */}
-                <td>
+                <td className="text-center">
                   <button
                     className="btn-history"
                     onClick={() => onViewHistory(row.employee_id)}

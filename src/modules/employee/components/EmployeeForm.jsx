@@ -5,9 +5,14 @@ import {
   User,
   Building2,
   FileText,
+  FileCheck,
+  CheckCircle,
+  Trash2,
+  XCircle,
   ChevronLeft,
   ChevronRight,
   Upload,
+  UploadCloud,
   Image as ImageIcon,
   AlertCircle,
 } from "lucide-react";
@@ -462,29 +467,79 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
 
   const handleNext = () => {
+    // Validate Step 1 before moving to Step 2
+    if (step === 1) {
+      if (!employeeForm.branch_id) return toast.error("Please select a branch");
+      if (!employeeForm.full_name?.trim()) return toast.error("Full Name is required");
+      if (!employeeForm.email?.trim()) return toast.error("Email is required");
+      if (errors.email) return toast.error("Please fix email errors");
+      if (!employeeForm.joining_date) return toast.error("Joining Date is required");
+      if (!employeeForm.department_id) return toast.error("Department is required");
+      if (!employeeForm.designation_id) return toast.error("Designation is required");
+      if (!isEdit && !employeeForm.password?.trim()) return toast.error("Password is required");
+      toast.success("Employee Details Validated");
+    }
+
+    // Validate Step 2 before moving to Step 3
+    if (step === 2) {
+      if (!profileForm.dob) return toast.error("Date of Birth is required");
+      if (errors.dob) return toast.error("Please fix date of birth errors");
+      toast.success("Bio Data Validated");
+    }
+
     setStep((prev) => prev + 1);
   };
 
   const submit = async () => {
     // 1. Full Validation before Submit
-    const newErrors = {};
     let isValid = true;
+    let jumpToStep = null;
+    const newErrors = {}; // Collect errors for setErrors later
 
-    // --- Mandatory Fields Check ---
-    if (!employeeForm.branch_id) { isValid = false; toast.error("Branch is required"); }
-    if (!employeeForm.full_name?.trim()) { isValid = false; toast.error("Full Name is required"); }
-    if (!employeeForm.email?.trim()) { isValid = false; newErrors.email = "Email is required"; }
-    if (!employeeForm.joining_date) { isValid = false; newErrors.joining_date = "Joining Date is required"; }
-    if (!employeeForm.department_id) { isValid = false; toast.error("Department is required"); }
-    if (!employeeForm.designation_id) { isValid = false; toast.error("Designation is required"); }
-    if (!profileForm.dob) { isValid = false; newErrors.dob = "Date of Birth is required"; }
+    // --- Step 1 Validations ---
+    if (!employeeForm.branch_id) { isValid = false; toast.error("Branch is required"); jumpToStep = 1; }
+    else if (!employeeForm.full_name?.trim()) { isValid = false; toast.error("Full Name is required"); jumpToStep = 1; }
+    else if (!employeeForm.email?.trim()) { isValid = false; toast.error("Email is required"); jumpToStep = 1; }
+    else if (errors.email) { isValid = false; toast.error("Please fix email format"); jumpToStep = 1; }
+    else if (!employeeForm.joining_date) { isValid = false; toast.error("Joining Date is required"); jumpToStep = 1; }
+    else if (!employeeForm.department_id) { isValid = false; toast.error("Department is required"); jumpToStep = 1; }
+    else if (!employeeForm.designation_id) { isValid = false; toast.error("Designation is required"); jumpToStep = 1; }
+    else if (!isEdit && !employeeForm.password?.trim()) { isValid = false; toast.error("Password is required"); jumpToStep = 1; }
 
-    if (!isEdit && !employeeForm.password?.trim()) {
-      isValid = false;
-      toast.error("Password is required for new employees");
+    if (!isValid) {
+      setStep(jumpToStep);
+      return;
     }
 
-    // --- Format Validations ---
+    // --- Step 2 Validations ---
+    if (!profileForm.dob) { isValid = false; toast.error("Date of Birth is required"); jumpToStep = 2; }
+    else if (errors.dob) { isValid = false; toast.error("Invalid Date of Birth"); jumpToStep = 2; }
+
+    if (!isValid) {
+      setStep(jumpToStep);
+      return;
+    }
+
+    // --- Step 3 Validations ---
+    const mandatoryDocs = ["PAN", "AADHAAR"];
+    for (const code of mandatoryDocs) {
+      const isUploaded = documentsForm.files[code];
+      const isExisting = documentsForm.existing?.some(d => (d.document_type || d.type) === code);
+      if (!isUploaded && !isExisting) {
+        isValid = false;
+        toast.error(`Missing Document: ${code === 'PAN' ? 'PAN Card' : 'Aadhaar Card'}`);
+        jumpToStep = 3;
+        break;
+      }
+    }
+
+    if (!isValid) {
+      setStep(jumpToStep);
+      return;
+    }
+
+    // --- Format Validations check (from errors state) ---
+    // Re-run all validations to ensure `errors` state is up-to-date for all fields
     const empFields = ["email", "phone", "salary", "experience_years", "confirmation_date", "joining_date", "uan_number", "esic_number", "pan_number", "aadhaar_number"];
     empFields.forEach(f => {
       const err = handleValidate(f, employeeForm[f], "employee");
@@ -503,16 +558,14 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       }
     });
 
-    // --- Mandatory Document Files Check ---
-    const mandatoryDocs = ["PAN", "AADHAAR"];
-    mandatoryDocs.forEach(code => {
+    for (const code of mandatoryDocs) {
       const isUploaded = documentsForm.files[code];
-      const isExisting = documentsForm.existing?.some(d => d.document_type === code);
+      const isExisting = documentsForm.existing?.some(d => (d.document_type || d.type) === code);
       if (!isUploaded && !isExisting) {
         isValid = false;
         toast.error(`Please upload ${code} document`);
       }
-    });
+    }
 
     if (!isValid) {
       setErrors(prev => ({ ...prev, ...newErrors }));
@@ -591,90 +644,132 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const FileField = ({ label, field, accept }) => {
     const existing = documentsForm.existing?.find(d => (d.document_type || d.type) === field);
     const uploadedFile = documentsForm.files?.[field];
+    const [isDragging, setIsDragging] = useState(false);
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+      setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files?.[0];
+      if (!file) return;
+      const err = validateFile(file);
+      if (err) return toast.error(err);
+      setDocumentsForm((p) => ({
+        ...p,
+        files: { ...p.files, [field]: file },
+      }));
+    };
+
+    const removeFile = (e) => {
+      e.stopPropagation();
+      setDocumentsForm((p) => {
+        const newFiles = { ...p.files };
+        delete newFiles[field];
+        // Also remove from existing list to "clear" it from UI
+        const newExisting = p.existing?.filter(d => (d.document_type || d.type) !== field);
+        return { ...p, files: newFiles, existing: newExisting };
+      });
+      const el = document.getElementById(`file-input-${field}`);
+      if (el) el.value = "";
+    };
 
     return (
-      <div className="upload-inline">
-        <label className="file-field-container">
-          <div className="file-field-icon">
-            {uploadedFile ? <FileText color="#4caf50" /> : existing ? <FileText color="#2196f3" /> : <Upload />}
-          </div>
+      <div
+        className={`file-field-container ${isDragging ? "dragging" : ""}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <input
+          id={`file-input-${field}`}
+          type="file"
+          accept={accept}
+          className="hidden-file-input"
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const err = validateFile(file);
+            if (err) return toast.error(err);
+            setDocumentsForm((p) => ({
+              ...p,
+              files: { ...p.files, [field]: file },
+            }));
+          }}
+        />
 
-          <div className="file-field-content">
-            <span className="file-label">{label}</span>
-            {uploadedFile ? (
-              <div className="file-details">
-                <span className="file-name" title={uploadedFile.name}>{uploadedFile.name}</span>
-                <span className="file-size">{formatFileSize(uploadedFile.size)}</span>
+        <div
+          className="file-trigger-zone"
+          onClick={() => {
+            const el = document.getElementById(`file-input-${field}`);
+            if (el) el.click();
+          }}
+        >
+          {!uploadedFile && !existing && (
+            <>
+              <div className="file-field-icon"><Upload size={24} /></div>
+              <div className="file-label">{label}</div>
+              <div className="file-placeholder">Click or drag to upload</div>
+            </>
+          )}
+
+          {(uploadedFile || existing) && (
+            <div className="file-details">
+              <div className="file-field-icon">
+                {uploadedFile ? <FileText size={26} /> : <FileText size={26} style={{ opacity: 0.6 }} />}
               </div>
-            ) : existing ? (
-              <div className="file-details">
-                <span className="file-name existing">Existing Document</span>
-                <a
-                  href={existing.view_url || existing.url || existing.signedUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="view-link"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  View / Download
-                </a>
+              <div className="file-name">
+                {uploadedFile ? uploadedFile.name : (existing.original_name || existing.filename || "Existing Document")}
               </div>
-            ) : (
-              <span className="file-placeholder"> Click to upload</span>
+              {uploadedFile && (
+                <div className="file-size">
+                  {(uploadedFile.size / 1024).toFixed(1)} KB
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {(uploadedFile || existing) && (
+          <div className="file-field-actions" onClick={(e) => e.stopPropagation()}>
+            {existing && (
+              <a
+                href={existing.view_url || existing.url || existing.signedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="view-link"
+              >
+                View
+              </a>
+            )}
+            <button
+              type="button"
+              className="replace-btn"
+              onClick={() => {
+                const el = document.getElementById(`file-input-${field}`);
+                if (el) el.click();
+              }}
+            >
+              {uploadedFile ? "Change" : "Replace"}
+            </button>
+            {(uploadedFile || existing) && (
+              <button
+                type="button"
+                className="remove-btn-danger"
+                onClick={removeFile}
+                title="Remove Selection"
+              >
+                <Trash2 size={14} />
+              </button>
             )}
           </div>
-
-          <input
-            type="file"
-            accept={accept}
-            className="hidden-file-input"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-
-              const err = validateFile(file);
-              if (err) {
-                toast.error(err);
-                return;
-              }
-
-              setDocumentsForm((p) => ({
-                ...p,
-                files: {
-                  ...p.files,
-                  [field]: file,
-                },
-              }));
-            }}
-          />
-        </label>
-
-        {/* Replace Button for Existing/Uploaded */}
-        {(existing || uploadedFile) && (
-          <label className="replace-btn">
-            <span>Replace</span>
-            <input
-              type="file"
-              accept={accept}
-              className="hidden-file-input"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const err = validateFile(file);
-                if (err) {
-                  toast.error(err);
-                  return;
-                }
-                setDocumentsForm((p) => ({
-                  ...p,
-                  files: {
-                    ...p.files,
-                    [field]: file,
-                  },
-                }));
-              }}
-            />
-          </label>
         )}
       </div>
     );
@@ -705,7 +800,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
           </div>
           <div
             className={step === 3 ? "step active" : "step"}
-            onClick={() => !isSaving && setStep(3)}
+            onClick={() => setStep(3)}
           >
             <FileText /> Documents
           </div>
@@ -807,7 +902,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                   onChange={(e) =>
                     changeEmployee(
                       "phone",
-                      e.target.value.replace(/\D/g, "")
+                      e.target.value.replace(/\D/g, "").slice(0, 10)
                     )
                   }
                   onBlur={() => handleBlurEmployee("phone")}
@@ -917,10 +1012,13 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <input
                   className={errors.salary ? "error-border" : ""}
                   type="number"
+                  placeholder="e.g. 25000"
                   value={employeeForm.salary}
-                  onChange={(e) =>
-                    changeEmployee("salary", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val < 0) return toast.warning("Negative values are not allowed");
+                    changeEmployee("salary", e.target.value);
+                  }}
                   onBlur={() => handleBlurEmployee("salary")}
                 />
                 {errors.salary && <span className="error-text">{errors.salary}</span>}
@@ -930,10 +1028,13 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <input
                   className={errors.ctc_annual ? "error-border" : ""}
                   type="number"
+                  placeholder="e.g. 300000"
                   value={employeeForm.ctc_annual}
-                  onChange={(e) =>
-                    changeEmployee("ctc_annual", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val < 0) return toast.warning("Negative values are not allowed");
+                    changeEmployee("ctc_annual", e.target.value);
+                  }}
                   onBlur={() => handleBlurEmployee("ctc_annual")}
                 />
                 {errors.ctc_annual && <span className="error-text">{errors.ctc_annual}</span>}
@@ -948,10 +1049,13 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                   className={errors.experience_years ? "error-border" : ""}
                   type="number"
                   step="0.1"
+                  placeholder="e.g. 2.5"
                   value={employeeForm.experience_years}
-                  onChange={(e) =>
-                    changeEmployee("experience_years", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val < 0) return toast.warning("Negative values are not allowed");
+                    changeEmployee("experience_years", e.target.value);
+                  }}
                   onBlur={() => handleBlurEmployee("experience_years")}
                 />
                 {errors.experience_years && <span className="error-text">{errors.experience_years}</span>}
@@ -960,10 +1064,13 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <label>Notice Period (Days)</label>
                 <input
                   type="number"
+                  placeholder="e.g. 30"
                   value={employeeForm.notice_period_days}
-                  onChange={(e) =>
-                    changeEmployee("notice_period_days", e.target.value)
-                  }
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val < 0) return toast.warning("Negative values are not allowed");
+                    changeEmployee("notice_period_days", e.target.value);
+                  }}
                 />
               </div>
             </div>
@@ -973,6 +1080,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               <div>
                 <label>Job Location</label>
                 <input
+                  placeholder="e.g. Head Office"
                   value={employeeForm.job_location}
                   onChange={(e) =>
                     changeEmployee("job_location", e.target.value)
@@ -982,6 +1090,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               <div>
                 <label>Site Location</label>
                 <input
+                  placeholder="e.g. Branch Site A"
                   value={employeeForm.site_location}
                   onChange={(e) =>
                     changeEmployee("site_location", e.target.value)
@@ -1068,6 +1177,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
             <label>Father's Name</label>
             <input
+              placeholder="As per documents"
               value={profileForm.father_name}
               onChange={(e) =>
                 changeProfile("father_name", e.target.value)
@@ -1078,6 +1188,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               <div>
                 <label>Religion</label>
                 <input
+                  placeholder="e.g. Hindu / Muslim / Christian"
                   value={profileForm.religion}
                   onChange={(e) =>
                     changeProfile("religion", e.target.value)
@@ -1102,6 +1213,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
             <label>Qualification</label>
             <input
+              placeholder="e.g. MBA / B.Tech / Graduation"
               value={profileForm.qualification}
               onChange={(e) =>
                 changeProfile("qualification", e.target.value)
@@ -1191,6 +1303,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
             <label>Bank Name</label>
             <input
+              placeholder="e.g. State Bank of India"
               value={profileForm.bank_name}
               onChange={(e) =>
                 changeProfile("bank_name", e.target.value)
@@ -1201,6 +1314,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
               <div>
                 <label>Account Number</label>
                 <input
+                  placeholder="Enter full account number"
                   value={profileForm.account_number}
                   onChange={(e) =>
                     changeProfile("account_number", e.target.value)
@@ -1230,6 +1344,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
             <label>Bank Branch Name</label>
             <input
+              placeholder="City or Branch name"
               value={profileForm.bank_branch_name}
               onChange={(e) =>
                 changeProfile("bank_branch_name", e.target.value)
@@ -1297,7 +1412,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                   placeholder="12 digit number"
                   value={employeeForm.aadhaar_number || ""}
                   onChange={(e) =>
-                    changeEmployee("aadhaar_number", e.target.value.replace(/\D/g, ""))
+                    changeEmployee("aadhaar_number", e.target.value.replace(/\D/g, "").slice(0, 12))
                   }
                   onBlur={() => handleBlurEmployee("aadhaar_number")}
                 />
@@ -1309,7 +1424,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
             <div className="document-grid">
               {ALL_DOCUMENTS.map((doc) => (
-                <div key={doc.form_code}>
+                <div key={doc.form_code} className="document-item">
                   <label>{doc.form_name}</label>
                   <FileField
                     label={`Upload ${doc.form_name}`}
@@ -1326,27 +1441,34 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
 
         <div className="emp-form-footer">
-          {step > 1 && (
-            <button
-              className="btn-secondary"
-              onClick={() => setStep(step - 1)}
-              disabled={isSaving}
-            >
-              <ChevronLeft /> Back
+          <div className="footer-left">
+            <button className="btn-secondary" onClick={onClose} disabled={isSaving}>
+              <XCircle size={18} /> Cancel
             </button>
-          )}
+            {step > 1 && (
+              <button
+                className="btn-secondary"
+                onClick={() => setStep(step - 1)}
+                disabled={isSaving}
+              >
+                <ChevronLeft size={18} /> Back
+              </button>
+            )}
+          </div>
 
-          {step < 3 && (
-            <button className="btn-primary" onClick={handleNext} disabled={isSaving}>
-              Next <ChevronRight />
-            </button>
-          )}
+          <div className="footer-right">
+            {step < 3 && (
+              <button className="btn-primary" onClick={handleNext} disabled={isSaving}>
+                Next <ChevronRight size={18} />
+              </button>
+            )}
 
-          {step === 3 && (
-            <button className="btn-primary" onClick={submit} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Employee"}
-            </button>
-          )}
+            {step === 3 && (
+              <button className="btn-primary" onClick={submit} disabled={isSaving}>
+                <CheckCircle size={18} /> {isSaving ? "Saving..." : isEdit ? "Update" : "Save"}
+              </button>
+            )}
+          </div>
         </div>
 
       </div>

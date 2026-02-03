@@ -1,60 +1,39 @@
-import { FileSpreadsheet, FileText } from "lucide-react";
+import { FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { useToast } from "../../../context/ToastContext";
 
 export default function ExportActions({
   context,          // DAILY | MONTHLY | HISTORY
   onExport,
-  disabled = false
+  isSelectionEmpty = true
 }) {
+  const { error, success } = useToast();
+
+  const handleExportClick = (type) => {
+    if (isSelectionEmpty && context !== "HISTORY") {
+      error("Please select employees to export");
+      return;
+    }
+    success(`Generating ${type} report...`);
+    onExport({ type, context });
+  };
   return (
     <div className="export-actions" style={{ display: 'flex', gap: '8px' }}>
       <button
-        onClick={() => onExport({ type: "EXCEL", context })}
-        disabled={disabled}
+        onClick={() => handleExportClick("EXCEL")}
         title={`Export ${context} to Excel`}
-        className="btn-export-new"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 16px',
-          border: '1px solid #10b981',
-          backgroundColor: '#10b981',
-          color: 'white',
-          borderRadius: '6px',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          opacity: disabled ? 0.6 : 1,
-          fontSize: '13px',
-          fontWeight: 500
-        }}
-        onMouseOver={(e) => !disabled && (e.target.style.backgroundColor = '#059669')}
-        onMouseOut={(e) => !disabled && (e.target.style.backgroundColor = '#10b981')}
+        className="btn-export-excel"
       >
-        <FileSpreadsheet size={16} /> Excel
+        <FileSpreadsheet size={16} />
+        <span>Excel</span>
       </button>
 
       <button
-        onClick={() => onExport({ type: "PDF", context })}
-        disabled={disabled}
+        onClick={() => handleExportClick("PDF")}
         title={`Export ${context} to PDF`}
-        className="btn-export-new"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 16px',
-          border: '1px solid #ef4444',
-          backgroundColor: '#ef4444',
-          color: 'white',
-          borderRadius: '6px',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          opacity: disabled ? 0.6 : 1,
-          fontSize: '13px',
-          fontWeight: 500
-        }}
-        onMouseOver={(e) => !disabled && (e.target.style.backgroundColor = '#dc2626')}
-        onMouseOut={(e) => !disabled && (e.target.style.backgroundColor = '#ef4444')}
+        className="btn-export-pdf"
       >
-        <FileText size={16} /> PDF
+        <FileText size={16} />
+        <span>PDF</span>
       </button>
     </div>
   );

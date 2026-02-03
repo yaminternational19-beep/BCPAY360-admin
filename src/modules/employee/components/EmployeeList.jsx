@@ -49,7 +49,7 @@ const EmployeeListComponent = ({
       ? employees.filter(e => selectedIds.includes(e.id))
       : employees;
 
-    if (!dataToExport.length) return alert("No data to export");
+    if (!dataToExport.length) return; // Silent return or better feedback
 
     const exportData = dataToExport.map(e => ({
       "Emp Code": e.employee_code,
@@ -99,7 +99,7 @@ const EmployeeListComponent = ({
                 />
               </th>
               <th>PHOTO</th>
-              <th>EMP-ID</th>
+              <th>EMP CODE</th>
               <th>NAME</th>
               <th>PHONE</th>
               <th>EMAIL</th>
@@ -108,7 +108,7 @@ const EmployeeListComponent = ({
               <th>DESIG</th>
               <th>SHIFT</th>
               <th>JOINING</th>
-              <th className="right">SALARY</th>
+              <th>SALARY</th>
               <th>STATUS</th>
               <th className="actions-header">ACTIONS</th>
             </tr>
@@ -160,7 +160,7 @@ const EmployeeListComponent = ({
                       </span>
                     </td>
                     <td>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB') : "-"}</td>
-                    <td className="right salary">₹{Number(emp.salary || 0).toLocaleString()}</td>
+                    <td className="salary">₹{Number(emp.salary || 0).toLocaleString()}</td>
                     <td>
                       <span className={`status-pill ${isActive ? "pill-active" : "pill-inactive"}`}>
                         {emp.employee_status}

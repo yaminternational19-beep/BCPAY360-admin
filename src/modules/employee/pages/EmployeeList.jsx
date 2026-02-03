@@ -18,7 +18,8 @@ import {
   getShifts,
   getEmployeeTypes
 } from "../../../api/master.api";
-import { Search, Download, Filter, RotateCcw, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { Search, Download, Filter, RotateCcw, FileSpreadsheet, FileText, ChevronDown, Users, UserCheck, UserX } from "lucide-react";
+// ... (imports remain same)
 import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 import NoBranchState from "../../../components/NoBranchState"; // Import Empty State
 import { exportEmployeesExcel, exportEmployeesPDF } from "../../../utils/export/exportEmployees"; // Export Utils
@@ -299,16 +300,49 @@ const EmployeeListPage = () => {
 
   return (
     <div className="employee-panel">
-      {/* HEADER */}
+      {/* HEADER SECTION */}
       <div className="employee-header">
-        <h2>Employee Management</h2>
-        <div className="header-actions">
-          <button className="btn-primary" onClick={() => { setSelected(null); setShowForm(true); }}>
-            Add Employee
-          </button>
-          <div className="stat-mini"><span>Total</span><strong>{stats.total}</strong></div>
-          <div className="stat-mini"><span>Active</span><strong>{stats.active}</strong></div>
-          <div className="stat-mini"><span>Inactive</span><strong>{stats.inactive}</strong></div>
+        <div className="header-title-area">
+          <h2>Employee Management</h2>
+          <p className="text-muted" style={{ fontSize: '13px', marginTop: '4px' }}>
+            Manage your workforce across all branches and departments
+          </p>
+        </div>
+        <button className="btn-add-employee" onClick={() => { setSelected(null); setShowForm(true); }}>
+          + Add New Employee
+        </button>
+      </div>
+
+      {/* STATS GRID */}
+      <div className="stats-grid-premium">
+        <div className="stat-card-premium total">
+          <div className="stat-icon-wrapper">
+            <Users />
+          </div>
+          <div className="stat-content-premium">
+            <span className="stat-label-premium">Total Employees</span>
+            <span className="stat-value-premium">{stats.total}</span>
+          </div>
+        </div>
+
+        <div className="stat-card-premium active">
+          <div className="stat-icon-wrapper">
+            <UserCheck />
+          </div>
+          <div className="stat-content-premium">
+            <span className="stat-label-premium">Active Workforce</span>
+            <span className="stat-value-premium">{stats.active}</span>
+          </div>
+        </div>
+
+        <div className="stat-card-premium inactive">
+          <div className="stat-icon-wrapper">
+            <UserX />
+          </div>
+          <div className="stat-content-premium">
+            <span className="stat-label-premium">Inactive / On Hold</span>
+            <span className="stat-value-premium">{stats.inactive}</span>
+          </div>
         </div>
       </div>
 
@@ -374,7 +408,7 @@ const EmployeeListPage = () => {
             </select>
 
             <select value={sortBy} onChange={e => setSortBy(e.target.value)}>
-              <option value="employee_code">Sort: Emp Code</option>
+              <option value="employee_code">Sort: Code</option>
               <option value="name">Sort: Name</option>
               <option value="salary">Sort: Salary</option>
             </select>
@@ -389,10 +423,7 @@ const EmployeeListPage = () => {
                   className="btn-export-new"
                   onClick={handleExportExcel}
                   title="Export to Excel"
-                  disabled={selectedIds.length === 0}
                   style={{
-                    opacity: selectedIds.length === 0 ? 0.6 : 1,
-                    cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
                     backgroundColor: '#10b981', // Green for Excel
                     borderColor: '#10b981',
                     color: 'white'
@@ -405,10 +436,7 @@ const EmployeeListPage = () => {
                   className="btn-export-new"
                   onClick={handleExportPDF}
                   title="Export to PDF"
-                  disabled={selectedIds.length === 0}
                   style={{
-                    opacity: selectedIds.length === 0 ? 0.6 : 1,
-                    cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
                     backgroundColor: '#ef4444', // Red for PDF
                     borderColor: '#ef4444',
                     color: 'white'

@@ -31,7 +31,7 @@
     /* Near black / Dark blue */
     color: var(--text-inverse);
     padding: 12px 10px;
-    text-align: left;
+    text-align: center;
     font-weight: var(--weight-semibold);
     text-transform: uppercase;
     font-size: 11px;
@@ -54,6 +54,7 @@
 .employee-table tbody td {
     padding: 8px 10px;
     vertical-align: middle;
+    text-align: center;
 }
 
 /* ALIGNMENT */
