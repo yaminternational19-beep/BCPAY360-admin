@@ -217,6 +217,16 @@
     padding-top: 1.25rem !important;
 }
 
+.th-actions {
+    text-align: center !important;
+}
+
+.th-checkbox,
+.td-checkbox {
+    width: 60px;
+    text-align: center !important;
+}
+
 .table tbody tr {
     transition: var(--transition);
     animation: slideIn 0.4s ease-out;
@@ -231,6 +241,55 @@
     background: linear-gradient(135deg, var(--light-bg) 0%, rgba(0, 123, 255, 0.05) 100%);
     transform: translateY(-2px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Premium Checkbox Styling */
+.table input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+    margin: 0;
+    vertical-align: middle;
+}
+
+.table input[type="checkbox"]:checked {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+.table input[type="checkbox"]:checked::after,
+.table input[type="checkbox"]:indeterminate::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.table input[type="checkbox"]:indeterminate {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.table input[type="checkbox"]:indeterminate::after {
+    content: '—';
+    font-size: 16px;
+}
+
+.table input[type="checkbox"]:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.1);
 }
 
 @keyframes slideIn {
@@ -271,6 +330,8 @@
     gap: 0.5rem;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
+    min-height: 48px;
 }
 
 .row-actions button {
@@ -481,6 +542,194 @@
 .toggle-btn:hover {
     color: #0056b3;
     transform: scale(1.05);
+}
+
+/* --- HR FORM MODAL STRUCTURE (Integrating emp- classes for compatibility) --- */
+.emp-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.emp-modal {
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    animation: slideUp 0.3s ease-out;
+}
+
+.emp-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: white;
+}
+
+.emp-modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.emp-modal-header span {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    background-color: #f1f5f9;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    font-weight: 600;
+}
+
+.emp-modal-header button {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.emp-modal-header button:hover {
+    color: var(--danger-color);
+    transform: rotate(90deg);
+}
+
+.emp-step-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 2rem;
+    gap: 2rem;
+    background: #f8fafc;
+}
+
+.step {
+    padding: 1.25rem 0;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: var(--transition);
+}
+
+.step.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.emp-form-section {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+    background: white;
+}
+
+.emp-form-section label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.emp-form-section input,
+.emp-form-section select,
+.emp-form-section textarea {
+    width: 100%;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.emp-form-section input:focus,
+.emp-form-section select:focus,
+.emp-form-section textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.emp-form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    border-top: 1px solid var(--border-color);
+    background-color: #f8fafc;
+}
+
+.emp-form-footer button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+/* --- PREMIUM HR BUTTONS (Requested: Different Classnames) --- */
+.hr-btn-next {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.hr-btn-next:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+.hr-btn-submit {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(109, 40, 217, 0.25);
+    padding: 0.75rem 2.5rem !important;
+}
+
+.hr-btn-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    transform: scale(1.02);
+    box-shadow: 0 8px 20px rgba(109, 40, 217, 0.4);
+}
+
+.hr-btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #94a3b8;
+}
+
+.error-text {
+    color: var(--danger-color);
+    font-size: 0.75rem;
+    margin-top: -1.25rem;
+    margin-bottom: 1rem;
+    display: block;
+    font-weight: 500;
 }
 
 /* Form Actions */

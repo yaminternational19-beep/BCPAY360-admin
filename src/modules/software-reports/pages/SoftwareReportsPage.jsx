@@ -7,9 +7,10 @@ import DataTable from "../../../components/ui/DataTable";
 import StatusBadge from "../../../components/ui/StatusBadge";
 import { FaCheckCircle, FaExclamationCircle, FaUsers, FaEye, FaUpload, FaDownload, FaFileExport } from "react-icons/fa";
 import { getEmployeesByForm, uploadEmployeeForm, replaceEmployeeForm, deleteEmployeeForm } from "../../../api/employees.api";
-import { getBranches, getDepartments, getGovernmentForms } from "../../../api/master.api";
+import { getDepartments, getGovernmentForms } from "../../../api/master.api";
 import { REPORTS_CONFIG } from "../config/reports.config";
 import "../../../styles/shared/modern-ui.css";
+import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 
 const MONTH_MAP = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
@@ -18,6 +19,7 @@ const MONTH_MAP = {
 
 const SoftwareReportsPage = () => {
     const { reportType } = useParams();
+    const { branches, selectedBranch, changeBranch, isSingleBranch } = useBranch();
 
     // Metadata State
     const [reportMetadata, setReportMetadata] = useState(null);
@@ -68,7 +70,6 @@ const SoftwareReportsPage = () => {
     const [uploading, setUploading] = useState(false);
 
     // Master Data
-    const [branches, setBranches] = useState([]);
     const [departments, setDepartments] = useState([]);
 
     // UI State
@@ -78,7 +79,6 @@ const SoftwareReportsPage = () => {
     // State for filters
     const [filters, setFilters] = useState({
         search: "",
-        branchId: "",
         departmentId: "",
         month: new Date().toLocaleString('en-US', { month: 'long' }),
         year: new Date().getFullYear().toString(),
@@ -88,24 +88,23 @@ const SoftwareReportsPage = () => {
     // Clear selection on tab or filter change
     useEffect(() => {
         setSelectedIds(new Set());
-    }, [activeTab, filters.branchId, filters.departmentId, filters.month, filters.year, filters.financialYear, reportType]);
+    }, [activeTab, selectedBranch, filters.departmentId, filters.month, filters.year, filters.financialYear, reportType]);
 
-    const fetchMasterData = async () => {
-        try {
-            const [bRes, dRes] = await Promise.all([
-                getBranches(),
-                filters.branchId ? getDepartments(filters.branchId) : Promise.resolve([])
-            ]);
-            setBranches(bRes || []);
-            if (filters.branchId) {
-                setDepartments(dRes || []);
-            } else {
-                setDepartments([]);
-            }
-        } catch (error) {
-            alert("Error fetching master data: " + error.message);
+
+    useEffect(() => {
+        if (selectedBranch) {
+            (async () => {
+                try {
+                    const depts = await getDepartments(selectedBranch);
+                    setDepartments(depts || []);
+                } catch (error) {
+                    // silenced
+                }
+            })();
+        } else {
+            setDepartments([]);
         }
-    };
+    }, [selectedBranch]);
 
     const fetchData = useCallback(async () => {
         if (!reportMetadata?.code) return;
@@ -115,7 +114,7 @@ const SoftwareReportsPage = () => {
             const params = {
                 formCode: reportMetadata.code,
                 periodType: reportMetadata.periodType,
-                branchId: filters.branchId,
+                branchId: selectedBranch,
                 departmentId: filters.departmentId
             };
 
@@ -145,10 +144,6 @@ const SoftwareReportsPage = () => {
             setLoading(false);
         }
     }, [reportMetadata, filters]);
-
-    useEffect(() => {
-        fetchMasterData();
-    }, [filters.branchId]);
 
     useEffect(() => {
         if (reportMetadata) {
@@ -470,13 +465,22 @@ const SoftwareReportsPage = () => {
             <SummaryCards cards={stats} />
 
             <FiltersBar search={filters.search} onSearchChange={(val) => handleFilterChange("search", val)}>
-                <select value={filters.branchId} onChange={(e) => handleFilterChange("branchId", e.target.value)} className="filter-select-modern">
-                    <option value="">All Branches</option>
-                    {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
-                </select>
+                {!isSingleBranch && (
+                    <select
+                        value={selectedBranch === null ? "ALL" : selectedBranch}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            changeBranch(val === "ALL" ? null : Number(val));
+                        }}
+                        className="filter-select-modern"
+                    >
+                        {branches.length > 1 && <option value="ALL">All Branches</option>}
+                        {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
+                    </select>
+                )}
 
-                <select value={filters.departmentId} onChange={(e) => handleFilterChange("departmentId", e.target.value)} className="filter-select-modern" disabled={!filters.branchId}>
-                    <option value="">All Departments</option>
+                <select value={filters.departmentId} onChange={(e) => handleFilterChange("departmentId", e.target.value)} className="filter-select-modern" disabled={!selectedBranch}>
+                    <option value="">{selectedBranch ? "All Departments" : "Select Branch First"}</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
                 </select>
 
@@ -485,6 +489,7 @@ const SoftwareReportsPage = () => {
                     <button className={`tab-btn ${activeTab === 'Missing' ? 'active' : 'inactive'}`} onClick={() => setActiveTab('Missing')}>Missing</button>
                 </div>
             </FiltersBar>
+
 
             <div className="table-section mt-6">
                 <DataTable columns={columns} data={filteredData} isLoading={loading} emptyState={{ title: activeTab === "Available" ? "No available reports" : (reportMetadata?.emptyStateText || "No missing reports"), icon: "📄" }} />

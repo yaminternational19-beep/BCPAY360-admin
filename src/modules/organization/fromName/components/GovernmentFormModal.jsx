@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/styleforms.css";
+import { useToast } from "../../../../context/ToastContext.jsx";
+import { FaFileInvoice, FaTimes } from "react-icons/fa";
 
 const GovernmentFormModal = ({
   isOpen,
@@ -8,6 +10,7 @@ const GovernmentFormModal = ({
   editData = null,
   loading = false
 }) => {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     formName: "",
     formCode: "",
@@ -15,8 +18,6 @@ const GovernmentFormModal = ({
     periodType: "FY",
     description: ""
   });
-
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (editData) {
@@ -36,7 +37,6 @@ const GovernmentFormModal = ({
         description: ""
       });
     }
-    setError("");
   }, [editData, isOpen]);
 
   const handleChange = (e) => {
@@ -49,7 +49,7 @@ const GovernmentFormModal = ({
 
   const handleSubmit = () => {
     if (!formData.formName || !formData.formCode || !formData.category) {
-      setError("Form Name, Form Code, and Category are required");
+      toast.error("Form Name, Code, and Category are mandatory");
       return;
     }
     onSave(formData);
@@ -58,27 +58,30 @@ const GovernmentFormModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="gov-modal-overlay" onClick={onClose}>
-      <div className="gov-modal" onClick={e => e.stopPropagation()}>
-        <div className="gov-modal-header">
-          <h3>{editData ? "Edit Government Form" : "Create Government Form"}</h3>
-          <button className="modal-close-btn" onClick={onClose}>✕</button>
+    <div className="gf-modal-overlay" onClick={onClose}>
+      <div className="gf-modal" onClick={e => e.stopPropagation()}>
+        <div className="gf-modal-header">
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <FaFileInvoice style={{ color: "var(--gf-primary)", fontSize: "20px" }} />
+            <h3>{editData ? "Edit Configuration" : "Initialize Form"}</h3>
+          </div>
+          <button className="gf-close-btn" onClick={onClose}><FaTimes /></button>
         </div>
 
-        <div className="gov-modal-body">
-          <div className="form-group">
-            <label>Form Code *</label>
-            <input name="formCode" placeholder="Form Code" value={formData.formCode} onChange={handleChange} />
+        <div className="gf-modal-body">
+          <div className="gf-form-group">
+            <label>Form Code <span style={{ color: "red" }}>*</span></label>
+            <input name="formCode" placeholder="e.g. FORM-12A" value={formData.formCode} onChange={handleChange} />
           </div>
-          <div className="form-group">
-            <label>Form Name *</label>
-            <input name="formName" placeholder="Form Name" value={formData.formName} onChange={handleChange} />
+          <div className="gf-form-group">
+            <label>Form Name <span style={{ color: "red" }}>*</span></label>
+            <input name="formName" placeholder="e.g. PF Monthly Return" value={formData.formName} onChange={handleChange} />
           </div>
-          <div className="form-group">
-            <label>Category *</label>
-            <input name="category" placeholder="Category (PF / ESI / IT)" value={formData.category} onChange={handleChange} />
+          <div className="gf-form-group">
+            <label>Category <span style={{ color: "red" }}>*</span></label>
+            <input name="category" placeholder="PF / ESI / INCOME TAX" value={formData.category} onChange={handleChange} />
           </div>
-          <div className="form-group">
+          <div className="gf-form-group">
             <label>Period Type</label>
             <select name="periodType" value={formData.periodType} onChange={handleChange}>
               <option value="FY">Financial Year</option>
@@ -86,23 +89,22 @@ const GovernmentFormModal = ({
               <option value="ONE_TIME">One Time</option>
             </select>
           </div>
-          <div className="form-group">
+          <div className="gf-form-group">
             <label>Description</label>
             <textarea
               name="description"
-              placeholder="Description (optional)"
+              rows={3}
+              placeholder="Provide brief details about this form..."
               value={formData.description}
               onChange={handleChange}
             />
           </div>
-
-          {error && <p className="error-text">{error}</p>}
         </div>
 
-        <div className="gov-modal-footer">
-          <button onClick={onClose} className="btn-secondary">Cancel</button>
-          <button onClick={handleSubmit} className="btn-primary" disabled={loading}>
-            {loading ? "Saving..." : "Save"}
+        <div className="gf-modal-footer">
+          <button onClick={onClose} className="gf-btn-cancel">Dismiss</button>
+          <button onClick={handleSubmit} className="gf-btn-save" disabled={loading}>
+            {loading ? "Processing..." : (editData ? "Update Configuration" : "Save Configuration")}
           </button>
         </div>
       </div>

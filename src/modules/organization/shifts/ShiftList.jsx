@@ -2,7 +2,17 @@ import React, { useState } from "react";
 import { FaEdit, FaTrash, FaPlus, FaClock, FaSearch } from "react-icons/fa";
 import "../../../styles/Shifts.css";
 
-export default function ShiftList({ branches, selectedBranch, onBranchChange, shifts, onAdd, onEdit, onDelete, user }) {
+export default function ShiftList({
+  branches,
+  selectedBranch,
+  branchStatus,
+  changeBranch,
+  shifts,
+  onAdd,
+  onEdit,
+  onDelete,
+  user
+}) {
   const isAdmin = user?.role === "COMPANY_ADMIN";
   const isHR = user?.role === "HR";
 
@@ -25,28 +35,56 @@ export default function ShiftList({ branches, selectedBranch, onBranchChange, sh
     (s.shift_name || s.name || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // 1. Handle LOADING state
+  if (branchStatus === "LOADING") {
+    return <div className="p-4 text-center">Loading...</div>;
+  }
+
+  // 1. Handle NO_BRANCH state (Critical blocker)
+  if (branchStatus === "NO_BRANCH") {
+    return (
+      <div className="sm-page-container">
+        <div className="sm-empty-state">
+          <div className="sm-empty-box">
+            <h3>No Branches Found</h3>
+            <p>Please create a branch to manage shifts.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="shifts-container">
-      <div className="shifts-layout-wrapper">
-        <div className="shifts-main-panel">
+    <div className="sm-page-container">
+      <div className="sm-layout-wrapper">
+        <div className="sm-main-panel">
 
           {/* Unified Header */}
-          <div className="shifts-panel-header">
-            <div className="header-info">
+          <div className="sm-panel-header">
+            <div className="sm-header-info">
               <h3>Shift Management</h3>
               <span>Total: {filteredShifts.length}</span>
             </div>
 
-            <div className="header-actions-row">
-              <div className="branch-nav-inline">
+            <div className="sm-header-actions">
+              <div className="sm-branch-nav">
+                {/* 4. FIX the <select> */}
                 <select
-                  value={selectedBranch}
-                  onChange={(e) => onBranchChange(e.target.value)}
-                  className="shifts-branch-dropdown"
+                  value={selectedBranch === null ? "ALL" : selectedBranch}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    changeBranch(value === "ALL" ? null : Number(value));
+                  }}
+                  className="sm-branch-dropdown"
                 >
-                  <option value="">Select Branch</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>{b.branch_name}</option>
+                  {branches.length > 1 && (
+                    <option value="ALL">All Branches</option>
+                  )}
+
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.branch_name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -61,7 +99,7 @@ export default function ShiftList({ branches, selectedBranch, onBranchChange, sh
               </div>
 
               {canCreate && selectedBranch && (
-                <button onClick={onAdd} className="btn-add-shift">
+                <button onClick={onAdd} className="sm-btn-add">
                   <FaPlus /> Add Shift
                 </button>
               )}
@@ -69,38 +107,31 @@ export default function ShiftList({ branches, selectedBranch, onBranchChange, sh
           </div>
 
           {/* Content Area */}
-          <div className="shifts-list-scroll">
-            {!selectedBranch ? (
-              <div className="shifts-empty-state">
-                <div className="empty-box">
-                  <h3>No Branch Selected</h3>
-                  <p>Please select a branch to view and manage shifts.</p>
-                </div>
-              </div>
-            ) : filteredShifts.length === 0 ? (
-              <div className="no-data-msg">No shifts found for this branch.</div>
+          <div className="sm-list-scroll">
+            {filteredShifts.length === 0 ? (
+              <div className="no-data-msg">No shifts found.</div>
             ) : (
-              <div className="shifts-grid">
+              <div className="sm-grid">
                 {filteredShifts.map((shift) => (
-                  <div key={shift.id} className="shift-card-item">
-                    <div className="shift-header">
-                      <div className="shift-name">{shift.shift_name || shift.name}</div>
-                      <span className={`status-badge ${shift.is_active ? "active" : "inactive"}`}>
+                  <div key={shift.id} className="sm-card-item">
+                    <div className="sm-card-header">
+                      <div className="sm-card-name">{shift.shift_name || shift.name}</div>
+                      <span className={`sm-status-badge ${shift.is_active ? "active" : "inactive"}`}>
                         {shift.is_active ? "Active" : "Inactive"}
                       </span>
                     </div>
 
-                    <div className="shift-time-range">
+                    <div className="sm-card-time">
                       <FaClock size={12} />
                       {formatTime(shift.start_time)} - {formatTime(shift.end_time)}
                     </div>
 
-                    <div className="shift-desc">
+                    <div className="sm-card-desc">
                       {shift.description || "No description provided."}
                     </div>
 
                     {(canEdit || canDelete) && (
-                      <div className="shift-actions">
+                      <div className="sm-card-actions">
                         {canEdit && (
                           <button onClick={() => onEdit(shift)} title="Edit Shift">
                             <FaEdit />
@@ -108,7 +139,7 @@ export default function ShiftList({ branches, selectedBranch, onBranchChange, sh
                         )}
                         {canDelete && (
                           <button
-                            className="btn-trash"
+                            className="sm-btn-trash"
                             onClick={() => onDelete(shift.id)}
                             title="Delete Shift"
                           >

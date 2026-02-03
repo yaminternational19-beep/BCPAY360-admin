@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { FaSearch, FaPaperPlane, FaUserCircle, FaCheckCircle, FaFilter, FaInbox, FaSitemap, FaClock, FaIdBadge } from "react-icons/fa";
 import { Badge, Button, EmptyState, Loader } from "./components";
-import { getSupportTickets, getSupportTicketById, respondToSupportTicket, getBranches } from "../../api/master.api";
+import { getSupportTickets, getSupportTicketById, respondToSupportTicket } from "../../api/master.api";
 import "./HelpSupport.css";
+import { useBranch } from "../../hooks/useBranch"; // Import Hook
 
 export default function HelpSupport() {
+    const { branches, selectedBranch, changeBranch, isSingleBranch } = useBranch();
     const [tickets, setTickets] = useState([]);
-    const [branches, setBranches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [detailLoading, setDetailLoading] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
@@ -15,37 +16,19 @@ export default function HelpSupport() {
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState("");
-    const [branchFilter, setBranchFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
 
     // Fetch data on mount and when filters change
     useEffect(() => {
-        fetchBranches();
-    }, []);
-
-    useEffect(() => {
         fetchTickets();
-    }, [searchQuery, branchFilter, statusFilter]);
-
-    const fetchBranches = async () => {
-        try {
-            const response = await getBranches();
-            if (response && response.success) {
-                setBranches(response.data || []);
-            } else if (Array.isArray(response)) {
-                setBranches(response);
-            }
-        } catch (error) {
-            // silenced
-        }
-    };
+    }, [searchQuery, selectedBranch, statusFilter]);
 
     const fetchTickets = async () => {
         setLoading(true);
         try {
             const params = {};
             if (searchQuery) params.search = searchQuery;
-            if (branchFilter !== "All") params.branch_id = branchFilter;
+            if (selectedBranch) params.branch_id = selectedBranch;
             if (statusFilter !== "All") params.status = statusFilter;
 
             const response = await getSupportTickets(params);
@@ -123,17 +106,22 @@ export default function HelpSupport() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <select
-                    className="form-control"
-                    style={{ width: "180px" }}
-                    value={branchFilter}
-                    onChange={(e) => setBranchFilter(e.target.value)}
-                >
-                    <option value="All">All Branches</option>
-                    {branches.map(b => (
-                        <option key={b.id} value={b.id}>{b.branch_name || b.name}</option>
-                    ))}
-                </select>
+                {!isSingleBranch && (
+                    <select
+                        className="form-control"
+                        style={{ width: "180px" }}
+                        value={selectedBranch === null ? "ALL" : selectedBranch}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            changeBranch(val === "ALL" ? null : Number(val));
+                        }}
+                    >
+                        {branches.length > 1 && <option value="ALL">All Branches</option>}
+                        {branches.map(b => (
+                            <option key={b.id} value={b.id}>{b.branch_name || b.name}</option>
+                        ))}
+                    </select>
+                )}
                 <select
                     className="form-control"
                     style={{ width: "150px" }}

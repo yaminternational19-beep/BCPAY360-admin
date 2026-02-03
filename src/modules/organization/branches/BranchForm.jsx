@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FaTimes, FaSave, FaBan } from "react-icons/fa";
+import { useToast } from "../../../context/ToastContext";
 import "../../../styles/Branch.css";
 
 const EMPTY_FORM = {
@@ -11,9 +13,9 @@ const EMPTY_FORM = {
   is_active: true,
 };
 
-const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
+const BranchForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
-
+  const toast = useToast();
   const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
@@ -34,66 +36,69 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validation with descriptive toasts
+    if (!form.branch_name.trim()) {
+      return toast.error("Please enter the branch name then click on the save button");
+    }
+    if (!form.location.trim()) {
+      return toast.error("Please enter the branch location then click on the save button");
+    }
+
     const payload = {
       ...form,
       is_active: Boolean(form.is_active),
     };
+
     onSave(payload);
+    toast.success(isEdit ? "Branch updated successfully" : "Branch created successfully");
   };
 
   return (
-    <div className="branch-modal-backdrop" onClick={onClose}>
-      <div className="branch-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="branch-modal-header">
-          <h3>{isEdit ? "Edit Branch" : "Add Branch"}</h3>
-          <button onClick={onClose} className="close-btn">
-            ✕
+    <div className="bf-modal-backdrop" onClick={onClose}>
+      <div className="bf-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="bf-modal-header">
+          <h3>{isEdit ? "Edit Branch Details" : "Register New Branch"}</h3>
+          <button onClick={onClose} className="bf-close-btn" title="Close">
+            <FaTimes />
           </button>
         </div>
 
-        <form className="branch-form" onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <div className="form-group">
+        <form className="bf-form" onSubmit={handleSubmit}>
+          <div className="bf-form-grid">
+            <div className="bf-form-group">
+              <label>
+                Branch Name <span className="bf-field-required">*</span>
+              </label>
+              <input
+                placeholder="Enter branch name"
+                value={form.branch_name}
+                onChange={(e) => change("branch_name", e.target.value)}
+              />
+            </div>
+            <div className="bf-form-group">
               <label>Branch Code</label>
               <input
-                placeholder="Auto-generated or manual"
+                placeholder="Unique code (e.g. BR001)"
                 value={form.branch_code}
                 onChange={(e) => change("branch_code", e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label>Branch Name <span style={{ color: "#ef4444" }}>*</span></label>
+          </div>
+
+          <div className="bf-form-grid">
+            <div className="bf-form-group">
+              <label>
+                Location <span className="bf-field-required">*</span>
+              </label>
               <input
-                placeholder="Branch name"
-                value={form.branch_name}
-                onChange={(e) => change("branch_name", e.target.value)}
-                required
+                placeholder="City or region"
+                value={form.location}
+                onChange={(e) => change("location", e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="form-group">
-            <label>Location</label>
-            <input
-              placeholder="City / Location"
-              value={form.location}
-              onChange={(e) => change("location", e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Address</label>
-            <textarea
-              placeholder="Full address"
-              value={form.address}
-              onChange={(e) => change("address", e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Phone</label>
+            <div className="bf-form-group">
+              <label>Contact Phone</label>
               <input
                 type="tel"
                 placeholder="Phone number"
@@ -101,34 +106,46 @@ const BranchForm = ({ initial, onSave, onClose, companies = [] }) => {
                 onChange={(e) => change("phone", e.target.value.replace(/\D/g, ""))}
               />
             </div>
-            <div className="form-group">
-              <label>Email</label>
+          </div>
+
+          <div className="bf-form-group">
+            <label>Full Address</label>
+            <textarea
+              placeholder="Provide complete physical address"
+              value={form.address}
+              onChange={(e) => change("address", e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <div className="bf-form-grid">
+            <div className="bf-form-group">
+              <label>Official Email</label>
               <input
                 type="email"
-                placeholder="branch@email.com"
+                placeholder="branch@company.com"
                 value={form.email}
                 onChange={(e) => change("email", e.target.value)}
               />
             </div>
+            <div className="bf-form-group" style={{ justifyContent: 'center' }}>
+              <label className="bf-checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={(e) => change("is_active", e.target.checked)}
+                />
+                <span className="bf-checkbox-text">Active Branch</span>
+              </label>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(e) => change("is_active", e.target.checked)}
-              />
-              Active
-            </label>
-          </div>
-
-          <div className="branch-form-footer">
-            <button type="button" onClick={onClose}>
-              Cancel
+          <div className="bf-form-footer">
+            <button type="button" className="bf-btn bf-btn-secondary" onClick={onClose}>
+              <FaBan /> Cancel
             </button>
-            <button type="submit" className="primary">
-              {isEdit ? "Update Branch" : "Create Branch"}
+            <button type="submit" className="bf-btn bf-btn-primary">
+              <FaSave /> {isEdit ? "Update Branch" : "Create Branch"}
             </button>
           </div>
         </form>

@@ -9,9 +9,10 @@ import StatusBadge from "../../../components/ui/StatusBadge";
 import ActionButtons from "../../../components/ui/ActionButtons";
 import { FaCheckCircle, FaExclamationCircle, FaUsers, FaEye, FaUpload, FaDownload, FaFileExport } from "react-icons/fa";
 import { getEmployeesByForm, uploadEmployeeForm, replaceEmployeeForm, deleteEmployeeForm } from "../../../api/employees.api";
-import { getBranches, getDepartments } from "../../../api/master.api";
+import { getDepartments } from "../../../api/master.api";
 import "../../../styles/shared/modern-ui.css";
 import "../Forms.css";
+import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 
 const MONTH_MAP = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
@@ -19,6 +20,7 @@ const MONTH_MAP = {
 };
 
 const EmployeeFormsPage = () => {
+    const { branches, selectedBranch, changeBranch, isSingleBranch } = useBranch();
     const { formType } = useParams();
     const config = useMemo(() => {
         const baseConfig = FORMS_CONFIG[formType];
@@ -61,7 +63,6 @@ const EmployeeFormsPage = () => {
     const [uploading, setUploading] = useState(false);
 
     // Master Data
-    const [branches, setBranches] = useState([]);
     const [departments, setDepartments] = useState([]);
 
     // UI State
@@ -71,7 +72,6 @@ const EmployeeFormsPage = () => {
     // State for filters
     const [filters, setFilters] = useState({
         search: "",
-        branchId: "",
         departmentId: "",
         month: new Date().toLocaleString('en-US', { month: 'long' }),
         year: new Date().getFullYear().toString(),
@@ -81,19 +81,16 @@ const EmployeeFormsPage = () => {
     // Clear selection on tab or filter change
     useEffect(() => {
         setSelectedIds(new Set());
-    }, [activeTab, filters.branchId, filters.departmentId, filters.month, filters.year, filters.financialYear, selectedFormCode]);
+    }, [activeTab, selectedBranch, filters.departmentId, filters.month, filters.year, filters.financialYear, selectedFormCode]);
 
     const fetchMasterData = async () => {
         try {
-            const [bRes, dRes] = await Promise.all([
-                getBranches(),
-                filters.branchId ? getDepartments(filters.branchId) : Promise.resolve([])
-            ]);
-            setBranches(bRes || []);
-            if (filters.branchId) {
-                setDepartments(dRes || []);
+            if (selectedBranch) {
+                const response = await getDepartments(selectedBranch);
+                setDepartments(response || []);
             } else {
                 setDepartments([]);
+                handleFilterChange("departmentId", "");
             }
         } catch (error) {
             alert("Error fetching master data: " + error.message);
@@ -108,7 +105,7 @@ const EmployeeFormsPage = () => {
             const params = {
                 formCode: selectedForm.code,
                 periodType: selectedForm.periodType,
-                branchId: filters.branchId,
+                branchId: selectedBranch,
                 departmentId: filters.departmentId
             };
 
@@ -139,11 +136,11 @@ const EmployeeFormsPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedForm, filters]);
+    }, [selectedForm, filters, selectedBranch]);
 
     useEffect(() => {
         fetchMasterData();
-    }, [filters.branchId]);
+    }, [selectedBranch]);
 
     useEffect(() => {
         fetchData();
@@ -570,22 +567,29 @@ const EmployeeFormsPage = () => {
                 search={filters.search}
                 onSearchChange={(val) => handleFilterChange("search", val)}
             >
-                <select
-                    value={filters.branchId}
-                    onChange={(e) => handleFilterChange("branchId", e.target.value)}
-                    className="filter-select-modern"
-                >
-                    <option value="">All Branches</option>
-                    {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
-                </select>
+                {!isSingleBranch && (
+                    <select
+                        value={selectedBranch === null ? "ALL" : selectedBranch}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            changeBranch(val === "ALL" ? null : Number(val));
+                        }}
+                        className="filter-select-modern"
+                    >
+                        {branches.length > 1 && <option value="ALL">All Branches</option>}
+                        {branches.map(b => (
+                            <option key={b.id} value={b.id}>{b.branch_name}</option>
+                        ))}
+                    </select>
+                )}
 
                 <select
                     value={filters.departmentId}
                     onChange={(e) => handleFilterChange("departmentId", e.target.value)}
                     className="filter-select-modern"
-                    disabled={!filters.branchId}
+                    disabled={!selectedBranch}
                 >
-                    <option value="">All Departments</option>
+                    <option value="">{selectedBranch ? "All Departments" : "Select Branch First"}</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
                 </select>
 

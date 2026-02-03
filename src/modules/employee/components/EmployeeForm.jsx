@@ -12,9 +12,10 @@ import {
   AlertCircle,
 } from "lucide-react";
 import "../styles/EmployeeForm.css";
-import { getDepartments, getDesignations, getEmployeeTypes, getShifts, getBranches } from "../../../api/master.api";
+import { getDepartments, getDesignations, getEmployeeTypes, getShifts } from "../../../api/master.api";
 import { getLastEmployeeCode, getAvailableCompanyForms } from "../../../api/employees.api";
 import { useToast } from "../../../context/ToastContext";
+import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 import {
   validateEmail,
   validatePhone,
@@ -70,6 +71,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const isEdit = Boolean(initial);
   const toast = useToast();
 
+  // Use Global Branch Context
+  const { branches, selectedBranch } = useBranch();
+
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -77,7 +81,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const [designations, setDesignations] = useState([]);
   const [employeeTypes, setEmployeeTypes] = useState([]);
   const [shifts, setShifts] = useState([]);
-  const [branches, setBranches] = useState([]);
+  // const [branches, setBranches] = useState([]); // REMOVED
   const [showPassword, setShowPassword] = useState(false);
   const [companyForms, setCompanyForms] = useState([]);
 
@@ -85,6 +89,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   const [errors, setErrors] = useState({});
   const [sameAddress, setSameAddress] = useState(false);
 
+  // Initialize with selectedBranch if available
   const [employeeForm, setEmployeeForm] = useState({
     employee_code: "",
     full_name: "",
@@ -110,7 +115,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     job_location: "",
     site_location: "",
 
-    branch_id: "",
+    branch_id: selectedBranch || "", // Use Global Default
     department_id: "",
     designation_id: "",
 
@@ -154,7 +159,12 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
   // 1️⃣ Initialize Form for Edit
   useEffect(() => {
-    if (!isEdit || !initial) return;
+    if (!isEdit || !initial) {
+      if (!isEdit && selectedBranch && !employeeForm.branch_id) {
+        setEmployeeForm(prev => ({ ...prev, branch_id: selectedBranch }));
+      }
+      return;
+    }
 
     // Handle initial data which might be structured differently
     const ef = initial.employee || initial;
@@ -186,7 +196,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       job_location: ef.job_location || "",
       site_location: ef.site_location || "",
 
-      branch_id: ef.branch_id || ef.branch?.id || "",
+      branch_id: ef.branch_id || ef.branch?.id || selectedBranch || "",
       department_id: ef.department_id || ef.department?.id || "",
       designation_id: ef.designation_id || ef.designation?.id || "",
 
@@ -223,7 +233,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       existing: docs || [],
     });
 
-  }, [isEdit, initial]);
+  }, [isEdit, initial, selectedBranch]);
 
   // 2️⃣ Employee Code (only on create)
   useEffect(() => {
@@ -267,26 +277,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
   }, []);
 
 
-  // 2️⃣ Load branches (on mount)
-  useEffect(() => {
-    let mounted = true;
-
-    getBranches()
-      .then((res) => {
-        if (mounted) {
-          const list = Array.isArray(res) ? res : (res?.data || []);
-          setBranches(list);
-        }
-      })
-      .catch((err) => {
-        toast.error("Branch Load Error: " + err.message);
-        if (mounted) setBranches([]);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  // No local branch loading needed, context handles it.
 
 
 

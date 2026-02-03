@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { FaEdit, FaTrash, FaCheck, FaTimes, FaPlus, FaSearch } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCheck, FaTimes, FaPlus } from "react-icons/fa";
+import { useToast } from "../../../context/ToastContext";
 import "../../../styles/EmployeeTypes.css";
+import { useBranch } from "../../../hooks/useBranch";
 import {
-  getBranches,
   getEmployeeTypes,
   createEmployeeType,
   updateEmployeeType,
@@ -17,43 +18,46 @@ export default function EmployeeTypeList({ user }) {
   const canEdit = isAdmin || isHR;
   const canDelete = isAdmin;
 
-  const [branches, setBranches] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState("");
+  // Use centralized branch state
+  const {
+    branches,
+    selectedBranch,
+    changeBranch,
+    branchStatus,
+    isLoading: branchLoading
+  } = useBranch();
+
   const [employeeTypes, setEmployeeTypes] = useState([]);
   const [newType, setNewType] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const toast = useToast();
 
-  const loadBranches = async () => {
-    try {
-      const data = await getBranches();
-      setBranches(data || []);
-    } catch (error) {
-      alert("Failed to load employee types: " + error.message);
-    }
-  };
 
   const loadEmployeeTypes = async (branchId) => {
-    if (!branchId) {
-      setEmployeeTypes([]);
-      return;
-    }
+    // If you want to support "All Branches" view for Employee Types, 
+    // update this logic. Currently mirroring Shift.jsx pattern which allows null.
     try {
       const data = await getEmployeeTypes(branchId);
       setEmployeeTypes(Array.isArray(data) ? data : []);
     } catch (error) {
+      toast.error("Failed to load employee types: " + error.message);
       setEmployeeTypes([]);
     }
   };
 
   useEffect(() => {
-    loadBranches();
-  }, []);
+    loadEmployeeTypes(selectedBranch);
+  }, [selectedBranch]);
+
 
   const handleCreateEmployeeType = async () => {
-    if (!canCreate || !newType.trim() || !selectedBranch) return;
+    if (!canCreate || !selectedBranch) return;
+
+    if (!newType.trim()) {
+      return toast.error("Please enter the employee type name then click on the add button");
+    }
 
     setLoading(true);
     try {
@@ -62,9 +66,10 @@ export default function EmployeeTypeList({ user }) {
         branch_id: Number(selectedBranch),
       });
       setNewType("");
+      toast.success("Employee type created successfully");
       loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      alert("Failed to create employee type: " + error.message);
+      toast.error("Failed to create employee type: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -78,9 +83,10 @@ export default function EmployeeTypeList({ user }) {
       await updateEmployeeType(id, { type_name: editingName.trim() });
       setEditingId(null);
       setEditingName("");
+      toast.success("Employee type updated");
       loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      alert("Failed to update employee type: " + error.message);
+      toast.error("Failed to update employee type: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -92,15 +98,30 @@ export default function EmployeeTypeList({ user }) {
 
     try {
       await apiDeleteEmployeeType(id);
+      toast.success("Employee type deleted");
       loadEmployeeTypes(selectedBranch);
     } catch (error) {
-      alert("Failed to delete employee type: " + error.message);
+      toast.error("Failed to delete employee type: " + error.message);
     }
   };
 
-  const filteredTypes = employeeTypes.filter(t =>
-    (t.type_name || t.name || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
+  // 1. Handle LOADING state
+  if (branchStatus === "LOADING") {
+    return <div className="p-4 text-center">Loading...</div>;
+  }
+
+  // 2. Handle NO_BRANCH state
+  if (branchStatus === "NO_BRANCH") {
+    return (
+      <div className="et-container">
+        <div className="no-data-msg" style={{ marginTop: '50px' }}>
+          <h3>No Branches Found</h3>
+          <p>Please create a branch to manage employee types.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="et-container">
@@ -109,34 +130,28 @@ export default function EmployeeTypeList({ user }) {
           <div className="et-panel-header">
             <div className="header-info">
               <h3>Employee Types</h3>
-              <span>Total: {filteredTypes.length}</span>
+              <span>Total: {employeeTypes.length}</span>
             </div>
 
             <div className="header-actions-row">
               <div className="branch-nav-inline">
                 <select
-                  value={selectedBranch}
+                  value={selectedBranch === null ? "ALL" : selectedBranch}
                   onChange={(e) => {
-                    setSelectedBranch(e.target.value);
-                    loadEmployeeTypes(e.target.value);
+                    const value = e.target.value;
+                    changeBranch(value === "ALL" ? null : Number(value));
                   }}
                   className="et-branch-dropdown"
                 >
-                  <option value="">Select Branch</option>
+                  {branches.length > 1 && (
+                    <option value="ALL">All Branches</option>
+                  )}
                   {branches.map((b) => (
                     <option key={b.id} value={b.id}>{b.branch_name}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="search-bar-et">
-                <FaSearch className="search-icon" />
-                <input
-                  placeholder="Search types..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
 
               {selectedBranch && canCreate && (
                 <div className="add-et-row">
@@ -148,7 +163,7 @@ export default function EmployeeTypeList({ user }) {
                   />
                   <button
                     onClick={handleCreateEmployeeType}
-                    disabled={loading || !newType.trim()}
+                    disabled={loading}
                     className="btn-add-et"
                   >
                     <FaPlus /> Add Type
@@ -159,13 +174,11 @@ export default function EmployeeTypeList({ user }) {
           </div>
 
           <div className="et-list-scroll">
-            {!selectedBranch ? (
-              <div className="no-data-msg">Please select a branch above to view employee types.</div>
-            ) : filteredTypes.length === 0 ? (
+            {employeeTypes.length === 0 ? (
               <div className="no-data-msg">No employee types found.</div>
             ) : (
               <div className="et-grid-modern">
-                {filteredTypes.map((type) => (
+                {employeeTypes.map((type) => (
                   <div key={type.id} className="et-card-item">
                     {editingId === type.id ? (
                       <div className="et-edit-row">

@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import "../../../styles/Shifts.css";
 import ShiftList from "./ShiftList";
 import ShiftForm from "./ShiftForm";
+import { useBranch } from "../../../hooks/useBranch";
 import {
-  getBranches,
   getShifts,
   createShift,
   updateShift,
   deleteShift as apiDeleteShift,
   toggleShiftStatus,
 } from "../../../api/master.api";
+import { useToast } from "../../../context/ToastContext";
 
 
 export default function Shift({ user }) {
@@ -20,27 +21,24 @@ export default function Shift({ user }) {
   const canEdit = isAdmin || isHR;
   const canDelete = isAdmin;
 
-  const [branches, setBranches] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState("");
+  // Use centralized branch state
+  const {
+    branches,
+    selectedBranch,
+    changeBranch,
+    branchStatus,
+    isLoading: branchLoading
+  } = useBranch();
+
   const [shifts, setShifts] = useState([]);
   const [mode, setMode] = useState('list');
   const [currentShift, setCurrentShift] = useState(null);
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
-  const loadBranches = async () => {
-    try {
-      const data = await getBranches();
-      setBranches(data || []);
-    } catch (error) {
-      alert("Failed to load branches: " + error.message);
-    }
-  };
 
   const loadShifts = async (branchId) => {
-    if (!branchId) {
-      setShifts([]);
-      return;
-    }
+    // If selectedBranch is null, we fetch all branches (assuming API handles it or we pass null)
     try {
       const data = await getShifts(branchId);
       setShifts(Array.isArray(data) ? data : []);
@@ -50,10 +48,7 @@ export default function Shift({ user }) {
   };
 
   useEffect(() => {
-    loadBranches();
-  }, []);
-
-  useEffect(() => {
+    // Always fetch, whether selectedBranch is specific ID or null (All)
     loadShifts(selectedBranch);
   }, [selectedBranch]);
 
@@ -69,12 +64,13 @@ export default function Shift({ user }) {
         description: shiftData.description || null,
         branch_id: Number(selectedBranch),
       });
+      toast.success("Shift added successfully");
       loadShifts(selectedBranch);
     } catch (error) {
       if (error.message && error.message.includes("already exists")) {
-        alert(error.message);
+        toast.error(error.message);
       } else {
-        alert("Failed to create shift: " + error.message);
+        toast.error("Failed to create shift: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -92,12 +88,13 @@ export default function Shift({ user }) {
         end_time: shiftData.end_time,
         description: shiftData.description || null,
       });
+      toast.success("Shift updated successfully");
       loadShifts(selectedBranch);
     } catch (error) {
       if (error.message && error.message.includes("already exists")) {
-        alert(error.message);
+        toast.error(error.message);
       } else {
-        alert("Failed to update shift: " + error.message);
+        toast.error("Failed to update shift: " + error.message);
       }
     } finally {
       setLoading(false);
@@ -110,9 +107,10 @@ export default function Shift({ user }) {
 
     try {
       await apiDeleteShift(id);
+      toast.success("Shift removed");
       loadShifts(selectedBranch);
     } catch (error) {
-      alert("Failed to delete shift: " + error.message);
+      toast.error("Failed to delete shift: " + error.message);
     }
   };
 
@@ -121,7 +119,7 @@ export default function Shift({ user }) {
       await toggleShiftStatus(shift.id);
       loadShifts(selectedBranch);
     } catch (error) {
-      alert("Failed to update status: " + error.message);
+      toast.error("Failed to update status: " + error.message);
     }
   };
 
@@ -146,21 +144,22 @@ export default function Shift({ user }) {
   };
 
   const onCancel = () => {
+    if (!currentShift) {
+      toast.info("Shift creation was cancelled");
+    }
     setMode('list');
     setCurrentShift(null);
   };
 
-  const onBranchChange = (branchId) => {
-    setSelectedBranch(branchId);
-  };
 
   return (
-    <div className="shifts-page">
+    <div className="sm-page-container">
       {mode === 'list' ? (
         <ShiftList
           branches={branches}
           selectedBranch={selectedBranch}
-          onBranchChange={onBranchChange}
+          branchStatus={branchStatus}
+          changeBranch={changeBranch}
           shifts={shifts}
           onAdd={onAdd}
           onEdit={onEdit}

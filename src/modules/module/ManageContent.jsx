@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaSave, FaFileSignature, FaShieldAlt, FaHandshake, FaMoneyBillWave, FaEnvelope, FaFileAlt, FaPlus, FaCheck, FaTrash, FaTimes } from "react-icons/fa";
 import { Card, CardBody, Button, Modal, Loader } from "./components";
-import { getCompanyPages, getCompanyPageBySlug, createCompanyPage, updateCompanyPage, deleteCompanyPage, getBranches } from "../../api/master.api";
+import { getCompanyPages, getCompanyPageBySlug, createCompanyPage, updateCompanyPage, deleteCompanyPage } from "../../api/master.api";
 import "./module.css";
+import { useBranch } from "../../hooks/useBranch"; // Import Hook
 
 // Helper to map icons based on slug
 const getIconForSlug = (slug) => {
@@ -34,8 +35,8 @@ const INITIAL_CONTACT_STATE = {
 };
 
 export default function ManageContent() {
+    const { branches } = useBranch();
     const [sections, setSections] = useState([]);
-    const [branches, setBranches] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeSection, setActiveSection] = useState(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -55,7 +56,6 @@ export default function ManageContent() {
     // Fetch pages on mount
     useEffect(() => {
         fetchPages();
-        fetchBranches();
     }, []);
 
     const fetchPages = async () => {
@@ -69,19 +69,6 @@ export default function ManageContent() {
             // silenced
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const fetchBranches = async () => {
-        try {
-            const response = await getBranches();
-            if (response && response.success) {
-                setBranches(response.data || []);
-            } else if (Array.isArray(response)) {
-                setBranches(response);
-            }
-        } catch (error) {
-            // silenced
         }
     };
 

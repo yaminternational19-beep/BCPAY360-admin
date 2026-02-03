@@ -26,7 +26,6 @@ export default function LeaveManagementPage() {
   // Filter States
   const [filters, setFilters] = useState({
     search: "",
-    branchId: "",
     departmentId: ""
   });
 
@@ -37,25 +36,11 @@ export default function LeaveManagementPage() {
   const [pendingCount, setPendingCount] = useState(0);
   const [loadingTab, setLoadingTab] = useState(null);
 
-  // Sync selected branch to filters
   useEffect(() => {
     if (selectedBranch) {
-      setFilters(prev => ({ ...prev, branchId: selectedBranch, departmentId: "" }));
-    }
-  }, [selectedBranch]);
-
-  useEffect(() => {
-    // If user changes branch manually in UI (for multi-branch)
-    if (filters.branchId && filters.branchId !== selectedBranch) {
-      changeBranch(filters.branchId);
-    }
-  }, [filters.branchId, selectedBranch, changeBranch]);
-
-  useEffect(() => {
-    if (filters.branchId) {
       const fetchDepts = async () => {
         try {
-          const res = await getDepartments(filters.branchId);
+          const res = await getDepartments(selectedBranch);
           setDepartmentList(res?.data || res || []);
         } catch (err) {
           // silenced
@@ -65,12 +50,11 @@ export default function LeaveManagementPage() {
     } else {
       setDepartmentList([]);
     }
-  }, [filters.branchId]);
+  }, [selectedBranch]);
 
   const handleReset = () => {
     setFilters({
       search: "",
-      branchId: "",
       departmentId: ""
     });
   };
@@ -82,6 +66,9 @@ export default function LeaveManagementPage() {
       setLoadingTab(null);
     }, 200);
   };
+
+  // Combine filters with global selectedBranch for children
+  const activeFilters = { ...filters, branchId: selectedBranch };
 
   return (
     <div className="lm-root">
@@ -157,10 +144,13 @@ export default function LeaveManagementPage() {
         {!isSingleBranch && (
           <select
             className="lm-select"
-            value={filters.branchId}
-            onChange={(e) => setFilters({ ...filters, branchId: e.target.value, departmentId: "" })}
+            value={selectedBranch === null ? "ALL" : selectedBranch}
+            onChange={(e) => {
+              const val = e.target.value;
+              changeBranch(val === "ALL" ? null : Number(val));
+            }}
           >
-            <option value="">All Branches</option>
+            {branchList.length > 1 && <option value="ALL">All Branches</option>}
             {branchList.map(b => (
               <option key={b.id} value={b.id}>{b.branch_name}</option>
             ))}
@@ -171,9 +161,9 @@ export default function LeaveManagementPage() {
           className="lm-select"
           value={filters.departmentId}
           onChange={(e) => setFilters({ ...filters, departmentId: e.target.value })}
-          disabled={!filters.branchId}
+          disabled={!selectedBranch}
         >
-          <option value="">{filters.branchId ? "All Departments" : "Select Branch First"}</option>
+          <option value="">{selectedBranch ? "All Departments" : "Select Branch First"}</option>
           {departmentList.map(d => (
             <option key={d.id} value={d.id}>{d.department_name}</option>
           ))}
@@ -222,20 +212,20 @@ export default function LeaveManagementPage() {
 
         {/* POLICY */}
         <div className={`lm-section ${activeTab === "policy" ? "active" : ""}`}>
-          <LeavePolicyTable filters={filters} />
+          <LeavePolicyTable filters={activeFilters} />
         </div>
 
         {/* APPROVALS */}
         <div className={`lm-section ${activeTab === "approvals" ? "active" : ""}`}>
           <PendingLeaveList
             onCountChange={setPendingCount}
-            filters={filters}
+            filters={activeFilters}
           />
         </div>
 
         {/* HISTORY */}
         <div className={`lm-section ${activeTab === "history" ? "active" : ""}`}>
-          <LeaveHistoryTable filters={filters} />
+          <LeaveHistoryTable filters={activeFilters} />
         </div>
       </section>
 

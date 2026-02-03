@@ -34,28 +34,14 @@ const AttendanceHeader = ({
   const [departmentList, setDepartmentList] = useState([]);
   const [shiftList, setShiftList] = useState([]);
 
-  // Sync selected branch to filters
-  useEffect(() => {
-    if (selectedBranch) {
-      onFilterChange({ ...filters, branchId: selectedBranch });
-    }
-  }, [selectedBranch]);
-
-  // Sync filter changes back to hook (if user changed it manually)
-  useEffect(() => {
-    if (filters.branchId && filters.branchId !== selectedBranch) {
-      changeBranch(filters.branchId);
-    }
-  }, [filters.branchId, selectedBranch, changeBranch]);
-
   // Fetch Departments & Shifts when branch changes
   useEffect(() => {
-    if (filters.branchId) {
+    if (selectedBranch) {
       const fetchData = async () => {
         try {
           const [deptRes, shiftRes] = await Promise.all([
-            getDepartments(filters.branchId),
-            getShifts(filters.branchId)
+            getDepartments(selectedBranch),
+            getShifts(selectedBranch)
           ]);
           setDepartmentList(deptRes?.data || deptRes || []);
           setShiftList(shiftRes?.data || shiftRes || []);
@@ -68,22 +54,11 @@ const AttendanceHeader = ({
       setDepartmentList([]);
       setShiftList([]);
     }
-  }, [filters.branchId]);
-
-  const handleBranchChange = (e) => {
-    const branchId = e.target.value;
-    onFilterChange({
-      ...filters,
-      branchId: branchId,
-      departmentId: "", // Reset child filters
-      shiftId: ""
-    });
-  };
+  }, [selectedBranch]);
 
   const handleReset = () => {
     onFilterChange({
       search: "",
-      branchId: "",
       departmentId: "",
       shiftId: "",
       status: ""
@@ -123,11 +98,14 @@ const AttendanceHeader = ({
             {/* Hide Branch Selector if Single Branch Mode */}
             {!isSingleBranch && (
               <select
-                value={filters.branchId}
-                onChange={handleBranchChange}
+                value={selectedBranch === null ? "ALL" : selectedBranch}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  changeBranch(val === "ALL" ? null : Number(val));
+                }}
                 className="filter-select"
               >
-                <option value="">All Branches</option>
+                {branchList.length > 1 && <option value="ALL">All Branches</option>}
                 {branchList.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.branch_name}
@@ -142,10 +120,10 @@ const AttendanceHeader = ({
                 onFilterChange({ ...filters, departmentId: e.target.value })
               }
               className="filter-select"
-              disabled={!filters.branchId}
+              disabled={!selectedBranch}
             >
               <option value="">
-                {filters.branchId ? "All Departments" : "Select Branch First"}
+                {selectedBranch ? "All Departments" : "Select Branch First"}
               </option>
               {departmentList.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -160,10 +138,10 @@ const AttendanceHeader = ({
                 onFilterChange({ ...filters, shiftId: e.target.value })
               }
               className="filter-select"
-              disabled={!filters.branchId}
+              disabled={!selectedBranch}
             >
               <option value="">
-                {filters.branchId ? "All Shifts" : "Select Branch First"}
+                {selectedBranch ? "All Shifts" : "Select Branch First"}
               </option>
               {shiftList.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -213,11 +191,14 @@ const AttendanceHeader = ({
             {/* Hide Branch Selector if Single Branch Mode */}
             {!isSingleBranch && (
               <select
-                value={filters.branchId}
-                onChange={handleBranchChange}
+                value={selectedBranch === null ? "ALL" : selectedBranch}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  changeBranch(val === "ALL" ? null : Number(val));
+                }}
                 className="filter-select"
               >
-                <option value="">All Branches</option>
+                {branchList.length > 1 && <option value="ALL">All Branches</option>}
                 {branchList.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.branch_name}
@@ -232,10 +213,10 @@ const AttendanceHeader = ({
                 onFilterChange({ ...filters, departmentId: e.target.value })
               }
               className="filter-select"
-              disabled={!filters.branchId}
+              disabled={!selectedBranch}
             >
               <option value="">
-                {filters.branchId ? "All Departments" : "Select Branch First"}
+                {selectedBranch ? "All Departments" : "Select Branch First"}
               </option>
               {departmentList.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -250,10 +231,10 @@ const AttendanceHeader = ({
                 onFilterChange({ ...filters, shiftId: e.target.value })
               }
               className="filter-select"
-              disabled={!filters.branchId}
+              disabled={!selectedBranch}
             >
               <option value="">
-                {filters.branchId ? "All Shifts" : "Select Branch First"}
+                {selectedBranch ? "All Shifts" : "Select Branch First"}
               </option>
               {shiftList.map((s) => (
                 <option key={s.id} value={s.id}>

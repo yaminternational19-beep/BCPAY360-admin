@@ -93,6 +93,10 @@ const GovernmentForms = () => {
   };
 
   const handleDelete = async (form) => {
+    if (form.status === "ACTIVE") {
+      return toast.error("Active forms cannot be deleted! Please deactivate the form first.");
+    }
+
     if (!window.confirm("Delete this form permanently?")) return;
     try {
       await deleteGovernmentForm(form.id);
@@ -115,20 +119,22 @@ const GovernmentForms = () => {
   };
 
   return (
-    <div className="gov-forms-container">
-      <div className="gov-forms-header">
-        <h2>Government Forms</h2>
-        <button className="btn-primary" onClick={() => setModalOpen(true)}>
-          + New Form
+    <div className="gf-container">
+      <div className="gf-header">
+        <h2>Government Forms Setup</h2>
+        <button className="gf-btn-new" onClick={() => setModalOpen(true)}>
+          Create New Form
         </button>
       </div>
 
-      <input
-        className="gov-search"
-        placeholder="Search by name, code, category"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="gf-search-wrap">
+        <input
+          className="gf-search-input"
+          placeholder="Search by name, code, category..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       <GovernmentFormsTable
         data={filteredForms}

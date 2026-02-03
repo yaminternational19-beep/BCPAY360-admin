@@ -1,36 +1,29 @@
 import React, { useEffect, useState } from "react";
 import "./EmpCode.css";
-import { getBranches, generateEmployeeCode } from "../../../api/master.api.js";
+import { generateEmployeeCode } from "../../../api/master.api.js";
+import { useBranch } from "../../../hooks/useBranch";
+import { useToast } from "../../../context/ToastContext";
+import { FaBarcode, FaCheckCircle, FaInfoCircle, FaSave } from "react-icons/fa";
 
 const EmpCode = () => {
-  const [branches, setBranches] = useState([]);
-  const [branchId, setBranchId] = useState("");
+  const toast = useToast();
+  const {
+    branches,
+    selectedBranch,
+    changeBranch,
+    branchStatus,
+  } = useBranch();
+
   const [employeeCode, setEmployeeCode] = useState("");
   const [preview, setPreview] = useState("");
   const [exists, setExists] = useState(false);
   const [loading, setLoading] = useState(false);
 
   /* =========================================
-     Fetch branches (dynamic, no static data)
-     ========================================= */
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const data = await getBranches();
-        setBranches(data || []);
-      } catch (err) {
-        alert("Failed to fetch branches: " + err.message);
-      }
-    };
-    fetchBranches();
-  }, []);
-
-  /* =========================================
      When branch changes → fetch emp code config
-     SAME API (no new endpoints)
      ========================================= */
   useEffect(() => {
-    if (!branchId) {
+    if (!selectedBranch) {
       setEmployeeCode("");
       setPreview("");
       setExists(false);
@@ -40,7 +33,7 @@ const EmpCode = () => {
     const fetchEmpCode = async () => {
       try {
         const res = await generateEmployeeCode({
-          branch_id: branchId,
+          branch_id: selectedBranch,
         });
 
         if (res?.exists) {
@@ -51,14 +44,14 @@ const EmpCode = () => {
           setExists(false);
         }
       } catch (err) {
-        alert("Failed to fetch employee code: " + err.message);
+        toast.error("Failed to fetch employee code: " + err.message);
         setEmployeeCode("");
         setExists(false);
       }
     };
 
     fetchEmpCode();
-  }, [branchId]);
+  }, [selectedBranch, toast]);
 
   /* =========================================
      Preview next employee code (frontend only)
@@ -71,25 +64,28 @@ const EmpCode = () => {
 
     const match = employeeCode.match(/(\d+)$/);
     if (!match) {
-      setPreview("Invalid code format");
+      setPreview("Invalid format");
       return;
     }
 
     const number = match[1];
     const prefix = employeeCode.slice(0, -number.length);
 
-    const next =
-      prefix + String(parseInt(number, 10) + 1).padStart(number.length, "0");
-
-    setPreview(next);
+    try {
+      const next =
+        prefix + String(parseInt(number, 10) + 1).padStart(number.length, "0");
+      setPreview(next);
+    } catch (e) {
+      setPreview("Error");
+    }
   }, [employeeCode]);
 
   /* =========================================
      Save (Create / Update using SAME API)
      ========================================= */
   const handleSave = async () => {
-    if (!branchId || !employeeCode) {
-      alert("Branch and employee code are required");
+    if (!selectedBranch || !employeeCode) {
+      toast.error("Branch and employee code are required");
       return;
     }
 
@@ -97,92 +93,134 @@ const EmpCode = () => {
       setLoading(true);
 
       await generateEmployeeCode({
-        branch_id: branchId,
+        branch_id: selectedBranch,
         employee_code: employeeCode,
       });
 
-      alert(`Employee code ${exists ? "updated" : "created"} successfully`);
+      toast.success(`Employee code ${exists ? "updated" : "created"} successfully!`);
       setExists(true);
     } catch (err) {
-      alert(err?.message || "Failed to save employee code");
+      toast.error(err?.message || "Failed to save employee code");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="empcode-container">
-      <div className="empcode-card">
+  if (branchStatus === "LOADING") {
+    return (
+      <div className="ec-loading-wrap">
+        <div className="ec-spinner"></div>
+        <p>Loading setup...</p>
+      </div>
+    );
+  }
 
-        {/* Header */}
-        <div className="empcode-header">
-          <div className="empcode-title">Employee Code Setup</div>
-          <div className="empcode-subtitle">Configure employee code format for each branch</div>
+  return (
+    <div className="ec-page-container">
+      <div className="ec-setup-card">
+
+        {/* Header Section */}
+        <div className="ec-header-box">
+          <div className="ec-icon-circle">
+            <FaBarcode />
+          </div>
+          <div className="ec-header-text">
+            <h2>Employee Code Setup</h2>
+            <p>Define the sequential code format for new employee IDs</p>
+          </div>
         </div>
 
-        {/* Form Body */}
-        <div className="empcode-body">
-
-          {/* Branch Selection */}
-          <div className="form-group">
-            <label>
-              Select Branch <span className="required">*</span>
+        <div className="ec-card-body">
+          {/* Branch Picker */}
+          <div className="ec-form-section">
+            <label className="ec-label">
+              Target Branch <span className="ec-req">*</span>
             </label>
-            <select
-              value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-            >
-              <option value="">-- Select Branch --</option>
-              {branches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.branch_name}
-                </option>
-              ))}
-            </select>
-            {!branchId && (
-              <div className="helper-text">Choose a branch to configure its employee code format</div>
+            <div className="ec-input-wrapper">
+              <select
+                className="ec-select"
+                value={selectedBranch === null ? "" : selectedBranch}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  changeBranch(val ? Number(val) : null);
+                }}
+              >
+                <option value="">-- Select Branch --</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.branch_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {!selectedBranch && (
+              <p className="ec-hint">Please select a branch to view or configure its code format</p>
             )}
           </div>
 
-          {/* Employee Code Input */}
-          <div className="form-group">
-            <label>
-              Employee Code <span className="required">*</span>
-              {exists && <span className="status-indicator exists">Existing</span>}
-              {!exists && branchId && <span className="status-indicator new">New</span>}
-            </label>
-            <input
-              placeholder="e.g. ABC2025001"
-              value={employeeCode}
-              onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
-              disabled={!branchId}
-            />
-            <div className="helper-text">
-              Use a format like: BranchCode + Year + Sequential Number
+          <div className="ec-split-layout">
+            {/* Code Configuration */}
+            <div className="ec-form-section">
+              <label className="ec-label">
+                Base Employee Code <span className="ec-req">*</span>
+                {exists && <span className="ec-badge exists">Existing</span>}
+                {!exists && selectedBranch && <span className="ec-badge new">New Setup</span>}
+              </label>
+              <div className="ec-input-wrapper">
+                <input
+                  className="ec-input"
+                  placeholder="e.g. EMP2026001"
+                  value={employeeCode}
+                  onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
+                  disabled={!selectedBranch}
+                />
+              </div>
+              <p className="ec-hint">Recommended: [BranchCode][Year][001]</p>
+            </div>
+
+            {/* Preview Section */}
+            <div className={`ec-preview-box ${preview && !preview.includes("Invalid") ? 'active' : ''}`}>
+              <div className="ec-preview-inner">
+                <div className="ec-preview-label">Next Generation Preview</div>
+                <div className="ec-preview-value">
+                  {preview || (selectedBranch ? "Waiting for code..." : "Select branch first")}
+                </div>
+                {preview && !preview.includes("Invalid") && (
+                  <div className="ec-preview-status">
+                    <FaCheckCircle /> Valid Format Detected
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Preview Next Code */}
-          {preview && !preview.includes("Invalid") && (
-            <div className="preview-box">
-              <div className="preview-label">Next Employee Code Preview</div>
-              <div className="preview-code">{preview}</div>
+          {/* Guidelines Box */}
+          <div className="ec-guidelines">
+            <div className="ec-guide-header">
+              <FaInfoCircle /> Important Guidelines
             </div>
-          )}
-
-          {/* Info Box */}
-          {branchId && (
-            <div className="info-box">
-              <strong>Note:</strong> This code format will be used as the base for all new employees in this branch.
-              The system will auto-increment the number for each new employee.
-            </div>
-          )}
+            <ul>
+              <li>The code <strong>must end with a number</strong> (e.g., 001) for auto-incrementing.</li>
+              <li>Changing this format will only affect <strong>new</strong> employees added after the update.</li>
+              <li>Ensure the prefix is consistent with your company's naming convention.</li>
+            </ul>
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="empcode-footer">
-          <button className="btn" onClick={handleSave} disabled={loading || !branchId || !employeeCode}>
-            {loading ? "Saving..." : exists ? "Update Code Format" : "Create Code Format"}
+        {/* Footer Actions */}
+        <div className="ec-footer">
+          <button
+            className="ec-btn-save"
+            onClick={handleSave}
+            disabled={loading || !selectedBranch || !employeeCode}
+          >
+            {loading ? (
+              <span className="ec-loading-text">Saving Changes...</span>
+            ) : (
+              <>
+                <FaSave /> {exists ? "Update Format Configuration" : "Initialize Code Format"}
+              </>
+            )}
           </button>
         </div>
 

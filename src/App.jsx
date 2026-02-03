@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ToastProvider } from "./context/ToastContext";
+import { BranchProvider } from "./context/BranchContext";
 
 import Login from "./pages/Login";
 import RoleGate from "./pages/RoleGate";
@@ -62,210 +63,208 @@ const AdminLayout = ({ user, setUser }) => {
   };
 
   return (
-    <div className="app-root">
-      <Navbar
-        user={user}
-        onToggleSidebar={() => setCollapsed((prev) => !prev)}
-        onLogout={logout}
-      />
+    <BranchProvider>
+      <div className="app-root">
+        <Navbar
+          user={user}
+          onToggleSidebar={() => setCollapsed((prev) => !prev)}
+          onLogout={logout}
+        />
 
-      <div className="main-wrapper">
-        <Sidebar collapsed={collapsed} user={user} />
+        <div className="main-wrapper">
+          <Sidebar collapsed={collapsed} user={user} />
 
-        <main className="main-content">
-          <Routes>
-            <Route index element={<Navigate to="dashboard" replace />} />
+          <main className="main-content">
+            <Routes>
+              <Route index element={<Navigate to="dashboard" replace />} />
 
-            <Route path="dashboard" element={<Dashboard user={user} />} />
+              <Route path="dashboard" element={<Dashboard user={user} />} />
 
-            <Route
-              path="employees"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="EMPLOYEE_MASTER"
-                >
-                  <EmployeeList />
-                </PermissionProtectedRoute>
-              }
-            />
+              <Route
+                path="employees"
+                element={
+                  <PermissionProtectedRoute
+                    user={user}
+                    permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                    moduleKey="EMPLOYEE_MASTER"
+                  >
+                    <EmployeeList />
+                  </PermissionProtectedRoute>
+                }
+              />
 
-            <Route
-              path="attendance"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="ATTENDANCE"
-                >
-                  <Attendance />
-                </PermissionProtectedRoute>
-              }
-            />
+              <Route
+                path="attendance"
+                element={
+                  <PermissionProtectedRoute
+                    user={user}
+                    permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                    moduleKey="ATTENDANCE"
+                  >
+                    <Attendance />
+                  </PermissionProtectedRoute>
+                }
+              />
 
-            <Route
-              path="leavemanagement"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="LEAVE_MASTER"
-                >
-                  <LeaveManagement />
-                </PermissionProtectedRoute>
-              }
-            />
+              <Route
+                path="leavemanagement"
+                element={
+                  <PermissionProtectedRoute
+                    user={user}
+                    permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                    moduleKey="LEAVE_MASTER"
+                  >
+                    <LeaveManagement />
+                  </PermissionProtectedRoute>
+                }
+              />
 
-            <Route
-              path="payroll/*"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="PAYROLL"
-                >
-                  <PayrollManagement />
-                </PermissionProtectedRoute>
-              }
-            />
+              <Route
+                path="payroll/*"
+                element={
+                  <PermissionProtectedRoute
+                    user={user}
+                    permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                    moduleKey="PAYROLL"
+                  >
+                    <PayrollManagement />
+                  </PermissionProtectedRoute>
+                }
+              />
 
-            <Route
-              path="holidays"
-              element={
-                <PermissionProtectedRoute
-                  user={user}
-                  permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
-                  moduleKey="HOLIDAYS"
-                >
-                  <HolidaysPage />
-                </PermissionProtectedRoute>
-              }
-            />
+              <Route
+                path="holidays"
+                element={
+                  <PermissionProtectedRoute
+                    user={user}
+                    permissions={JSON.parse(localStorage.getItem("hr_permissions") || "[]")}
+                    moduleKey="HOLIDAYS"
+                  >
+                    <HolidaysPage />
+                  </PermissionProtectedRoute>
+                }
+              />
 
-            <Route
-              path="departments"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <DepartmentDesignation user={user} />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="employee-types"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <EmployeeTypeList user={user} />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="shifts"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <ShiftList user={user} />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="branches"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <BranchList user={user} />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="organization/emp-code"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <EmpCode user={user} />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="organization/government-forms"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <GovernmentForms />
-                </RoleProtectedRoute>
-              }
-            />
+              <Route
+                path="departments"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <DepartmentDesignation user={user} />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="employee-types"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <EmployeeTypeList user={user} />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="shifts"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <ShiftList user={user} />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="branches"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <BranchList user={user} />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="organization/emp-code"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <EmpCode user={user} />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="organization/government-forms"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <GovernmentForms />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="companies"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <Companies user={user} />
+                  </RoleProtectedRoute>
+                }
+              />
 
+              <Route
+                path="accounting"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <Accounts />
+                  </RoleProtectedRoute>
+                }
+              />
+              {/* Reports and Forms - Flattened Routes */}
+              <Route
+                path="reports"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <SoftwareReportsDashboard />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="reports/:reportType"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <SoftwareReportsPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="forms/*"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <FormsRouter />
+                  </RoleProtectedRoute>
+                }
+              />
 
-
-
-            <Route
-              path="companies"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <Companies user={user} />
-                </RoleProtectedRoute>
-              }
-            />
-
-            <Route
-              path="accounting"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <Accounts />
-                </RoleProtectedRoute>
-              }
-            />
-            {/* Reports and Forms - Flattened Routes */}
-            <Route
-              path="reports"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <SoftwareReportsDashboard />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="reports/:reportType"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <SoftwareReportsPage />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="forms/*"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <FormsRouter />
-                </RoleProtectedRoute>
-              }
-            />
-
-            {/* New Module Routes */}
-            <Route path="manage-content" element={<ManageContent />} />
-            <Route path="help-support" element={<HelpSupport />} />
-            <Route path="faq" element={<FAQ />} />
-            <Route path="manage-broadcast" element={<ManageBroadcast />} />
-            <Route
-              path="hr-management/:hrId/permissions"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <HRPermissions />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="hr-management/*"
-              element={
-                <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                  <HRList />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route path="employees/:id" element={<EmployeeProfile />} />
-            <Route path="profile" element={<UserProfile />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </main>
+              {/* New Module Routes */}
+              <Route path="manage-content" element={<ManageContent />} />
+              <Route path="help-support" element={<HelpSupport />} />
+              <Route path="faq" element={<FAQ />} />
+              <Route path="manage-broadcast" element={<ManageBroadcast />} />
+              <Route
+                path="hr-management/:hrId/permissions"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <HRPermissions />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="hr-management/*"
+                element={
+                  <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
+                    <HRList />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route path="employees/:id" element={<EmployeeProfile />} />
+              <Route path="profile" element={<UserProfile />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
+    </BranchProvider>
   );
 };
 

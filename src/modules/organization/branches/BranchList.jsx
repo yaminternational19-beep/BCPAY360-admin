@@ -2,13 +2,12 @@ import React, { useEffect, useState } from "react";
 import "../../../styles/Branch.css";
 import BranchForm from "./BranchForm";
 import {
-  getBranches,
   createBranch,
   updateBranch,
   toggleBranchStatus,
   deleteBranch,
 } from "../../../api/master.api";
-
+import { useBranch } from "../../../hooks/useBranch";
 import { FaPlus, FaEdit, FaTrash, FaMapMarkerAlt, FaBan } from "react-icons/fa";
 
 export default function BranchList({ user }) {
@@ -18,26 +17,18 @@ export default function BranchList({ user }) {
   const canEdit = isAdmin;
   const canDelete = isAdmin;
 
-  const [branches, setBranches] = useState([]);
+  // USE GLOBAL BRANCH CONTEXT
+  const {
+    branches,
+    refreshBranches,
+    isLoading,
+    branchStatus
+  } = useBranch();
+
   const [selected, setSelected] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const loadBranches = async () => {
-    try {
-      setLoading(true);
-      const data = await getBranches();
-      setBranches(Array.isArray(data) ? data : []);
-    } catch (error) {
-      setBranches([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadBranches();
-  }, []);
+  // No local loadBranches needed check context
 
   const handleSave = async (payload) => {
     try {
@@ -45,11 +36,11 @@ export default function BranchList({ user }) {
         await updateBranch(selected.id, payload);
         setShowForm(false);
         setSelected(null);
-        loadBranches();
+        await refreshBranches();
       } else {
         await createBranch(payload);
         setShowForm(false);
-        loadBranches();
+        await refreshBranches();
       }
     } catch (error) {
       alert(error.message || "Failed to save branch. Please try again.");
@@ -70,7 +61,7 @@ export default function BranchList({ user }) {
 
     try {
       await toggleBranchStatus(id);
-      loadBranches();
+      await refreshBranches();
     } catch (error) {
       alert("Failed to update branch status.");
     }
@@ -81,7 +72,7 @@ export default function BranchList({ user }) {
 
     try {
       await deleteBranch(id);
-      loadBranches();
+      await refreshBranches();
     } catch (error) {
       alert("Failed to delete branch.");
     }
@@ -116,7 +107,7 @@ export default function BranchList({ user }) {
 
           {/* Content Area */}
           <div className="branch-list-scroll">
-            {loading ? (
+            {isLoading ? (
               <div className="no-data-msg">Loading branches...</div>
             ) : branches.length === 0 ? (
               <div className="branch-empty-state">

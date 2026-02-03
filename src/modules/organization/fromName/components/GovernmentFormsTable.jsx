@@ -3,12 +3,12 @@ import "../styles/styleforms.css";
 import { FaEdit, FaTrash, FaPowerOff, FaEye, FaBan } from "react-icons/fa";
 
 const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus }) => {
-  if (loading) return <p>Loading…</p>;
-  if (!data.length) return <p>No government forms found.</p>;
+  if (loading) return <div className="gf-loading">Loading configuration…</div>;
+  if (!data.length) return <div className="gf-empty">No government forms found.</div>;
 
   return (
-    <div className="gov-table-wrapper">
-      <table className="gov-table">
+    <div className="gf-table-card">
+      <table className="gf-table">
         <thead>
           <tr>
             <th>#</th>
@@ -17,51 +17,42 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus 
             <th>Category</th>
             <th>Period</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th style={{ textAlign: "center" }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {data.map((f, i) => (
             <tr key={f.id}>
               <td>{i + 1}</td>
-              <td>{f.formName}</td>
-              <td><span className="gov-badge code">{f.formCode}</span></td>
-              <td><span className="gov-badge category">{f.category}</span></td>
+              <td style={{ fontWeight: 600 }}>{f.formName}</td>
+              <td><span className="gf-badge code">{f.formCode}</span></td>
+              <td><span className="gf-badge category">{f.category}</span></td>
               <td>{f.periodType}</td>
               <td>
-                <span className={`gov-status ${f.status === "ACTIVE" ? "active" : "inactive"}`}>
+                <span className={`gf-status ${f.status === "ACTIVE" ? "active" : "inactive"}`}>
                   {f.status}
                 </span>
               </td>
               <td>
-                <div className="gov-actions">
+                <div className="gf-actions">
                   <button
-                    className="btn-action btn-action-view"
-                    onClick={() => onEdit(f)}
-                    title="View Form Details"
-                  >
-                    <FaEye />
-                  </button>
-
-                  <button
-                    className="btn-action btn-action-edit"
+                    className="gf-btn-action edit"
                     onClick={() => onEdit(f)}
                     title="Edit Form"
                   >
                     <FaEdit />
                   </button>
                   <button
-                    className={`btn-action btn-action-toggle ${f.status === "ACTIVE" ? "active" : "inactive"}`}
+                    className="gf-btn-action toggle"
                     onClick={() => onToggleStatus(f)}
                     title={f.status === "ACTIVE" ? "Deactivate" : "Activate"}
                   >
                     <FaBan />
                   </button>
                   <button
-                    className="btn-action btn-action-delete"
-                    disabled={f.status === "ACTIVE"}
+                    className="gf-btn-action delete"
                     onClick={() => onDelete(f)}
-                    title={f.status === "ACTIVE" ? "Deactivate before deleting" : "Delete Form"}
+                    title="Delete Form"
                   >
                     <FaTrash />
                   </button>

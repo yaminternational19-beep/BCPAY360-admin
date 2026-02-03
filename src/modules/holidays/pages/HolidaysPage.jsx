@@ -3,34 +3,23 @@ import PageHeader from "../../../components/ui/PageHeader";
 import HolidayModal from "../components/HolidayModal";
 import "../styles/Holidays.css";
 import { FaCalendarAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useBranch } from "../../../hooks/useBranch";
+import { useToast } from "../../../context/ToastContext";
 
 import {
-  getBranches,
   getBranchHolidays,
   createBranchHolidays,
   updateBranchHolidays,
   deleteBranchHolidays,
 } from "../../../api/master.api";
 
-/* ======================================================
-   LOCAL TOAST (NO CONTEXT, NO DEPENDENCY)
-   ====================================================== */
-const notify = (message, type = "info") => {
-  // simple, production-safe fallback
-  // replace with real toast later if needed
-  if (type === "error") alert(`❌ ${message}`);
-  else if (type === "success") alert(`✅ ${message}`);
-  else if (type === "warning") alert(`⚠️ ${message}`);
-  else alert(message);
-};
-
 const HolidaysPage = () => {
   /* =========================
      STATE
   ========================= */
+  const toast = useToast();
+  const { branches, selectedBranch, changeBranch, isSingleBranch } = useBranch();
 
-  const [branches, setBranches] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState("");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(0);
 
@@ -47,17 +36,6 @@ const HolidaysPage = () => {
   /* =========================
      EFFECTS
   ========================= */
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await getBranches();
-        setBranches(res || []);
-      } catch {
-        notify("Failed to load branches", "error");
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     setCurrentMonth(0);
@@ -94,7 +72,7 @@ const HolidaysPage = () => {
 
       setHolidays(map);
     } catch {
-      notify("Failed to fetch holidays", "error");
+      toast.error("Failed to fetch holidays");
     } finally {
       setLoading(false);
     }
@@ -131,7 +109,7 @@ const HolidaysPage = () => {
 
   const openDate = (day) => {
     if (!selectedBranch) {
-      notify("Select branch first", "warning");
+      toast.error("Select branch first");
       return;
     }
 
@@ -170,11 +148,11 @@ const HolidaysPage = () => {
         }
       }
 
-      notify("Holiday saved successfully", "success");
+      toast.success("Holiday saved successfully");
       setModalOpen(false);
       fetchHolidays();
     } catch {
-      notify("Operation failed", "error");
+      toast.error("Operation failed");
     }
   };
 
@@ -183,7 +161,7 @@ const HolidaysPage = () => {
     if (!h) return;
 
     await deleteBranchHolidays({ id: h.id });
-    notify("Holiday removed", "success");
+    toast.success("Holiday removed");
     setModalOpen(false);
     fetchHolidays();
   };
@@ -193,7 +171,7 @@ const HolidaysPage = () => {
      ====================================================== */
   const handleClearWeekends = async () => {
     if (!selectedBranch) {
-      notify("Select branch first", "warning");
+      toast.error("Select branch first");
       return;
     }
 
@@ -206,7 +184,7 @@ const HolidaysPage = () => {
     );
 
     if (existingWeekendHolidays.length === 0) {
-      notify("No weekend holidays to remove", "info");
+      toast.info("No weekend holidays to remove");
       return;
     }
 
@@ -222,23 +200,23 @@ const HolidaysPage = () => {
         dates: existingWeekendHolidays,
       });
 
-      notify("Weekend holidays cleared", "success");
+      toast.success("Weekend holidays cleared");
       fetchHolidays();
     } catch {
-      notify("Failed to clear weekend holidays", "error");
+      toast.error("Failed to clear weekend holidays");
     }
   };
 
   const handleClearAllHolidays = async () => {
     if (!selectedBranch) {
-      notify("Select branch first", "warning");
+      toast.error("Select branch first");
       return;
     }
 
     const allDates = Object.keys(holidays);
 
     if (allDates.length === 0) {
-      notify("No holidays to remove", "info");
+      toast.info("No holidays to remove");
       return;
     }
 
@@ -254,16 +232,16 @@ const HolidaysPage = () => {
         dates: allDates,
       });
 
-      notify("All holidays cleared", "success");
+      toast.success("All holidays cleared");
       fetchHolidays();
     } catch {
-      notify("Failed to clear holidays", "error");
+      toast.error("Failed to clear holidays");
     }
   };
 
   const markWeekend = (dayIndex, label) => {
     if (!selectedBranch) {
-      notify("Select branch first", "warning");
+      toast.error("Select branch first");
       return;
     }
 
@@ -345,17 +323,22 @@ const HolidaysPage = () => {
       />
 
       <div className="holidays-filters">
-        <select
-          value={selectedBranch}
-          onChange={(e) => setSelectedBranch(Number(e.target.value))}
-        >
-          <option value="">Select Branch</option>
-          {branches.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.branch_name} ({b.branch_code})
-            </option>
-          ))}
-        </select>
+        {!isSingleBranch && (
+          <select
+            value={selectedBranch === null ? "ALL" : selectedBranch}
+            onChange={(e) => {
+              const val = e.target.value;
+              changeBranch(val === "ALL" ? null : Number(val));
+            }}
+          >
+            {branches.length > 1 && <option value="ALL">All Branches</option>}
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.branch_name} ({b.branch_code})
+              </option>
+            ))}
+          </select>
+        )}
 
         <select
           value={selectedYear}
@@ -372,7 +355,7 @@ const HolidaysPage = () => {
         </select>
       </div>
 
-      {selectedBranch && (
+      {selectedBranch ? (
         <>
           <div className="calendar-controls">
             <button className="next-prev-btn" onClick={() => setCurrentMonth((m) => (m === 0 ? 11 : m - 1))}>
@@ -409,6 +392,10 @@ const HolidaysPage = () => {
 
           {renderCalendar()}
         </>
+      ) : (
+        <div style={{ marginTop: '40px' }}>
+          <NoBranchState moduleName="Holidays" />
+        </div>
       )}
 
       <HolidayModal

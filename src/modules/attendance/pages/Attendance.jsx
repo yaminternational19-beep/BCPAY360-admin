@@ -26,7 +26,7 @@ import { exportHistoryExcel } from "../../../utils/export/exportHistoryExcel";
 import { exportHistoryPDF } from "../../../utils/export/exportHistoryPDF";
 
 const AttendancePage = () => {
-  const { canProceed, isLoading: branchLoading } = useBranch();
+  const { canProceed, isLoading: branchLoading, selectedBranch } = useBranch();
   const today = new Date().toISOString().slice(0, 10);
 
   const [viewType, setViewType] = useState("DAILY");
@@ -68,7 +68,7 @@ const AttendancePage = () => {
   useEffect(() => {
     if (viewType === "DAILY" && attendanceMode === "DAILY") {
       setLoading(true);
-      fetchDailyAttendance({ date, ...filters })
+      fetchDailyAttendance({ date, ...filters, branch_id: selectedBranch })
         .then(res => {
           setRows(res.data);
           setSummary(res.summary);
@@ -76,20 +76,20 @@ const AttendancePage = () => {
         })
         .finally(() => setLoading(false));
     }
-  }, [date, attendanceMode, filters, viewType]);
+  }, [date, attendanceMode, filters, viewType, selectedBranch]);
 
   /* LOAD MONTHLY */
   useEffect(() => {
     if (viewType === "DAILY" && attendanceMode === "MONTHLY" && monthRange) {
       setLoading(true);
-      fetchMonthlyAttendance({ ...monthRange, ...filters })
+      fetchMonthlyAttendance({ ...monthRange, ...filters, branch_id: selectedBranch })
         .then(res => {
           setMonthlyData(res.data);
           setSelectedIds([]); // Reset selection on new fetch
         })
         .finally(() => setLoading(false));
     }
-  }, [attendanceMode, monthRange, filters, viewType]);
+  }, [attendanceMode, monthRange, filters, viewType, selectedBranch]);
 
   /* LOAD HISTORY */
   const loadHistoryAttendance = async (employeeId) => {

@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from "react";
 import "../../../styles/DepartmentDesignation.css";
+import { useBranch } from "../../../hooks/useBranch";
 import {
     FaEdit,
     FaTrash,
     FaCheck,
     FaTimes,
     FaPlus,
-    FaEye,
-    FaEyeSlash,
-    FaChevronRight,
-    FaSearch
 } from "react-icons/fa";
+import { useToast } from "../../../context/ToastContext";
 import {
-    getBranches,
     getDepartments,
     createDepartment,
     updateDepartment,
@@ -37,12 +34,19 @@ export default function DepartmentDesignation({ user }) {
     const canEditDesignation = isAdmin || isHR;
     const canDeleteDesignation = isAdmin || isHR;
 
+    // USE GLOBAL BRANCH CONTEXT
+    const {
+        branches,
+        selectedBranch,
+        changeBranch,
+        branchStatus,
+        isLoading: branchLoading
+    } = useBranch();
+
     // STATE
-    const [branches, setBranches] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [designations, setDesignations] = useState([]);
 
-    const [selectedBranch, setSelectedBranch] = useState("");
     const [selectedDept, setSelectedDept] = useState(null);
 
     const [newDept, setNewDept] = useState("");
@@ -57,18 +61,9 @@ export default function DepartmentDesignation({ user }) {
     const [editingDesigCode, setEditingDesigCode] = useState("");
 
     const [loading, setLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState("");
+    const toast = useToast();
 
     // LOADERS
-    const loadBranches = async () => {
-        try {
-            const data = await getBranches();
-            setBranches(data || []);
-        } catch (error) {
-            alert("Failed to load branches: " + error.message);
-        }
-    };
-
     const loadDepartments = async (branchId) => {
         setDepartments([]);
         setSelectedDept(null);
@@ -80,7 +75,7 @@ export default function DepartmentDesignation({ user }) {
             const data = await getDepartments(branchId);
             setDepartments(data || []);
         } catch (error) {
-            alert("Failed to load departments: " + error.message);
+            toast.error("Failed to load departments: " + error.message);
         }
     };
 
@@ -94,17 +89,21 @@ export default function DepartmentDesignation({ user }) {
             const data = await getDesignations(branchId, dept.id);
             setDesignations(data || []);
         } catch (error) {
-            alert("Failed to load designations: " + error.message);
+            toast.error("Failed to load designations: " + error.message);
         }
     };
 
     useEffect(() => {
-        loadBranches();
-    }, []);
+        loadDepartments(selectedBranch);
+    }, [selectedBranch]);
 
     // DEPARTMENT ACTIONS
     const handleCreateDepartment = async () => {
-        if (!canCreateDepartment || !newDept.trim() || !selectedBranch) return;
+        if (!canCreateDepartment || !selectedBranch) return;
+
+        if (!newDept.trim()) {
+            return toast.error("Please enter the department name then click on the add button");
+        }
 
         setLoading(true);
         try {
@@ -113,9 +112,10 @@ export default function DepartmentDesignation({ user }) {
                 branch_id: Number(selectedBranch),
             });
             setNewDept("");
+            toast.success("Department added successfully");
             loadDepartments(selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }
@@ -128,9 +128,10 @@ export default function DepartmentDesignation({ user }) {
         try {
             await updateDepartment(id, { department_name: editingDeptName });
             setEditingDeptId(null);
+            toast.success("Department updated");
             loadDepartments(selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }
@@ -142,22 +143,23 @@ export default function DepartmentDesignation({ user }) {
 
         try {
             await apiDeleteDepartment(dept.id);
+            toast.success("Department removed");
             loadDepartments(selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 
     // DESIGNATION ACTIONS
     const handleCreateDesignation = async () => {
-        if (
-            !canCreateDesignation ||
-            !newDesignation.trim() ||
-            !newDesignationCode.trim() ||
-            !selectedDept ||
-            !selectedBranch
-        )
-            return;
+        if (!canCreateDesignation || !selectedDept || !selectedBranch) return;
+
+        if (!newDesignation.trim()) {
+            return toast.error("Please enter the designation name then click on the add button");
+        }
+        if (!newDesignationCode.trim()) {
+            return toast.error("Please enter the designation code then click on the add button");
+        }
 
         setLoading(true);
         try {
@@ -169,9 +171,10 @@ export default function DepartmentDesignation({ user }) {
             });
             setNewDesignation("");
             setNewDesignationCode("");
+            toast.success("Role added successfully");
             loadDesignations(selectedDept, selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }
@@ -187,9 +190,10 @@ export default function DepartmentDesignation({ user }) {
                 designation_code: editingDesigCode,
             });
             setEditingDesigId(null);
+            toast.success("Role updated");
             loadDesignations(selectedDept, selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }
@@ -201,9 +205,10 @@ export default function DepartmentDesignation({ user }) {
 
         try {
             await apiDeleteDesignation(desig.id);
+            toast.success("Role removed");
             loadDesignations(selectedDept, selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 
@@ -212,13 +217,28 @@ export default function DepartmentDesignation({ user }) {
             await toggleDesignationStatus(desig.id);
             loadDesignations(selectedDept, selectedBranch);
         } catch (error) {
-            alert(error.message);
+            toast.error(error.message);
         }
     };
 
-    const filteredDepartments = departments.filter(d =>
-        d.department_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // 1. Handle LOADING state
+    if (branchStatus === "LOADING") {
+        return <div className="p-4 text-center">Loading...</div>;
+    }
+
+    // 2. Handle NO_BRANCH state
+    if (branchStatus === "NO_BRANCH") {
+        return (
+            <div className="dd-container">
+                <div className="dd-empty-state" style={{ marginTop: '50px' }}>
+                    <div className="empty-box">
+                        <h3>No Branches Found</h3>
+                        <p>Please create a branch to manage departments.</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="dd-container">
@@ -229,15 +249,16 @@ export default function DepartmentDesignation({ user }) {
                 </div>
                 <div className="branch-nav">
                     <select
-                        value={selectedBranch}
+                        value={selectedBranch === null ? "ALL" : selectedBranch}
                         onChange={(e) => {
-                            const id = e.target.value;
-                            setSelectedBranch(id);
-                            loadDepartments(id);
+                            const value = e.target.value;
+                            changeBranch(value === "ALL" ? null : Number(value));
                         }}
                         className="branch-dropdown"
                     >
-                        <option value="">Select Branch</option>
+                        {branches.length > 1 && (
+                            <option value="ALL">All Branches</option>
+                        )}
                         {branches.map((b) => (
                             <option key={b.id} value={b.id}>
                                 {b.branch_name}
@@ -251,8 +272,8 @@ export default function DepartmentDesignation({ user }) {
                 <div className="dd-empty-state">
                     <div className="empty-box">
                         <FaPlus className="empty-icon" />
-                        <h3>No Branch Selected</h3>
-                        <p>Please select a branch from the dropdown above to manage its departments.</p>
+                        <h3>All Branches Selected</h3>
+                        <p>Please select a specific branch to manage its departments.</p>
                     </div>
                 </div>
             ) : (
@@ -262,17 +283,9 @@ export default function DepartmentDesignation({ user }) {
                         <div className="detail-header">
                             <div className="header-info">
                                 <h3>Departments</h3>
-                                <span>Total: {filteredDepartments.length}</span>
+                                <span>Total: {departments.length}</span>
                             </div>
                             <div className="header-actions-row">
-                                <div className="search-bar-dept">
-                                    <FaSearch className="search-icon" />
-                                    <input
-                                        placeholder="Search..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
                                 {canCreateDepartment && (
                                     <div className="add-desig-row">
                                         <input
@@ -285,7 +298,7 @@ export default function DepartmentDesignation({ user }) {
                                         />
                                         <button
                                             onClick={handleCreateDepartment}
-                                            disabled={loading || !newDept.trim()}
+                                            disabled={loading}
                                             className="btn-add-desig"
                                         >
                                             <FaPlus /> Add
@@ -296,11 +309,11 @@ export default function DepartmentDesignation({ user }) {
                         </div>
 
                         <div className="panel-list-scroll">
-                            {filteredDepartments.length === 0 ? (
+                            {departments.length === 0 ? (
                                 <div className="no-data-msg">No departments available</div>
                             ) : (
                                 <div className="dept-list-modern">
-                                    {filteredDepartments.map((d) => (
+                                    {departments.map((d) => (
                                         <div
                                             key={d.id}
                                             className={`dept-card-item ${selectedDept?.id === d.id ? "active" : ""}`}
@@ -389,7 +402,7 @@ export default function DepartmentDesignation({ user }) {
                                             />
                                             <button
                                                 onClick={handleCreateDesignation}
-                                                disabled={loading || !newDesignation.trim() || !newDesignationCode.trim()}
+                                                disabled={loading}
                                                 className="btn-add-desig"
                                             >
                                                 <FaPlus /> Add Role

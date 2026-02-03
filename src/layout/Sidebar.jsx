@@ -18,6 +18,7 @@ import {
   FaUserTag,
   FaBusinessTime,
   FaFileAlt,
+  FaFileInvoice,
   FaQuestionCircle,
   FaBullhorn,
   FaWpforms,
@@ -185,6 +186,30 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    go("branches");
+                  }}
+                >
+                  <FaBuilding /> Branches
+                </button>
+
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    go("organization/emp-code");
+                  }}
+                >
+                  <FaIdCard /> Employee Code
+                </button>
+
+                <button
+                  type="button"
+                  className="submenu-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     go("departments");
                   }}
                 >
@@ -218,17 +243,6 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    go("branches");
-                  }}
-                >
-                  <FaBuilding /> Branches
-                </button>
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
                     go("hr-management");
                   }}
                 >
@@ -241,21 +255,10 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    go("organization/emp-code");
-                  }}
-                >
-                  <FaIdCard /> Employee Code
-                </button>
-                <button
-                  type="button"
-                  className="submenu-item"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
                     go("organization/government-forms");
                   }}
                 >
-                  📄 Government Forms
+                  <FaFileInvoice /> Government Forms
                 </button>
               </div>
             )}

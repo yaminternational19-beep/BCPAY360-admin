@@ -4,14 +4,16 @@ import {
   getHRList,
   toggleHRStatus,
   deleteHR,
-  getBranches,
 } from "../../../api/master.api";
+import { useBranch } from "../../../hooks/useBranch";
+import { useToast } from "../../../context/ToastContext";
 import HRForm from "./HRForm";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FaEdit, FaUserLock, FaPowerOff, FaTrash } from "react-icons/fa";
 
 export default function HRList() {
+  const toast = useToast();
   const user = JSON.parse(localStorage.getItem("auth_user"));
   const navigate = useNavigate();
 
@@ -19,14 +21,19 @@ export default function HRList() {
     return <p className="hint">Access denied</p>;
   }
 
+  // USE GLOBAL BRANCH CONTEXT
+  const {
+    branches,
+    selectedBranch,
+    changeBranch,
+  } = useBranch();
+
   const [hrs, setHrs] = useState([]);
-  const [branches, setBranches] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingHR, setEditingHR] = useState(null);
 
   const [filters, setFilters] = useState({
-    branch_id: "",
     search: "",
     status: "ALL",
   });
@@ -35,13 +42,16 @@ export default function HRList() {
      LOAD DATA
   ========================= */
   const loadHRs = async () => {
-    const res = await getHRList();
-    setHrs(res?.data || []);
+    try {
+      const res = await getHRList();
+      setHrs(res?.data || []);
+    } catch (err) {
+      toast.error("Failed to load HR profiles");
+    }
   };
 
   useEffect(() => {
     loadHRs();
-    getBranches().then(setBranches);
   }, []);
 
   /* =========================
@@ -49,9 +59,10 @@ export default function HRList() {
   ========================= */
   const filteredHRs = useMemo(() => {
     return hrs.filter((hr) => {
+      // Filter by Global Selected Branch
       if (
-        filters.branch_id &&
-        Number(hr.branch_id) !== Number(filters.branch_id)
+        selectedBranch &&
+        Number(hr.branch_id) !== Number(selectedBranch)
       ) {
         return false;
       }
@@ -74,13 +85,25 @@ export default function HRList() {
 
       return true;
     });
-  }, [hrs, filters]);
+  }, [hrs, filters, selectedBranch]);
 
   /* =========================
      EXPORT
   ========================= */
   const exportToExcel = () => {
-    const rows = filteredHRs.map((hr) => ({
+    if (!selectedIds.length) {
+      return toast.info("Please select the HR profiles you want to export");
+    }
+
+    const dataToExport = filteredHRs.filter((hr) =>
+      selectedIds.includes(hr.id)
+    );
+
+    if (!dataToExport.length) {
+      return toast.info("No selected data matching current filters available to export");
+    }
+
+    const rows = dataToExport.map((hr) => ({
       "HR Code": hr.hr_code,
       "Full Name": hr.full_name,
       Email: hr.email,
@@ -94,7 +117,48 @@ export default function HRList() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "HRs");
 
-    XLSX.writeFile(workbook, "HR_List.xlsx");
+    XLSX.writeFile(workbook, "Selected_HR_List.xlsx");
+    toast.success(`${dataToExport.length} HR records exported successfully`);
+  };
+
+  const handleToggle = async (hr) => {
+    try {
+      await toggleHRStatus(hr.id);
+      toast.success(`HR ${hr.is_active ? "disabled" : "enabled"} successfully`);
+      loadHRs();
+    } catch (err) {
+      toast.error("Status update failed");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this HR profile? This action cannot be undone.")) return;
+    try {
+      await deleteHR(id);
+      toast.success("HR profile deleted successfully");
+      loadHRs();
+    } catch (err) {
+      toast.error("Deletion failed");
+    }
+  };
+
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  /* =========================
+     SELECTION LOGIC
+  ========================= */
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredHRs.map((hr) => hr.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -120,12 +184,15 @@ export default function HRList() {
       {/* FILTER BAR */}
       <div className="filter-bar">
         <select
-          value={filters.branch_id}
-          onChange={(e) =>
-            setFilters((p) => ({ ...p, branch_id: e.target.value }))
-          }
+          value={selectedBranch === null ? "ALL" : selectedBranch}
+          onChange={(e) => {
+            const val = e.target.value;
+            changeBranch(val === "ALL" ? null : Number(val));
+          }}
         >
-          <option value="">All Branches</option>
+          {branches.length > 1 && (
+            <option value="ALL">All Branches</option>
+          )}
           {branches.map((b) => (
             <option key={b.id} value={b.id}>
               {b.branch_name}
@@ -147,7 +214,7 @@ export default function HRList() {
             setFilters((p) => ({ ...p, status: e.target.value }))
           }
         >
-          <option value="ALL">All</option>
+          <option value="ALL">All Status</option>
           <option value="ACTIVE">Active</option>
           <option value="INACTIVE">Inactive</option>
         </select>
@@ -157,15 +224,19 @@ export default function HRList() {
       <table className="table">
         <thead>
           <tr>
-            <th>
-              <input type="checkbox" disabled />
+            <th className="th-checkbox">
+              <input
+                type="checkbox"
+                checked={filteredHRs.length > 0 && selectedIds.length === filteredHRs.length}
+                onChange={handleSelectAll}
+              />
             </th>
             <th>HR Code</th>
             <th>Name</th>
             <th>Branch</th>
             <th>Joining Date</th>
             <th>Phone</th>
-            <th>Actions</th>
+            <th className="th-actions">Actions</th>
           </tr>
         </thead>
 
@@ -173,8 +244,12 @@ export default function HRList() {
           {filteredHRs.map((hr) => (
             <tr key={hr.id}>
               {/* Checkbox */}
-              <td>
-                <input type="checkbox" />
+              <td className="td-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(hr.id)}
+                  onChange={() => handleSelectRow(hr.id)}
+                />
               </td>
 
               {/* HR Code */}
@@ -191,7 +266,11 @@ export default function HRList() {
               {/* Joining Date */}
               <td>
                 {hr.joining_date
-                  ? new Date(hr.joining_date).toLocaleDateString()
+                  ? new Intl.DateTimeFormat("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }).format(new Date(hr.joining_date))
                   : "—"}
               </td>
 
@@ -210,29 +289,18 @@ export default function HRList() {
                 </button>
 
                 <button
-  onClick={() => navigate(`/hr-management/${hr.id}/permissions`)}
-
->
-  <FaUserLock /> Permissions
-</button>
-
-
-                <button
-                  onClick={async () => {
-                    await toggleHRStatus(hr.id);
-                    loadHRs();
-                  }}
+                  onClick={() => navigate(`/hr-management/${hr.id}/permissions`)}
                 >
+                  <FaUserLock /> Permissions
+                </button>
+
+                <button onClick={() => handleToggle(hr)}>
                   <FaPowerOff /> {hr.is_active ? "Disable" : "Enable"}
                 </button>
 
                 <button
                   className="danger"
-                  onClick={async () => {
-                    if (!confirm("Delete this HR?")) return;
-                    await deleteHR(hr.id);
-                    loadHRs();
-                  }}
+                  onClick={() => handleDelete(hr.id)}
                 >
                   <FaTrash /> Delete
                 </button>
@@ -249,7 +317,6 @@ export default function HRList() {
           )}
         </tbody>
       </table>
-
 
       {/* FORM MODAL */}
       {showForm && (

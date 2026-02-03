@@ -40,7 +40,9 @@ const EmployeeListPage = () => {
 
   // Filter States
   const [search, setSearch] = useState("");
-  const [branchId, setBranchId] = useState("");
+
+  // Removed local branchId state - use selectedBranch from context directly
+
   const [deptId, setDeptId] = useState("");
   const [desigId, setDesigId] = useState("");
   const [shiftId, setShiftId] = useState("");
@@ -66,31 +68,11 @@ const EmployeeListPage = () => {
   const [showForm, setShowForm] = useState(false);
 
   /* ===================================================================================
-     INITIAL LOAD
-     =================================================================================== */
-
-  // Sync selected branch to filters
-  useEffect(() => {
-    if (selectedBranch) {
-      setBranchId(selectedBranch);
-    }
-  }, [selectedBranch]);
-
-  useEffect(() => {
-    // If user changes branch manually in UI (for multi-branch)
-    if (branchId && branchId !== selectedBranch) {
-      changeBranch(branchId);
-    }
-  }, [branchId, selectedBranch, changeBranch]);
-
-
-
-  /* ===================================================================================
      CASCADING LOGIC & RESET
      =================================================================================== */
   // Branch -> Depts, Shifts, Types
   useEffect(() => {
-    if (!branchId) {
+    if (!selectedBranch) {
       setDepartments([]);
       setShifts([]);
       setEmployeeTypes([]);
@@ -107,19 +89,19 @@ const EmployeeListPage = () => {
     setTypeId("");
 
     Promise.all([
-      getDepartments(branchId),
-      getShifts(branchId),
-      getEmployeeTypes(branchId)
+      getDepartments(selectedBranch),
+      getShifts(selectedBranch),
+      getEmployeeTypes(selectedBranch)
     ]).then(([depts, shfts, types]) => {
       setDepartments(Array.isArray(depts) ? depts : []);
       setShifts(Array.isArray(shfts) ? shfts : []);
       setEmployeeTypes(Array.isArray(types) ? types : []);
     }).catch(err => toast.error("Cascade Error: " + err.message));
-  }, [branchId]);
+  }, [selectedBranch]);
 
   // Dept -> Designations
   useEffect(() => {
-    if (!deptId || !branchId) {
+    if (!deptId || !selectedBranch) {
       setDesignations([]);
       setDesigId("");
       return;
@@ -127,10 +109,10 @@ const EmployeeListPage = () => {
     // Explicitly reset designation when department changes
     setDesigId("");
 
-    getDesignations(branchId, deptId)
+    getDesignations(selectedBranch, deptId)
       .then(res => setDesignations(Array.isArray(res) ? res : []))
       .catch(err => toast.error("Designations Error: " + err.message));
-  }, [deptId, branchId]);
+  }, [deptId, selectedBranch]);
 
   /* ===================================================================================
      DATA FETCHING & PAGINATION SYNC
@@ -142,7 +124,7 @@ const EmployeeListPage = () => {
       const params = {
         limit: pageSize,
         offset,
-        branch_id: branchId || undefined,
+        branch_id: selectedBranch || undefined, // Use global selectedBranch
         department_id: deptId || undefined,
         designation_id: desigId || undefined,
         shift_id: shiftId || undefined,
@@ -169,7 +151,7 @@ const EmployeeListPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, branchId, deptId, desigId, shiftId, typeId, search, status, sortBy, toast]);
+  }, [page, selectedBranch, deptId, desigId, shiftId, typeId, search, status, sortBy, toast]);
 
   useEffect(() => {
     loadData();
@@ -179,7 +161,7 @@ const EmployeeListPage = () => {
   useEffect(() => {
     setPage(1);
     setSelectedIds([]);
-  }, [branchId, deptId, desigId, shiftId, typeId, search, status, sortBy]);
+  }, [selectedBranch, deptId, desigId, shiftId, typeId, search, status, sortBy]);
 
   // Mandatory: Clear selection when page changes
   useEffect(() => {
@@ -193,7 +175,6 @@ const EmployeeListPage = () => {
      =================================================================================== */
   const handleClearFilters = () => {
     setSearch("");
-    setBranchId("");
     setDeptId("");
     setDesigId("");
     setShiftId("");
@@ -210,22 +191,17 @@ const EmployeeListPage = () => {
       return employees.filter(emp => selectedIds.includes(emp.id));
     }
     // If nothing selected, export ALL (current view)
-    // Note: Ideally this should fetch ALL from backend if pagination is active, 
-    // but for now we export current page/view to match "what is visible" per requirements or basic implementation.
-    // However, user said "Export only the selected records" when selected.
     return employees;
   };
 
   const handleExportExcel = () => {
     if (selectedIds.length === 0) return toast.error("Please select employees to export");
-    exportEmployeesExcel(getExportData(), `Employees_Branch_${branchId || "All"}`);
-    setShowExportMenu(false);
+    exportEmployeesExcel(getExportData(), `Employees_Branch_${selectedBranch || "All"}`);
   };
 
   const handleExportPDF = () => {
     if (selectedIds.length === 0) return toast.error("Please select employees to export");
-    exportEmployeesPDF(getExportData(), `Employees_Branch_${branchId || "All"}`);
-    setShowExportMenu(false);
+    exportEmployeesPDF(getExportData(), `Employees_Branch_${selectedBranch || "All"}`);
   };
 
   const handleSave = async (payload) => {
@@ -357,13 +333,21 @@ const EmployeeListPage = () => {
             </div>
 
             {!isSingleBranch && (
-              <select value={branchId} onChange={e => setBranchId(e.target.value)}>
-                <option value="">All Branches</option>
+              <select
+                value={selectedBranch === null ? "ALL" : selectedBranch}
+                onChange={e => {
+                  const val = e.target.value;
+                  changeBranch(val === "ALL" ? null : Number(val));
+                }}
+              >
+                {branches.length > 1 && (
+                  <option value="ALL">All Branches</option>
+                )}
                 {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
               </select>
             )}
 
-            <select value={deptId} onChange={e => setDeptId(e.target.value)} disabled={!branchId}>
+            <select value={deptId} onChange={e => setDeptId(e.target.value)} disabled={!selectedBranch}>
               <option value="">All Departments</option>
               {departments.map(d => <option key={d.id} value={d.id}>{d.department_name}</option>)}
             </select>
@@ -373,12 +357,12 @@ const EmployeeListPage = () => {
               {designations.map(d => <option key={d.id} value={d.id}>{d.designation_name}</option>)}
             </select>
 
-            <select value={shiftId} onChange={e => setShiftId(e.target.value)} disabled={!branchId}>
+            <select value={shiftId} onChange={e => setShiftId(e.target.value)} disabled={!selectedBranch}>
               <option value="">All Shifts</option>
               {shifts.map(s => <option key={s.id} value={s.id}>{s.shift_name}</option>)}
             </select>
 
-            <select value={typeId} onChange={e => setTypeId(e.target.value)} disabled={!branchId}>
+            <select value={typeId} onChange={e => setTypeId(e.target.value)} disabled={!selectedBranch}>
               <option value="">All Employee Types</option>
               {employeeTypes.map(t => <option key={t.id} value={t.id}>{t.employee_type_name}</option>)}
             </select>

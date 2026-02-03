@@ -7,64 +7,74 @@ import {
   getHRPermissions,
   saveHRPermissions,
 } from "../../../api/master.api";
+import { useToast } from "../../../context/ToastContext";
 
 /* =====================================================
    PERMISSION CONFIG (SINGLE SOURCE OF TRUTH)
 ===================================================== */
 const PERMISSION_GROUPS = [
   {
-  key: "CORE",
-  label: "Core Access",
-  children: [
-    { key: "DASHBOARD", label: "Dashboard Access" },
-  ],
-},
- 
+    key: "CORE",
+    label: "Core Access",
+    children: [
+      { key: "DASHBOARD", label: "Dashboard Access" },
+    ],
+  },
   {
     key: "ORGANIZATION",
-    label: "Organization",
+    label: "Organization Setup",
     children: [
       { key: "DEPARTMENTS", label: "Departments" },
       { key: "EMPLOYEE_TYPES", label: "Employee Types" },
       { key: "SHIFTS", label: "Shifts" },
       { key: "BRANCHES", label: "Branches" },
-      { key: "HR_MANAGEMENT", label: "Add HR" },
+      { key: "HR_MANAGEMENT", label: "HR Management" },
       { key: "EMPLOYEE_CODE", label: "Employee Code" },
       { key: "GOVERNMENT_FORMS", label: "Government Forms" },
     ],
   },
   {
     key: "HR_MODULE",
-    label: "HR Module",
+    label: "Employee & HR Operations",
     children: [
-      { key: "EMPLOYEE_MASTER", label: "Employees" },
+      { key: "EMPLOYEE_MASTER", label: "Employee Master" },
       { key: "ATTENDANCE", label: "Attendance" },
-      { key: "LEAVE_MASTER", label: "Leaves" },
-      { key: "PAYROLL", label: "Payroll" },
-      { key: "HOLIDAYS", label: "Holidays" },
+      { key: "LEAVE_MASTER", label: "Leave Management" },
+      { key: "PAYROLL", label: "Payroll Processing" },
+      { key: "HOLIDAYS", label: "Holiday Calendar" },
     ],
   },
   {
     key: "FORMS",
-    label: "Forms",
+    label: "Government Compliance Forms",
     children: [
       { key: "PF_FORMS", label: "Provident Fund (PF)" },
       { key: "ESIC_FORMS", label: "ESIC Forms" },
-      { key: "FORM_16", label: "Income Tax (Form-16)" },
+      { key: "FORM_16", label: "Form-16 (ITX)" },
       { key: "BONUS_ACT", label: "Bonus Act Forms" },
-      { key: "LABOUR_LAW", label: "Attendance / Labour Law" },
-      { key: "FACTORIES_ACT", label: "Factories Act Forms" },
+      { key: "LABOUR_LAW", label: "Labour Law / Attendance" },
+      { key: "FACTORIES_ACT", label: "Factories Act" },
       { key: "GRATUITY_ACT", label: "Gratuity Act Forms" },
     ],
   },
   {
     key: "REPORTS",
-    label: "Reports",
+    label: "Analytics & Reports",
     children: [
-      { key: "EMPLOYEE_REPORTS", label: "Employee Reports" },
+      { key: "EMPLOYEE_REPORTS", label: "Employee Analytics" },
       { key: "ATTENDANCE_REPORTS", label: "Attendance Reports" },
-      { key: "LEAVE_REPORTS", label: "Leave Reports" },
-      { key: "SALARY_REPORTS", label: "Salary Reports" },
+      { key: "LEAVE_REPORTS", label: "Leave Analytics" },
+      { key: "SALARY_REPORTS", label: "Salary/Payroll Reports" },
+    ],
+  },
+  {
+    key: "SETTINGS",
+    label: "Portal Settings & CMS",
+    children: [
+      { key: "MANAGE_CONTENT", label: "Manage Content (CMS)" },
+      { key: "SUPPORT_TICKETS", label: "Help & Support" },
+      { key: "FAQ_MANAGEMENT", label: "FAQ Management" },
+      { key: "BROADCAST", label: "Manage Broadcasts" },
     ],
   },
 ];
@@ -81,6 +91,7 @@ const buildInitialState = () => {
 };
 
 export default function HRPermissions() {
+  const toast = useToast();
   const { hrId } = useParams();
   const navigate = useNavigate();
 
@@ -89,54 +100,46 @@ export default function HRPermissions() {
   const [loading, setLoading] = useState(false);
 
   /* =====================================================
-     LOAD HR
+     LOAD DATA
   ===================================================== */
   useEffect(() => {
-    const loadHR = async () => {
-      const res = await getHRList();
-      const list = Array.isArray(res?.data) ? res.data : [];
-      const hr = list.find((h) => h.id === Number(hrId));
-
-      if (!hr) {
-        navigate("/admin/hr-management", { replace: true });
-        return;
-      }
-      setSelectedHR(hr);
-    };
-    loadHR();
-  }, [hrId, navigate]);
-
-  /* =====================================================
-     LOAD PERMISSIONS
-  ===================================================== */
-  useEffect(() => {
-    if (!selectedHR) return;
-
-    const loadPermissions = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
-        const data = await getHRPermissions(selectedHR.id);
-        if (!Array.isArray(data)) return;
+        const res = await getHRList();
+        const list = Array.isArray(res?.data) ? res.data : [];
+        const hr = list.find((h) => h.id === Number(hrId));
 
-        setPermissions((prev) => {
-          const updated = { ...prev };
-          data.forEach((p) => {
-            if (updated.hasOwnProperty(p.module_key)) {
-              updated[p.module_key] = !!p.allowed;
-            }
+        if (!hr) {
+          toast.error("HR profile not found");
+          navigate("/hr-management", { replace: true });
+          return;
+        }
+        setSelectedHR(hr);
+
+        const permData = await getHRPermissions(hr.id);
+        if (Array.isArray(permData)) {
+          setPermissions((prev) => {
+            const updated = { ...prev };
+            permData.forEach((p) => {
+              if (updated.hasOwnProperty(p.module_key)) {
+                updated[p.module_key] = !!p.allowed;
+              }
+            });
+            return updated;
           });
-          return updated;
-        });
+        }
+      } catch (err) {
+        toast.error("Failed to load permission details");
       } finally {
         setLoading(false);
       }
     };
-
-    loadPermissions();
-  }, [selectedHR]);
+    loadData();
+  }, [hrId, navigate, toast]);
 
   /* =====================================================
-     TOGGLES
+     HANDLERS
   ===================================================== */
   const toggleItem = (key) => {
     setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -177,84 +180,90 @@ export default function HRPermissions() {
      SAVE
   ===================================================== */
   const save = async () => {
-    const payload = Object.entries(permissions).map(
-      ([module_key, allowed]) => ({ module_key, allowed })
-    );
+    setLoading(true);
+    try {
+      const payload = Object.entries(permissions).map(
+        ([module_key, allowed]) => ({ module_key, allowed })
+      );
 
-    await saveHRPermissions(selectedHR.id, {
-      branch_id: selectedHR.branch_id,
-      department_id: selectedHR.department_id,
-      permissions: payload,
-    });
+      await saveHRPermissions(selectedHR.id, {
+        branch_id: selectedHR.branch_id,
+        department_id: selectedHR.department_id,
+        permissions: payload,
+      });
 
-    alert("Permissions saved successfully");
+      toast.success("Permissions updated successfully!");
+    } catch (err) {
+      toast.error(err?.message || "Failed to update permissions");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* =====================================================
      UI
   ===================================================== */
   return (
-    <div className="hr-permissions-page">
-      <h2>HR Permissions</h2>
-
-      <div className="hr-context">
-        <strong>HR:</strong> {selectedHR?.emp_id} |{" "}
-        <strong>Branch:</strong> {selectedHR?.branch_name} |{" "}
-
+    <div className="hp-permissions-container">
+      <div className="hp-header-section">
+        <button className="hp-back-btn" onClick={() => navigate("/hr-management")}>
+          <FaArrowLeft />
+        </button>
+        <div className="hp-title-group">
+          <h2>Access Permissions</h2>
+          <p>Manage module-level access for <strong>{selectedHR?.full_name || "HR Profile"}</strong></p>
+        </div>
       </div>
 
-      <div className="select-all">
-        <label>
+      <div className="hp-meta-card">
+        <div className="hp-meta-info">
+          <span>Code: <strong>{selectedHR?.hr_code}</strong></span>
+          <span>Branch: <strong>{selectedHR?.branch_name}</strong></span>
+        </div>
+        <label className="hp-select-all-label">
           <input
             type="checkbox"
             checked={isAllChecked()}
             onChange={(e) => toggleAll(e.target.checked)}
           />
-          Select All Permissions
+          Grant All Permissions
         </label>
       </div>
 
-      {PERMISSION_GROUPS.map((group) => (
-        <div className="permission-group" key={group.key}>
-          <label className="group-header">
-            <input
-              type="checkbox"
-              checked={isGroupChecked(group)}
-              ref={(el) => {
-                if (el) el.indeterminate = isGroupIndeterminate(group);
-              }}
-              onChange={(e) =>
-                toggleGroup(group, e.target.checked)
-              }
-            />
-            {group.label}
-          </label>
-
-          <div className="permission-grid">
-            {group.children.map((item) => (
-              <label key={item.key} className="permission-item">
+      <div className="hp-permissions-grid">
+        {PERMISSION_GROUPS.map((group) => (
+          <div className="hp-group-card" key={group.key}>
+            <div className="hp-group-header">
+              <label className="hp-group-toggle">
                 <input
                   type="checkbox"
-                  checked={permissions[item.key]}
-                  onChange={() => toggleItem(item.key)}
+                  checked={isGroupChecked(group)}
+                  ref={(el) => { if (el) el.indeterminate = isGroupIndeterminate(group); }}
+                  onChange={(e) => toggleGroup(group, e.target.checked)}
                 />
-                {item.label}
+                {group.label}
               </label>
-            ))}
+            </div>
+
+            <div className="hp-items-list">
+              {group.children.map((item) => (
+                <label key={item.key} className={`hp-item ${permissions[item.key] ? 'active' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={permissions[item.key]}
+                    onChange={() => toggleItem(item.key)}
+                  />
+                  {item.label}
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
-      <div className="actions">
-        <button
-          className="secondary"
-          onClick={() => navigate("/admin/hr-management")}
-        >
-          <FaArrowLeft /> Back
-        </button>
-
-        <button className="primary" onClick={save}>
-          <FaSave /> Save
+      <div className="hp-footer-actions">
+        <button className="hp-btn-save" onClick={save} disabled={loading}>
+          <FaSave /> {loading ? "Saving..." : "Save Change Permissions"}
         </button>
       </div>
     </div>

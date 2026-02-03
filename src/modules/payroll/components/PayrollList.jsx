@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   getPayrollEmployees,
   generatePayrollBatch,
-  getBranches,
   getDepartments
 } from "../../../api/master.api.js";
 import PageHeader from "../../../components/ui/PageHeader";
@@ -14,9 +13,11 @@ import StatusBadge from "../../../components/ui/StatusBadge";
 import { FaUsers, FaCheckCircle, FaHourglassHalf, FaExclamationCircle, FaWallet, FaCalendarAlt, FaMoneyBillWave, FaSync } from "react-icons/fa";
 import "./payroll.css";
 import "../../../styles/shared/modern-ui.css";
+import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 
 const PayrollList = () => {
   const navigate = useNavigate();
+  const { branches: branchList, selectedBranch, changeBranch, isSingleBranch } = useBranch();
   const [loading, setLoading] = useState(false);
 
   const [payMonth, setPayMonth] = useState(new Date().getMonth() + 1);
@@ -35,12 +36,10 @@ const PayrollList = () => {
   const [payrollData, setPayrollData] = useState({});
 
   // Master Data state
-  const [branchList, setBranchList] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterBranchId, setFilterBranchId] = useState("");
   const [filterDepartmentId, setFilterDepartmentId] = useState("");
 
   const loadEmployees = async () => {
@@ -73,21 +72,13 @@ const PayrollList = () => {
     }
   };
 
-  const loadMasters = async () => {
-    try {
-      const branches = await getBranches();
-      setBranchList(branches);
-    } catch (err) {
-      alert("Master data fetch failed: " + err.message);
-    }
-  };
 
   // Fetch departments when branch filter changes
   useEffect(() => {
-    if (filterBranchId) {
+    if (selectedBranch) {
       (async () => {
         try {
-          const depts = await getDepartments(filterBranchId);
+          const depts = await getDepartments(selectedBranch);
           setDepartmentList(depts || []);
         } catch (err) {
           alert("Failed to fetch departments: " + err.message);
@@ -98,11 +89,10 @@ const PayrollList = () => {
       setDepartmentList([]);
     }
     setFilterDepartmentId("");
-  }, [filterBranchId]);
+  }, [selectedBranch]);
 
   useEffect(() => {
     loadEmployees();
-    loadMasters();
   }, [payMonth, payYear]); // Re-fetch employees on month/year change
 
   // Filter employees based on all criteria
@@ -112,12 +102,12 @@ const PayrollList = () => {
         e.employee_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesBranch = !filterBranchId || String(e.branch_id) === String(filterBranchId);
+      const matchesBranch = !selectedBranch || String(e.branch_id) === String(selectedBranch);
       const matchesDept = !filterDepartmentId || String(e.department_id) === String(filterDepartmentId);
 
       return matchesSearch && matchesBranch && matchesDept;
     });
-  }, [employees, searchQuery, filterBranchId, filterDepartmentId]);
+  }, [employees, searchQuery, selectedBranch, filterDepartmentId]);
 
   // Summary mapping for SummaryCards
   const summaryCards = useMemo(() => {
@@ -363,29 +353,35 @@ const PayrollList = () => {
           <FaCheckCircle /> Confirm / Send Salary
         </button>
 
-        <select
-          value={filterBranchId}
-          onChange={(e) => setFilterBranchId(e.target.value)}
-          className="filter-select-modern"
-        >
-          <option value="">All Branches</option>
-          {branchList.map(b => (
-            <option key={b.id} value={b.id}>{b.branch_name}</option>
-          ))}
-        </select>
+        {!isSingleBranch && (
+          <select
+            value={selectedBranch === null ? "ALL" : selectedBranch}
+            onChange={(e) => {
+              const val = e.target.value;
+              changeBranch(val === "ALL" ? null : Number(val));
+            }}
+            className="filter-select-modern"
+          >
+            {branchList.length > 1 && <option value="ALL">All Branches</option>}
+            {branchList.map(b => (
+              <option key={b.id} value={b.id}>{b.branch_name}</option>
+            ))}
+          </select>
+        )}
 
         <select
           value={filterDepartmentId}
           onChange={(e) => setFilterDepartmentId(e.target.value)}
           className="filter-select-modern"
+          disabled={!selectedBranch}
         >
-          <option value="">All Departments</option>
+          <option value="">{selectedBranch ? "All Departments" : "Select Branch First"}</option>
           {departmentList.map(d => (
             <option key={d.id} value={d.id}>{d.department_name}</option>
           ))}
         </select>
 
-        <button onClick={() => { setSearchQuery(""); setFilterBranchId(""); setFilterDepartmentId(""); }} className="btn-export">
+        <button onClick={() => { setSearchQuery(""); setFilterDepartmentId(""); }} className="btn-export">
           Clear Filters
         </button>
       </FiltersBar>

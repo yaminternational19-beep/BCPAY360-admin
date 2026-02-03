@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { FaPaperPlane, FaUsers, FaHistory, FaCheckCircle, FaBullhorn, FaTrash } from "react-icons/fa";
 import { Button, Modal, Card, CardBody, Badge, EmptyState, Loader } from "./components";
-import { getBroadcasts, createBroadcast, deleteBroadcast, getBroadcastEmployees, getBranches } from "../../api/master.api";
+import { getBroadcasts, createBroadcast, deleteBroadcast, getBroadcastEmployees } from "../../api/master.api";
 import "./module.css";
+import { useBranch } from "../../hooks/useBranch"; // Import Hook
 
 export default function ManageBroadcast() {
+    const { branches } = useBranch();
     const [broadcasts, setBroadcasts] = useState([]);
     const [employees, setEmployees] = useState([]);
-    const [branches, setBranches] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Form State
     const [audienceType, setAudienceType] = useState("ALL"); // ALL, BRANCH, EMPLOYEE
-    const [selectedBranch, setSelectedBranch] = useState("");
+    const [broadcastBranchId, setBroadcastBranchId] = useState("");
     const [selectedEmployees, setSelectedEmployees] = useState([]);
     const [message, setMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [employeeSearch, setEmployeeSearch] = useState("");
 
-    // Fetch broadcasts and branches on mount
+    // Fetch broadcasts on mount
     useEffect(() => {
         fetchBroadcasts();
-        fetchBranches();
     }, []);
 
     // Fetch employees when audience type changes to EMPLOYEE
@@ -54,19 +54,6 @@ export default function ManageBroadcast() {
             alert("Failed to load broadcasts: " + error.message);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const fetchBranches = async () => {
-        try {
-            const response = await getBranches();
-            if (response && response.success) {
-                setBranches(response.data || []);
-            } else if (Array.isArray(response)) {
-                setBranches(response);
-            }
-        } catch (error) {
-            // Silently fail for branches
         }
     };
 
@@ -123,7 +110,7 @@ export default function ManageBroadcast() {
             return;
         }
 
-        if (audienceType === "BRANCH" && !selectedBranch) {
+        if (audienceType === "BRANCH" && !broadcastBranchId) {
             alert("Please select a branch");
             return;
         }
@@ -140,7 +127,7 @@ export default function ManageBroadcast() {
         };
 
         if (audienceType === "BRANCH") {
-            payload.branch_id = selectedBranch;
+            payload.branch_id = broadcastBranchId;
         } else if (audienceType === "EMPLOYEE") {
             payload.employee_ids = selectedEmployees;
         }
@@ -156,7 +143,7 @@ export default function ManageBroadcast() {
                 // Reset form
                 setMessage("");
                 setSelectedEmployees([]);
-                setSelectedBranch("");
+                setBroadcastBranchId("");
                 setAudienceType("ALL");
                 setEmployeeSearch("");
                 setIsModalOpen(false);
@@ -204,6 +191,7 @@ export default function ManageBroadcast() {
         }
         return "Unknown";
     };
+
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
@@ -338,8 +326,8 @@ export default function ManageBroadcast() {
                         <label className="form-label">Select Branch</label>
                         <select
                             className="form-control"
-                            value={selectedBranch}
-                            onChange={(e) => setSelectedBranch(e.target.value)}
+                            value={broadcastBranchId}
+                            onChange={(e) => setBroadcastBranchId(e.target.value)}
                             disabled={isSending}
                         >
                             <option value="">Select a branch</option>
