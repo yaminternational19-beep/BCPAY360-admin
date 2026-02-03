@@ -1,30 +1,98 @@
-import React, { useState } from "react";
-import { FaPaperPlane, FaUsers, FaHistory, FaCheckCircle, FaBullhorn } from "react-icons/fa";
-import { Button, Modal, Card, CardBody, Badge, EmptyState } from "./components";
+import React, { useState, useEffect } from "react";
+import { FaPaperPlane, FaUsers, FaHistory, FaCheckCircle, FaBullhorn, FaTrash } from "react-icons/fa";
+import { Button, Modal, Card, CardBody, Badge, EmptyState, Loader } from "./components";
+import { getBroadcasts, createBroadcast, deleteBroadcast, getBroadcastEmployees, getBranches } from "../../api/master.api";
 import "./module.css";
 
-const MOCK_EMPLOYEES = [
-    { id: 1, name: "John Doe", department: "Engineering" },
-    { id: 2, name: "Jane Smith", department: "Marketing" },
-    { id: 3, name: "Mike Ross", department: "Legal" },
-    { id: 4, name: "Rachel Green", department: "Operations" },
-    { id: 5, name: "Harvey Specter", department: "Management" },
-];
-
-const MOCK_HISTORY = [
-    { id: 101, message: "Office will be closed tomorrow due to maintenance operations in the main server room.", audience: "All Employees", date: "2023-10-20 09:00 AM", sentBy: "Admin", count: 142 },
-    { id: 102, message: "Please submit your tax proofs by Friday.", audience: "John Doe, Jane Smith", date: "2023-10-18 02:30 PM", sentBy: "Admin", count: 2 },
-];
-
 export default function ManageBroadcast() {
-    const [history, setHistory] = useState(MOCK_HISTORY);
+    const [broadcasts, setBroadcasts] = useState([]);
+    const [employees, setEmployees] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Form State
-    const [target, setTarget] = useState("all");
+    const [audienceType, setAudienceType] = useState("ALL"); // ALL, BRANCH, EMPLOYEE
+    const [selectedBranch, setSelectedBranch] = useState("");
     const [selectedEmployees, setSelectedEmployees] = useState([]);
     const [message, setMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
+    const [employeeSearch, setEmployeeSearch] = useState("");
+
+    // Fetch broadcasts and branches on mount
+    useEffect(() => {
+        fetchBroadcasts();
+        fetchBranches();
+    }, []);
+
+    // Fetch employees when audience type changes to EMPLOYEE
+    useEffect(() => {
+        if (audienceType === "EMPLOYEE" && isModalOpen) {
+            fetchEmployees();
+        }
+    }, [audienceType, isModalOpen]);
+
+    const fetchBroadcasts = async () => {
+        setIsLoading(true);
+        try {
+            const response = await getBroadcasts();
+
+            // Handle both response formats
+            if (response.success) {
+                setBroadcasts(response.data || []);
+            } else if (Array.isArray(response)) {
+                // Direct array response
+                setBroadcasts(response);
+            } else if (response.data) {
+                // Response with data property but no success flag
+                setBroadcasts(response.data);
+            } else {
+                alert("Failed to load broadcasts: " + (response.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("Failed to load broadcasts: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchBranches = async () => {
+        try {
+            const response = await getBranches();
+            if (response && response.success) {
+                setBranches(response.data || []);
+            } else if (Array.isArray(response)) {
+                setBranches(response);
+            }
+        } catch (error) {
+            // Silently fail for branches
+        }
+    };
+
+    const fetchEmployees = async () => {
+        setIsLoadingEmployees(true);
+        try {
+            const response = await getBroadcastEmployees();
+
+            // Handle both response formats
+            if (response.success) {
+                setEmployees(response.data || []);
+            } else if (Array.isArray(response)) {
+                // Direct array response
+                setEmployees(response);
+            } else if (response.data) {
+                // Response with data property but no success flag
+                setEmployees(response.data);
+            } else {
+                alert("Failed to load employees: " + (response.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("Failed to load employees: " + error.message);
+        } finally {
+            setIsLoadingEmployees(false);
+        }
+    };
 
     const toggleEmployee = (id) => {
         if (selectedEmployees.includes(id)) {
@@ -34,39 +102,122 @@ export default function ManageBroadcast() {
         }
     };
 
-    const handleSend = () => {
-        if (!message.trim()) return;
-        if (target === "specific" && selectedEmployees.length === 0) {
-            alert("Select at least one employee.");
+    // Filter employees based on search query
+    const filteredEmployees = employees.filter((emp) => {
+        if (!employeeSearch.trim()) return true;
+
+        const searchLower = employeeSearch.toLowerCase();
+        const empCode = (emp.employee_code || "").toLowerCase();
+        const fullName = (emp.full_name || emp.name || emp.employee_name || "").toLowerCase();
+        const combinedText = `${empCode} ${fullName}`.toLowerCase();
+
+        return empCode.includes(searchLower) ||
+            fullName.includes(searchLower) ||
+            combinedText.includes(searchLower);
+    });
+
+    const handleSend = async () => {
+        // Validation
+        if (!message.trim()) {
+            alert("Message is required");
             return;
         }
 
+        if (audienceType === "BRANCH" && !selectedBranch) {
+            alert("Please select a branch");
+            return;
+        }
+
+        if (audienceType === "EMPLOYEE" && selectedEmployees.length === 0) {
+            alert("Please select at least one employee");
+            return;
+        }
+
+        // Build payload
+        const payload = {
+            audience_type: audienceType,
+            message: message.trim(),
+        };
+
+        if (audienceType === "BRANCH") {
+            payload.branch_id = selectedBranch;
+        } else if (audienceType === "EMPLOYEE") {
+            payload.employee_ids = selectedEmployees;
+        }
+
         setIsSending(true);
-        setTimeout(() => {
-            const count = target === "all" ? 150 : selectedEmployees.length; // Mock count
-            const audienceLabel = target === "all" ? "All Employees" : `${count} Recipients`;
-
-            const newBroadcast = {
-                id: Date.now(),
-                message,
-                audience: audienceLabel,
-                date: new Date().toLocaleString(),
-                sentBy: "Admin",
-                count
-            };
-
-            setHistory([newBroadcast, ...history]);
-            setMessage("");
-            setSelectedEmployees([]);
-            setTarget("all");
+        try {
+            const response = await createBroadcast(payload);
+            // Handle both response formats
+            if (response.success || response.success === undefined) {
+                // Refresh broadcast list
+                await fetchBroadcasts();
+                alert("Broadcast sent successfully!");
+                // Reset form
+                setMessage("");
+                setSelectedEmployees([]);
+                setSelectedBranch("");
+                setAudienceType("ALL");
+                setEmployeeSearch("");
+                setIsModalOpen(false);
+            } else {
+                alert("Failed to send broadcast: " + (response.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("Failed to send broadcast: " + error.message);
+        } finally {
             setIsSending(false);
-            setIsModalOpen(false);
-        }, 1000);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this broadcast?")) return;
+
+        try {
+            const response = await deleteBroadcast(id);
+            // Handle both response formats
+            if (response.success || response.success === undefined) {
+                // Remove from state instantly
+                setBroadcasts(broadcasts.filter((b) => b.id !== id));
+                alert("Broadcast deleted successfully!");
+            } else {
+                alert("Failed to delete broadcast: " + (response.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("Failed to delete broadcast: " + error.message);
+        }
     };
 
     const openComposer = () => {
         setIsModalOpen(true);
     };
+
+    const getAudienceLabel = (broadcast) => {
+        if (broadcast.audience_type === "ALL") return "All Employees";
+        if (broadcast.audience_type === "BRANCH") {
+            const branch = branches.find(b => b.id === broadcast.branch_id);
+            return `Branch: ${branch?.branch_name || branch?.name || 'Unknown'}`;
+        }
+        if (broadcast.audience_type === "EMPLOYEE") {
+            const count = broadcast.employee_ids?.length || broadcast.recipient_count || 0;
+            return `${count} Employee${count !== 1 ? 's' : ''}`;
+        }
+        return "Unknown";
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    if (isLoading) {
+        return (
+            <div className="module-container flex-center" style={{ minHeight: "400px" }}>
+                <Loader />
+            </div>
+        );
+    }
 
     return (
         <div className="module-container">
@@ -83,27 +234,41 @@ export default function ManageBroadcast() {
             <div style={{ maxWidth: "800px", margin: "0 auto" }}>
                 <h3 style={{ marginBottom: "20px", color: "#374151" }}>Recent Activity</h3>
 
-                {history.length === 0 ? (
+                {broadcasts.length === 0 ? (
                     <EmptyState
                         icon={<FaHistory style={{ color: "#d1d5db" }} />}
                         title="No Broadcasts Sent"
                         description="Your history of sent announcements will appear here."
+                        action={
+                            <Button variant="primary" size="small" onClick={openComposer}>
+                                Send First Broadcast
+                            </Button>
+                        }
                     />
                 ) : (
                     <div className="history-list">
-                        {history.map((item) => (
+                        {broadcasts.map((item) => (
                             <div key={item.id} className="history-item sent" style={{ marginLeft: "12px" }}>
-                                <div className="history-date">{item.date}</div>
+                                <div className="history-date">{formatDate(item.created_at)}</div>
                                 <Card style={{ marginBottom: "0" }}>
                                     <CardBody style={{ padding: "16px" }}>
                                         <p className="history-msg">{item.message}</p>
                                         <div className="flex-between" style={{ marginTop: "12px" }}>
                                             <div className="history-meta" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                                <Badge variant="neutral">{item.audience}</Badge>
-                                                <span style={{ fontSize: "12px", color: "#6b7280" }}>• Sent by {item.sentBy}</span>
+                                                <Badge variant="neutral">{getAudienceLabel(item)}</Badge>
                                             </div>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#059669", fontWeight: "600" }}>
-                                                <FaCheckCircle /> Delivered ({item.count})
+                                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: "#059669", fontWeight: "600" }}>
+                                                    <FaCheckCircle /> Delivered
+                                                </div>
+                                                <Button
+                                                    size="small"
+                                                    variant="danger"
+                                                    startIcon={<FaTrash />}
+                                                    onClick={() => handleDelete(item.id)}
+                                                >
+                                                    Delete
+                                                </Button>
                                             </div>
                                         </div>
                                     </CardBody>
@@ -125,8 +290,8 @@ export default function ManageBroadcast() {
                 size="medium"
                 footer={
                     <>
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSend} isLoading={isSending} endIcon={<FaPaperPlane />}>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isSending}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSend} isLoading={isSending} disabled={isSending} endIcon={<FaPaperPlane />}>
                             Send Announcement
                         </Button>
                     </>
@@ -136,35 +301,133 @@ export default function ManageBroadcast() {
                     <label className="form-label">Target Audience</label>
                     <div className="audience-selector">
                         <label className="radio-label">
-                            <input type="radio" name="target" checked={target === "all"} onChange={() => setTarget("all")} />
+                            <input
+                                type="radio"
+                                name="audienceType"
+                                checked={audienceType === "ALL"}
+                                onChange={() => setAudienceType("ALL")}
+                                disabled={isSending}
+                            />
                             All Employees
                         </label>
                         <label className="radio-label">
-                            <input type="radio" name="target" checked={target === "specific"} onChange={() => setTarget("specific")} />
+                            <input
+                                type="radio"
+                                name="audienceType"
+                                checked={audienceType === "BRANCH"}
+                                onChange={() => setAudienceType("BRANCH")}
+                                disabled={isSending}
+                            />
+                            Branch-wise
+                        </label>
+                        <label className="radio-label">
+                            <input
+                                type="radio"
+                                name="audienceType"
+                                checked={audienceType === "EMPLOYEE"}
+                                onChange={() => setAudienceType("EMPLOYEE")}
+                                disabled={isSending}
+                            />
                             Specific Employees
                         </label>
                     </div>
                 </div>
 
-                {target === "specific" && (
+                {audienceType === "BRANCH" && (
+                    <div className="form-field">
+                        <label className="form-label">Select Branch</label>
+                        <select
+                            className="form-control"
+                            value={selectedBranch}
+                            onChange={(e) => setSelectedBranch(e.target.value)}
+                            disabled={isSending}
+                        >
+                            <option value="">Select a branch</option>
+                            {branches.map((branch) => (
+                                <option key={branch.id} value={branch.id}>
+                                    {branch.branch_name || branch.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {audienceType === "EMPLOYEE" && (
                     <div className="form-field">
                         <label className="form-label">Select Recipients</label>
-                        <div className="checkbox-list">
-                            {MOCK_EMPLOYEES.map((emp) => (
-                                <label key={emp.id} className="checkbox-item">
+                        {isLoadingEmployees ? (
+                            <div className="flex-center" style={{ padding: "20px" }}>
+                                <Loader />
+                            </div>
+                        ) : employees.length === 0 ? (
+                            <p className="text-sm text-muted">No employees available</p>
+                        ) : (
+                            <>
+                                {/* Search Input */}
+                                <div style={{ position: "relative", marginBottom: "12px" }}>
                                     <input
-                                        type="checkbox"
-                                        checked={selectedEmployees.includes(emp.id)}
-                                        onChange={() => toggleEmployee(emp.id)}
-                                        style={{ marginRight: "12px" }}
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Search by employee code or name (e.g., EMP001 or John)"
+                                        value={employeeSearch}
+                                        onChange={(e) => setEmployeeSearch(e.target.value)}
+                                        disabled={isSending}
+                                        style={{ paddingLeft: "36px" }}
                                     />
-                                    <div>
-                                        <div style={{ fontWeight: "500", fontSize: "14px" }}>{emp.name}</div>
-                                        <div style={{ fontSize: "12px", color: "#6b7280" }}>{emp.department}</div>
-                                    </div>
-                                </label>
-                            ))}
-                        </div>
+                                    <FaUsers style={{
+                                        position: "absolute",
+                                        left: "12px",
+                                        top: "50%",
+                                        transform: "translateY(-50%)",
+                                        color: "#94a3b8",
+                                        fontSize: "14px"
+                                    }} />
+                                </div>
+
+                                {/* Employee List */}
+                                <div className="checkbox-list" style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "8px" }}>
+                                    {filteredEmployees.length === 0 ? (
+                                        <p className="text-sm text-muted" style={{ padding: "12px", textAlign: "center", margin: 0 }}>
+                                            No employees found matching "{employeeSearch}"
+                                        </p>
+                                    ) : (
+                                        filteredEmployees.map((emp) => {
+                                            const empCode = emp.employee_code || "N/A";
+                                            const empName = emp.full_name || emp.name || emp.employee_name ||
+                                                `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || "Unknown";
+                                            const displayText = `${empCode} - ${empName}`;
+
+                                            return (
+                                                <label key={emp.id} className="checkbox-item" style={{ padding: "8px 12px", borderRadius: "6px", cursor: "pointer" }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedEmployees.includes(emp.id)}
+                                                        onChange={() => toggleEmployee(emp.id)}
+                                                        style={{ marginRight: "12px" }}
+                                                        disabled={isSending}
+                                                    />
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: "500", fontSize: "14px", color: "#1f2937" }}>
+                                                            {displayText}
+                                                        </div>
+                                                        {emp.branch_id && (
+                                                            <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>
+                                                                Branch ID: {emp.branch_id}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </>
+                        )}
+                        {selectedEmployees.length > 0 && (
+                            <p className="text-sm text-muted" style={{ marginTop: "8px" }}>
+                                {selectedEmployees.length} employee{selectedEmployees.length !== 1 ? 's' : ''} selected
+                            </p>
+                        )}
                     </div>
                 )}
 
@@ -176,6 +439,7 @@ export default function ManageBroadcast() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         style={{ resize: "none", minHeight: "150px" }}
+                        disabled={isSending}
                     />
                     <p className="text-sm text-muted" style={{ marginTop: "6px" }}>
                         This message will be sent immediately to the selected recipients.

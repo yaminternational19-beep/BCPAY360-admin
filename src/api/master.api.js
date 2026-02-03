@@ -481,3 +481,45 @@ export const respondToSupportTicket = (ticketId, data) =>
   });
 
 
+/* ===================================================================================
+   FAQ MANAGEMENT (ADMIN)
+   Base: /api/admin/faqs
+   =================================================================================== */
+
+export const createFaq = (data) =>
+  api("/api/admin/company-faq", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const getFaqs = () =>
+  api("/api/admin/company-faq");
+
+export const updateFaq = (id, data) =>
+  api(`/api/admin/company-faq/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+export const deleteFaq = (id) =>
+  api(`/api/admin/company-faq/${id}`, {
+    method: "DELETE",
+  });
+
+
+export const createBroadcast = (data) =>
+  api("/api/admin/broadcast", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const getBroadcasts = () =>
+  api("/api/admin/broadcast");
+
+export const getBroadcastEmployees = () =>
+  api("/api/admin/broadcast/employees");
+
+export const deleteBroadcast = (id) =>
+  api(`/api/admin/broadcast/${id}`, {
+    method: "DELETE",
+  });

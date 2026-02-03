@@ -1,21 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaPlus, FaEdit, FaTrash, FaChevronDown, FaChevronUp, FaQuestionCircle } from "react-icons/fa";
-import { Button, Modal, EmptyState } from "./components";
+import { Button, Modal, EmptyState, Loader } from "./components";
+import { getFaqs, createFaq, updateFaq, deleteFaq } from "../../api/master.api";
 import "./module.css";
 
-const MOCK_FAQS = [
-    { id: 1, question: "How do I reset my password?", answer: "Go to settings and click on change password." },
-    { id: 2, question: "Where can I view my payslips?", answer: "Payslips can be found in the Payroll section of the app." },
-    { id: 3, question: "How do I apply for leave?", answer: "Navigate to the Leave module and click 'Apply Leave'." },
-    { id: 4, question: "Can I edit my attendance?", answer: "Attendance corrections can be requested via the Attendance module for approval." },
-];
-
 export default function FAQ() {
-    const [faqs, setFaqs] = useState(MOCK_FAQS);
+    const [faqs, setFaqs] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ question: "", answer: "" });
     const [expandedId, setExpandedId] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Fetch FAQs on component mount
+    useEffect(() => {
+        fetchFaqs();
+    }, []);
+
+    const fetchFaqs = async () => {
+        setIsLoading(true);
+        try {
+            const response = await getFaqs();
+
+            // Handle both response formats
+            if (response.success) {
+                setFaqs(response.data || []);
+            } else if (Array.isArray(response)) {
+                // Direct array response
+                setFaqs(response);
+            } else if (response.data) {
+                // Response with data property but no success flag
+                setFaqs(response.data);
+            } else {
+                alert("Failed to load FAQs: " + (response.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("Failed to load FAQs: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleOpenModal = (faq = null) => {
         if (faq) {
@@ -28,27 +53,81 @@ export default function FAQ() {
         setIsModalOpen(true);
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm("Are you sure you want to delete this FAQ?")) {
-            setFaqs(faqs.filter((f) => f.id !== id));
-            if (expandedId === id) setExpandedId(null);
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this FAQ?")) return;
+
+        try {
+            const response = await deleteFaq(id);
+            // Handle both response formats
+            if (response.success || response.success === undefined) {
+                // Remove from state instantly
+                setFaqs(faqs.filter((f) => f.id !== id));
+                if (expandedId === id) setExpandedId(null);
+                alert("FAQ deleted successfully!");
+            } else {
+                alert("Failed to delete FAQ: " + (response.message || "Unknown error"));
+            }
+        } catch (error) {
+            alert("Failed to delete FAQ: " + error.message);
         }
     };
 
-    const handleSave = () => {
-        if (!formData.question || !formData.answer) return;
-
-        if (editingId) {
-            setFaqs(faqs.map((f) => (f.id === editingId ? { ...f, ...formData } : f)));
-        } else {
-            setFaqs([...faqs, { id: Date.now(), ...formData }]);
+    const handleSave = async () => {
+        // Validation
+        if (!formData.question || !formData.question.trim()) {
+            alert("Question is required");
+            return;
         }
-        setIsModalOpen(false);
+        if (!formData.answer || !formData.answer.trim()) {
+            alert("Answer is required");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            if (editingId) {
+                // Update existing FAQ
+                const response = await updateFaq(editingId, formData);
+                // Handle both response formats
+                if (response.success || response.success === undefined) {
+                    // Refresh the list
+                    await fetchFaqs();
+                    alert("FAQ updated successfully!");
+                    setIsModalOpen(false);
+                } else {
+                    alert("Failed to update FAQ: " + (response.message || "Unknown error"));
+                }
+            } else {
+                // Create new FAQ
+                const response = await createFaq(formData);
+                // Handle both response formats
+                if (response.success || response.success === undefined) {
+                    // Refresh the list
+                    await fetchFaqs();
+                    alert("FAQ created successfully!");
+                    setIsModalOpen(false);
+                } else {
+                    alert("Failed to create FAQ: " + (response.message || "Unknown error"));
+                }
+            }
+        } catch (error) {
+            alert("Failed to save FAQ: " + error.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const toggleExpand = (id) => {
         setExpandedId(expandedId === id ? null : id);
     };
+
+    if (isLoading) {
+        return (
+            <div className="module-container flex-center" style={{ minHeight: "400px" }}>
+                <Loader />
+            </div>
+        );
+    }
 
     return (
         <div className="module-container">
@@ -119,8 +198,8 @@ export default function FAQ() {
                 size="medium"
                 footer={
                     <>
-                        <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSave}>Save FAQ</Button>
+                        <Button variant="ghost" onClick={() => setIsModalOpen(false)} disabled={isSaving}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSave} isLoading={isSaving} disabled={isSaving}>Save FAQ</Button>
                     </>
                 }
             >
