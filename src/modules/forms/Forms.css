@@ -50,87 +50,91 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    border: 1px solid transparent;
+    border: 1px solid rgba(0, 0, 0, 0.05);
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 0;
+    /* Reset any padding that might offset icons */
+}
+
+/* Force Lucide icons to be visible and correctly sized */
+.action-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+    display: block !important;
+    color: inherit !important;
+    /* Uses the color defined in .action-btn classes below */
+    stroke-width: 2.5px !important;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
 }
 
 .action-btn.view {
-    background-color: #dbeafe !important;
-    /* Sky 200 */
-    color: #1d4ed8 !important;
-    /* Sky 700 */
-    border-color: #bfdbfe;
+    background-color: #e5e7eb !important;
+    /* Blue 600 */
+    color: white !important;
 }
 
 .action-btn.view:hover {
     background-color: #1d4ed8 !important;
-    color: white !important;
+    /* Blue 700 */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .action-btn.download {
-    background-color: #d1fae5 !important;
-    /* Emerald 200 */
-    color: #065f46 !important;
-    /* Emerald 700 */
-    border-color: #bbf7d0;
+    background-color: #059669 !important;
+    /* Emerald 600 */
+    color: white !important;
 }
 
 .action-btn.download:hover {
-    background-color: #059669 !important;
-    color: white !important;
+    background-color: #047857 !important;
+    /* Emerald 700 */
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .action-btn.upload {
-    background-color: #fef3c7 !important;
-    /* Amber 200 */
-    color: #92400e !important;
-    /* Amber 700 */
-    border-color: #fde68a;
+    background-color: #d97706 !important;
+    /* Amber 600 */
+    color: white !important;
 }
 
 .action-btn.upload:hover {
-    background-color: #d97706 !important;
-    color: white !important;
+    background-color: #b45309 !important;
+    /* Amber 700 */
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
 }
 
 /* Replace Button - Teal/Cyan */
 .action-btn.replace {
-    background-color: #e0f2fe !important;
-    /* Sky 100 */
-    color: #0ea5e9 !important;
-    /* Sky 500 */
-    border-color: #bae6fd;
+    background-color: #0891b2 !important;
+    /* Cyan 600 */
+    color: white !important;
 }
 
 .action-btn.replace:hover {
-    background-color: #0ea5e9 !important;
-    color: white !important;
+    background-color: #0e7490 !important;
+    /* Cyan 700 */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
 }
 
 /* Delete Button - Red */
 .action-btn.delete {
-    background-color: #fee2e2 !important;
-    /* Red 100 */
-    color: #ef4444 !important;
-    /* Red 500 */
-    border-color: #fecaca;
+    background-color: #dc2626 !important;
+    /* Red 600 */
+    color: white !important;
 }
 
 .action-btn.delete:hover {
-    background-color: #ef4444 !important;
-    color: white !important;
+    background-color: #b91c1c !important;
+    /* Red 700 */
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .action-btn:disabled {
