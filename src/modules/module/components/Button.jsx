@@ -11,12 +11,26 @@ export const Button = ({
     endIcon,
     disabled,
     className = "",
+    style = {},
     ...props
 }) => {
+    // Injecting smaller sizes via inline styles as requested
+    const sizeStyles = {
+        small: { padding: "4px 10px", fontSize: "11px" },
+        medium: { padding: "8px 16px", fontSize: "13px" },
+        large: { padding: "10px 20px", fontSize: "15px" }
+    };
+
+    const combinedStyle = {
+        ...sizeStyles[size],
+        ...style
+    };
+
     return (
         <button
             className={`ui-btn btn-${variant} btn-${size} ${className}`}
             disabled={disabled || isLoading}
+            style={combinedStyle}
             {...props}
         >
             {isLoading && <FaSpinner className="spinner-icon" />}
