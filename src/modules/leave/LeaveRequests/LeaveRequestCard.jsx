@@ -1,7 +1,7 @@
 import React from "react";
 import "../../../styles/LeaveManagement.css";
 
-export default function LeaveRequestCard({ request, onApprove, onReject }) {
+export default function LeaveRequestCard({ request, onApprove, onReject, showActions = true }) {
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("en-IN", {
       day: "2-digit",
@@ -13,8 +13,15 @@ export default function LeaveRequestCard({ request, onApprove, onReject }) {
     <div className="req-card">
       <div className="req-info">
         <div className="req-header">
-          <h3>{request.full_name}</h3>
-          <span className="emp-id">({request.emp_id})</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3>{request.full_name}</h3>
+            <span className="emp-id">({request.emp_id})</span>
+          </div>
+          {request.status && (
+            <span className={`badge ${request.status.toLowerCase()}`}>
+              {request.status}
+            </span>
+          )}
         </div>
 
         <div className="req-meta-grid">
@@ -53,23 +60,25 @@ export default function LeaveRequestCard({ request, onApprove, onReject }) {
         )}
       </div>
 
-      <div className="req-actions">
-        <button
-          className="btn-success"
-          onClick={onApprove}
-          title="Approve leave request"
-        >
-          Approve
-        </button>
+      {showActions && (
+        <div className="req-actions">
+          <button
+            className="btn-success"
+            onClick={onApprove}
+            title="Approve leave request"
+          >
+            Approve
+          </button>
 
-        <button
-          className="btn-danger"
-          onClick={onReject}
-          title="Reject leave request"
-        >
-          Reject
-        </button>
-      </div>
+          <button
+            className="btn-danger"
+            onClick={onReject}
+            title="Reject leave request"
+          >
+            Reject
+          </button>
+        </div>
+      )}
     </div>
   );
 }

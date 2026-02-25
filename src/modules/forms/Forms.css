@@ -50,46 +50,55 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 14px;
 }
 
 .action-btn.view {
-    background-color: #eff6ff !important;
-    color: #3b82f6 !important;
+    background-color: #dbeafe !important;
+    /* Sky 200 */
+    color: #1d4ed8 !important;
+    /* Sky 700 */
+    border-color: #bfdbfe;
 }
 
 .action-btn.view:hover {
-    background-color: #3b82f6 !important;
+    background-color: #1d4ed8 !important;
     color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
 }
 
 .action-btn.download {
-    background-color: #ecfdf5 !important;
-    color: #10b981 !important;
+    background-color: #d1fae5 !important;
+    /* Emerald 200 */
+    color: #065f46 !important;
+    /* Emerald 700 */
+    border-color: #bbf7d0;
 }
 
 .action-btn.download:hover {
-    background-color: #10b981 !important;
+    background-color: #059669 !important;
     color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .action-btn.upload {
-    background-color: #fffbeb !important;
-    color: #f59e0b !important;
+    background-color: #fef3c7 !important;
+    /* Amber 200 */
+    color: #92400e !important;
+    /* Amber 700 */
+    border-color: #fde68a;
 }
 
 .action-btn.upload:hover {
-    background-color: #f59e0b !important;
+    background-color: #d97706 !important;
     color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
 }
 
 /* Replace Button - Teal/Cyan */
@@ -98,6 +107,7 @@
     /* Sky 100 */
     color: #0ea5e9 !important;
     /* Sky 500 */
+    border-color: #bae6fd;
 }
 
 .action-btn.replace:hover {
@@ -113,6 +123,7 @@
     /* Red 100 */
     color: #ef4444 !important;
     /* Red 500 */
+    border-color: #fecaca;
 }
 
 .action-btn.delete:hover {

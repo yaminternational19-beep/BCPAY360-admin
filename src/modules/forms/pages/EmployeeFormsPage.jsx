@@ -601,10 +601,10 @@ const EmployeeFormsPage = () => {
                         Available
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === 'Missing' ? 'active' : 'inactive'}`}
-                        onClick={() => setActiveTab('Missing')}
+                        className={`tab-btn ${activeTab === 'Upload' ? 'active' : 'inactive'}`}
+                        onClick={() => setActiveTab('Upload')}
                     >
-                        Missing
+                        Upload
                     </button>
                 </div>
             </FiltersBar>
@@ -615,7 +615,7 @@ const EmployeeFormsPage = () => {
                     data={filteredData}
                     isLoading={loading}
                     emptyState={{
-                        title: activeTab === "Available" ? "No available documents" : (config.emptyStateText || "No missing documents"),
+                        title: activeTab === "Available" ? "No available documents" : (config.emptyStateText || "No documents for upload"),
                         icon: "📄"
                     }}
                 />

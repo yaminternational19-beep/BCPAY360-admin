@@ -16,6 +16,8 @@ import { getDepartments } from "../../api/master.api";
 import { useBranch } from "../../hooks/useBranch"; // Import Hook
 import NoBranchState from "../../components/NoBranchState";
 
+import useLeaveRequests from "./hooks/useLeaveRequests";
+
 export default function LeaveManagementPage() {
   const [activeTab, setActiveTab] = useState("approvals");
   const [showPolicyForm, setShowPolicyForm] = useState(false);
@@ -23,18 +25,33 @@ export default function LeaveManagementPage() {
   // Use Branch Hook
   const { branches: branchList, selectedBranch, changeBranch, isSingleBranch, canProceed, isLoading: branchLoading } = useBranch();
 
+  // Integrated Leave Hook
+  const {
+    requests,
+    history,
+    loading: leaveLoading,
+    error: leaveError,
+    approve,
+    reject,
+    fetchPending,
+    fetchHistory
+  } = useLeaveRequests();
+
   // Filter States
   const [filters, setFilters] = useState({
     search: "",
-    departmentId: ""
+    departmentId: "",
+    status: "ALL"
   });
 
   // Master Data
   const [departmentList, setDepartmentList] = useState([]);
-
-  // Counts (In production, fetch these from a dedicated summary API)
-  const [pendingCount, setPendingCount] = useState(0);
   const [loadingTab, setLoadingTab] = useState(null);
+
+  useEffect(() => {
+    fetchPending();
+    fetchHistory();
+  }, [fetchPending, fetchHistory, selectedBranch]);
 
   useEffect(() => {
     if (selectedBranch) {
@@ -52,10 +69,31 @@ export default function LeaveManagementPage() {
     }
   }, [selectedBranch]);
 
+  // Derived Stats
+  const pendingCount = requests.filter(req => {
+    return !selectedBranch || String(req.branch_id) === String(selectedBranch);
+  }).length;
+
+  const onLeaveTodayCount = history.filter(h => {
+    if (h.status !== 'APPROVED') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const from = new Date(h.from_date);
+    from.setHours(0, 0, 0, 0);
+
+    const to = new Date(h.to_date);
+    to.setHours(0, 0, 0, 0);
+
+    const branchMatch = !selectedBranch || String(h.branch_id) === String(selectedBranch);
+    return branchMatch && today >= from && today <= to;
+  }).length;
+
   const handleReset = () => {
     setFilters({
       search: "",
-      departmentId: ""
+      departmentId: "",
+      status: "ALL"
     });
   };
 
@@ -78,7 +116,7 @@ export default function LeaveManagementPage() {
           <h1>Leave Management</h1>
           <p>Review attendance data, process leave requests and manage policies.</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowPolicyForm(true)}>
+        <button className="btn-primary premium" onClick={() => setShowPolicyForm(true)}>
           + Add Leave Policy
         </button>
       </div>
@@ -101,7 +139,7 @@ export default function LeaveManagementPage() {
           </div>
           <div className="lm-summary-info">
             <span className="lm-summary-label">On Leave Today</span>
-            <span className="lm-summary-value">0</span>
+            <span className="lm-summary-value">{onLeaveTodayCount}</span>
           </div>
         </div>
 
@@ -169,6 +207,17 @@ export default function LeaveManagementPage() {
           ))}
         </select>
 
+        <select
+          className="lm-select"
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+        >
+          <option value="ALL">All Status</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+
         <button className="lm-btn-reset" onClick={handleReset} title="Reset Filters">
           <FaRedo /> Reset
         </button>
@@ -218,14 +267,27 @@ export default function LeaveManagementPage() {
         {/* APPROVALS */}
         <div className={`lm-section ${activeTab === "approvals" ? "active" : ""}`}>
           <PendingLeaveList
-            onCountChange={setPendingCount}
             filters={activeFilters}
+            requests={requests}
+            history={history}
+            loading={leaveLoading}
+            error={leaveError}
+            approve={approve}
+            reject={reject}
+            fetchPending={fetchPending}
+            fetchHistory={fetchHistory}
           />
         </div>
 
         {/* HISTORY */}
         <div className={`lm-section ${activeTab === "history" ? "active" : ""}`}>
-          <LeaveHistoryTable filters={activeFilters} />
+          <LeaveHistoryTable
+            filters={activeFilters}
+            history={history}
+            loading={leaveLoading}
+            error={leaveError}
+            fetchHistory={fetchHistory}
+          />
         </div>
       </section>
 

@@ -1054,3 +1054,71 @@ input:checked+.slider:before {
     justify-content: flex-end;
   }
 }
+
+/* ===========================
+   PAGINATION STYLES
+   =========================== */
+.lm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0;
+  border-top: 1px solid var(--gray-200);
+  margin-top: 20px;
+}
+
+.pg-btn {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  padding: 8px 16px;
+  border-radius: var(--border-radius-small);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pg-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.pg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--gray-100);
+}
+
+.pg-info {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-400);
+}
+
+/* ===========================
+   PREMIUM ADD BUTTON
+   =========================== */
+.btn-primary.premium {
+  padding: 8px 18px;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  width: fit-content;
+}
+
+.btn-primary.premium:hover {
+  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.3);
+  transform: translateY(-2px);
+}
