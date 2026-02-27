@@ -41,15 +41,23 @@ const AttendancePage = () => {
   const [monthlyData, setMonthlyData] = useState([]);
 
   const [summary, setSummary] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total_records: 0
+  });
   const [loading, setLoading] = useState(false);
 
   const [historyData, setHistoryData] = useState(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
 
   const [filters, setFilters] = useState({
     search: "",
     departmentId: "",
     shiftId: "",
-    status: ""
+    status: "",
+    page: 1,
+    limit: 20
   });
 
   const [selectedIds, setSelectedIds] = useState([]);
@@ -74,6 +82,7 @@ const AttendancePage = () => {
         .then(res => {
           setRows(res.data);
           setSummary(res.summary);
+          setPagination(res.pagination || { page: 1, limit: 20, total_records: res.data?.length || 0 });
           setSelectedIds([]); // Reset selection on new fetch
         })
         .finally(() => setLoading(false));
@@ -88,6 +97,7 @@ const AttendancePage = () => {
         .then(res => {
           setMonthlyData(res.data);
           setSummary(res.summary); // Ensure summary is set for monthly too
+          setPagination(res.pagination || { page: 1, limit: 20, total_records: res.data?.length || 0 });
           setSelectedIds([]); // Reset selection on new fetch
         })
         .finally(() => setLoading(false));
@@ -95,19 +105,27 @@ const AttendancePage = () => {
   }, [attendanceMode, monthRange, filters, viewType, selectedBranch]);
 
   /* LOAD HISTORY */
-  const loadHistoryAttendance = async (employeeId) => {
-    const from = new Date(new Date().setMonth(new Date().getMonth() - 1))
+  const loadHistoryAttendance = async (employeeId, fromDate, toDate) => {
+    setSelectedEmployeeId(employeeId);
+
+    // Default to last 30 days if no range provided
+    const from = fromDate || new Date(new Date().setMonth(new Date().getMonth() - 1))
       .toISOString()
       .slice(0, 10);
+    const to = toDate || today;
 
-    const res = await fetchHistoryAttendance({
-      employeeId,
-      from,
-      to: today
-    });
-
-    setHistoryData(res);
-    setViewType("HISTORY");
+    setLoading(true);
+    try {
+      const res = await fetchHistoryAttendance({
+        employeeId,
+        from,
+        to
+      });
+      setHistoryData(res);
+      setViewType("HISTORY");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* EXPORT HANDLER (THIS MAKES DOWNLOAD WORK) */
@@ -189,7 +207,7 @@ const AttendancePage = () => {
         filters={filters}
         onDateChange={setDate}
         onMonthChange={setMonthRange}
-        onFilterChange={setFilters}
+        onFilterChange={(newFilters) => setFilters(prev => ({ ...prev, ...newFilters, page: 1 }))}
         onExport={handleExport}
         isSelectionEmpty={selectedIds.length === 0}
         onBack={() => {
@@ -219,6 +237,8 @@ const AttendancePage = () => {
           selectedIds={selectedIds}
           onSelectOne={handleSelectOne}
           onSelectAll={handleSelectAll}
+          pagination={pagination}
+          onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
         />
       )}
 
@@ -232,6 +252,8 @@ const AttendancePage = () => {
             selectedIds={selectedIds}
             onSelectOne={handleSelectOne}
             onSelectAll={handleSelectAll}
+            pagination={pagination}
+            onPageChange={(page) => setFilters(prev => ({ ...prev, page }))}
           />
         </>
       )}
@@ -241,9 +263,11 @@ const AttendancePage = () => {
         <HistoryAttendanceDrawer
           data={historyData}
           loading={loading}
+          onRefresh={(from, to) => loadHistoryAttendance(selectedEmployeeId, from, to)}
           onClose={() => {
             setViewType("DAILY");
             setHistoryData(null);
+            setSelectedEmployeeId(null);
           }}
         />
       )}

@@ -1,5 +1,6 @@
 import "../../../styles/Attendance.css";
-// import ProfileAvatar from "../../../components/common/ProfileAvatar";
+import MonthlyAttendanceForm from "./MonthlyAttendanceForm";
+import { X } from "lucide-react";
 
 const statusLabelMap = {
   PRESENT: "Present",
@@ -28,59 +29,53 @@ const formatDate = (dateStr) => {
   });
 };
 
-const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
-  if (loading) {
-    return (
-      <div className="history-drawer">
-        <p className="drawer-loading">Loading attendance history…</p>
-      </div>
-    );
-  }
+const HistoryAttendanceDrawer = ({ data, loading, onRefresh, onClose }) => {
+  if (!data && !loading) return null;
 
-  if (!data) return null;
-
-  const { employee, data: rows } = data;
+  const employee = data?.employee || {};
+  const rows = data?.data || [];
 
   return (
-    <div className="history-drawer">
+    <div className={`history-drawer ${loading ? 'opacity-50' : ''}`}>
       {/* ===========================
-          HEADER
+          HEADER SECTION
       =========================== */}
-      <div className="history-header">
-
-
-        <div className="employee-profile-card">
-          <div className="profile-image-container">
+      <div className="history-header-new">
+        <div className="profile-section">
+          <div className="profile-avatar-wrapper">
             <img
-              src={employee.profile_photo_url || employee.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=EFF6FF&color=3B82F6&bold=true`}
+              src={employee.profile_photo_url || employee.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name || "User")}&background=EFF6FF&color=3B82F6&bold=true`}
               alt={employee.name}
-              className="employee-avatar large"
+              className="employee-avatar-large"
               onError={(e) => {
-                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=F1F5F9&color=64748B&bold=true`;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name || "User")}&background=F1F5F9&color=64748B&bold=true`;
               }}
             />
+            <span className={`status-pill-floating ${employee.status?.toUpperCase() === "ACTIVE" ? "pill-active" : "pill-inactive"}`}>
+              {employee.status}
+            </span>
           </div>
 
-          <div className="employee-details">
-            <div className="name-row">
-              <h3>{employee.name}</h3>
-              <span className="status-indicator active">{employee.status}</span>
+          <div className="profile-info-main">
+            <h2>{employee.name}</h2>
+            <span className="code-badge">{employee.code}</span>
+            <div className="quick-meta">
+              <span><strong>Dept:</strong> {employee.department}</span>
+              <span><strong>Shift:</strong> {employee.shift}</span>
             </div>
-            <p className="emp-code-main">{employee.code}</p>
-            <div className="meta-grid">
-              <div className="meta-item">
-                <small>Department</small>
-                <span>{employee.department}</span>
-              </div>
-              <div className="meta-item">
-                <small>Designation</small>
-                <span>{employee.designation}</span>
-              </div>
-              <div className="meta-item">
-                <small>Current Shift</small>
-                <span>{employee.shift}</span>
-              </div>
-            </div>
+          </div>
+        </div>
+
+        <div className="history-controls">
+          <div className="filter-card">
+            <div className="filter-card-label">View History For</div>
+            <MonthlyAttendanceForm
+              onChange={(range) => {
+                if (onRefresh) {
+                  onRefresh(range.fromDate, range.toDate);
+                }
+              }}
+            />
           </div>
         </div>
       </div>
@@ -89,6 +84,7 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
           TABLE
       =========================== */}
       <div className="history-table-wrapper">
+        {loading && <div className="drawer-table-overlay">Loading...</div>}
         <table className="attendance-table sticky-header">
           <thead>
             <tr>
@@ -142,7 +138,7 @@ const HistoryAttendanceDrawer = ({ data, loading, onClose }) => {
             ) : (
               <tr>
                 <td colSpan="8" className="table-empty">
-                  No attendance history available
+                  No attendance history available for this period
                 </td>
               </tr>
             )}

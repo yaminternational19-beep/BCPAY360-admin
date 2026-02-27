@@ -1,72 +1,59 @@
 import { useEffect, useState } from "react";
 
-const buildRange = (fromYear, fromMonth, toYear, toMonth) => {
-  const fromDate = `${fromYear}-${String(fromMonth).padStart(2, "0")}-01`;
-  const lastDay = new Date(toYear, toMonth, 0).getDate();
-  const toDate = `${toYear}-${String(toMonth).padStart(2, "0")}-${lastDay}`;
+const buildMonthRange = (year, month) => {
+  const fromDate = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const toDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
   return { fromDate, toDate };
 };
 
 export default function MonthlyAttendanceForm({ value, onChange }) {
   const now = new Date();
 
-  const [fromYear, setFromYear] = useState(now.getFullYear());
-  const [fromMonth, setFromMonth] = useState(now.getMonth() + 1);
-  const [toYear, setToYear] = useState(now.getFullYear());
-  const [toMonth, setToMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
 
   useEffect(() => {
-    const range = buildRange(fromYear, fromMonth, toYear, toMonth);
+    const range = buildMonthRange(year, month);
     onChange({
-      fromYear,
-      fromMonth,
-      toYear,
-      toMonth,
+      year,
+      month,
       ...range
     });
-  }, [fromYear, fromMonth, toYear, toMonth]);
+  }, [year, month]);
 
   const years = [];
   for (let y = now.getFullYear() - 3; y <= now.getFullYear() + 1; y++) {
     years.push(y);
   }
   const MONTHS = [
-  "January", "February", "March", "April",
-  "May", "June", "July", "August",
-  "September", "October", "November", "December"
-];
-
+    "January", "February", "March", "April",
+    "May", "June", "July", "August",
+    "September", "October", "November", "December"
+  ];
 
   return (
     <div className="monthly-range-form">
-      <span>From</span>
+      <span>Month</span>
 
-      <select value={fromMonth} onChange={e => setFromMonth(+e.target.value)}>
-  {MONTHS.map((m, i) => (
-    <option key={m} value={i + 1}>
-      {m}
-    </option>
-  ))}
-</select>
-
-
-      <select value={fromYear} onChange={e => setFromYear(+e.target.value)}>
-        {years.map(y => <option key={y}>{y}</option>)}
+      <select
+        value={month}
+        onChange={e => setMonth(+e.target.value)}
+        className="filter-select date-select"
+      >
+        {MONTHS.map((m, i) => (
+          <option key={m} value={i + 1}>
+            {m}
+          </option>
+        ))}
       </select>
 
-      <span>To</span>
-
-      <select value={toMonth} onChange={e => setToMonth(+e.target.value)}>
-        {MONTHS.map((m, i) => (
-            <option key={m} value={i + 1}>
-            {m}
-            </option>
-        ))}
-        </select>
-
-
-      <select value={toYear} onChange={e => setToYear(+e.target.value)}>
-        {years.map(y => <option key={y}>{y}</option>)}
+      <select
+        value={year}
+        onChange={e => setYear(+e.target.value)}
+        className="filter-select year-select"
+      >
+        {years.map(y => <option key={y} value={y}>{y}</option>)}
       </select>
     </div>
   );
