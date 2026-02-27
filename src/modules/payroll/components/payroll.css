@@ -432,3 +432,129 @@
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+/* =====================================================
+   PAYROLL PAGINATION
+   ===================================================== */
+
+.payroll-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  margin-top: 12px;
+  border-top: 1px solid var(--border-light);
+  background: var(--white);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.pg-count-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pg-count-info strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.pg-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pg-nav-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--border-default);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pg-nav-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.pg-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pg-number-group {
+  display: flex;
+  gap: 4px;
+}
+
+.pg-num-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pg-num-btn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+
+.pg-num-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+/* =====================================================
+   PAYROLL LOADING OVERLAY
+   ===================================================== */
+
+.payroll-table-section {
+  position: relative;
+}
+
+.payroll-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(2px);
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  border-radius: var(--radius-lg);
+}
+
+.payroll-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: payroll-spin 0.75s linear infinite;
+}
+
+@keyframes payroll-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pg-ellipsis { display:flex; align-items:center; padding:0 4px; color:var(--text-secondary); font-size:13px; }

@@ -25,6 +25,8 @@ const PayrollConfirm = () => {
   const [selected, setSelected] = useState([]);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const loadBatch = useCallback(async () => {
     try {
@@ -59,6 +61,13 @@ const PayrollConfirm = () => {
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );
   };
+
+  // Pagination derived values
+  const totalPages = Math.ceil(employees.length / ITEMS_PER_PAGE);
+  const paginatedEmployees = employees.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const columns = [
     {
@@ -155,15 +164,74 @@ const PayrollConfirm = () => {
       />
 
       <div className="payroll-table-section">
+        {loading && (
+          <div className="payroll-loading-overlay">
+            <div className="payroll-spinner"></div>
+            <span>Loading payroll batch...</span>
+          </div>
+        )}
+
         <DataTable
           columns={columns}
-          data={employees}
+          data={paginatedEmployees}
           emptyState={{
             title: "No employees in this batch",
             subtitle: "Try selecting a different month.",
             icon: <FaMoneyBillWave />
           }}
         />
+
+        {/* ── PAGINATION ── */}
+        {employees.length > 0 && (
+          <div className="payroll-pagination">
+            <div className="pg-count-info">
+              Showing{" "}
+              <strong>{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, employees.length)}</strong>–
+              <strong>{Math.min(currentPage * ITEMS_PER_PAGE, employees.length)}</strong>
+              {" "}of <strong>{employees.length}</strong> employees
+            </div>
+            <div className="pg-controls">
+              <button
+                className="pg-nav-btn"
+                disabled={currentPage === 1 || totalPages <= 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                ‹ Prev
+              </button>
+              <div className="pg-number-group">
+                {(() => {
+                  const pages = [];
+                  const delta = 2;
+                  const left = Math.max(1, currentPage - delta);
+                  const right = Math.min(totalPages || 1, currentPage + delta);
+                  for (let p = left; p <= right; p++) pages.push(p);
+                  if (pages[0] > 1) pages.unshift("...");
+                  if (pages[pages.length - 1] < (totalPages || 1)) pages.push("...");
+                  return pages.map((p, idx) =>
+                    p === "..." ? (
+                      <span key={idx} className="pg-ellipsis">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        className={`pg-num-btn ${currentPage === p ? "active" : ""}`}
+                        onClick={() => setCurrentPage(p)}
+                      >
+                        {p}
+                      </button>
+                    )
+                  );
+                })()}
+              </div>
+              <button
+                className="pg-nav-btn"
+                disabled={currentPage === (totalPages || 1) || totalPages <= 1}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="payroll-footer-action slide-up">

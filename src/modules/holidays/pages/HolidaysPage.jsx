@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PageHeader from "../../../components/ui/PageHeader";
 import HolidayModal from "../components/HolidayModal";
 import "../styles/Holidays.css";
-import { FaCalendarAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaCalendarAlt, FaChevronLeft, FaChevronRight, FaBuilding, FaCalendar } from "react-icons/fa";
 import { useBranch } from "../../../hooks/useBranch";
 import { useToast } from "../../../context/ToastContext";
 import NoBranchState from "../../../components/NoBranchState";
@@ -323,38 +323,7 @@ const HolidaysPage = () => {
         icon={<FaCalendarAlt />}
       />
 
-      <div className="holidays-filters">
-        {!isSingleBranch && (
-          <select
-            value={selectedBranch === null ? "ALL" : selectedBranch}
-            onChange={(e) => {
-              const val = e.target.value;
-              changeBranch(val === "ALL" ? null : Number(val));
-            }}
-          >
-            {branches.length > 1 && <option value="ALL">All Branches</option>}
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.branch_name} ({b.branch_code})
-              </option>
-            ))}
-          </select>
-        )}
 
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-        >
-          {Array.from({ length: 6 }).map((_, i) => {
-            const y = new Date().getFullYear() - 1 + i;
-            return (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            );
-          })}
-        </select>
-      </div>
 
       {selectedBranch ? (
         <>
@@ -374,6 +343,23 @@ const HolidaysPage = () => {
             <button className="next-prev-btn" onClick={() => setCurrentMonth((m) => (m === 11 ? 0 : m + 1))}>
               <FaChevronRight />
             </button>
+
+
+        <div className="hf-select-group">
+          
+          <select
+            className="hf-select"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+          >
+            {Array.from({ length: 6 }).map((_, i) => {
+              const y = new Date().getFullYear() - 1 + i;
+              return (
+                <option key={y} value={y}>{y}</option>
+              );
+            })}
+          </select>
+        </div>
 
             <div className="bulk-actions">
               <button onClick={() => markWeekend(6, "All Saturdays")}>

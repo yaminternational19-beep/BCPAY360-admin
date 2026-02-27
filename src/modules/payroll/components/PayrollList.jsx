@@ -10,51 +10,52 @@ import SummaryCards from "../../../components/ui/SummaryCards";
 import FiltersBar from "../../../components/ui/FiltersBar";
 import DataTable from "../../../components/ui/DataTable";
 import StatusBadge from "../../../components/ui/StatusBadge";
-import { FaUsers, FaCheckCircle, FaHourglassHalf, FaExclamationCircle, FaWallet, FaCalendarAlt, FaMoneyBillWave, FaSync } from "react-icons/fa";
+import { FaUsers, FaCheckCircle, FaHourglassHalf, FaExclamationCircle, FaCalendarAlt, FaMoneyBillWave } from "react-icons/fa";
 import "./payroll.css";
 import "../../../styles/shared/modern-ui.css";
-import { useBranch } from "../../../hooks/useBranch"; // Import Hook
+import { useBranch } from "../../../hooks/useBranch";
+
+const ITEMS_PER_PAGE = 10;
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
 
 const PayrollList = () => {
   const navigate = useNavigate();
   const { branches: branchList, selectedBranch, changeBranch, isSingleBranch } = useBranch();
   const [loading, setLoading] = useState(false);
 
-  const [payMonth, setPayMonth] = useState(new Date().getMonth() + 1);
-  const [payYear, setPayYear] = useState(new Date().getFullYear());
+  const currentDate = new Date();
+  const [payMonth, setPayMonth] = useState(currentDate.getMonth() + 1);
+  const [payYear, setPayYear] = useState(currentDate.getFullYear());
 
-  const [summary, setSummary] = useState({
-    total: 0,
-    paid: 0,
-    pending: 0,
-    not_generated: 0
-  });
-
+  const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, not_generated: 0 });
   const [employees, setEmployees] = useState([]);
   const [batch, setBatch] = useState(null);
   const [selected, setSelected] = useState([]);
   const [payrollData, setPayrollData] = useState({});
 
-  // Master Data state
+  // Master Data
   const [departmentList, setDepartmentList] = useState([]);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartmentId, setFilterDepartmentId] = useState("");
 
-  const loadEmployees = async () => {
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // ─── Auto-fetch when month/year changes ───────────────────────────────────
+  const loadEmployees = async (month = payMonth, year = payYear) => {
     setLoading(true);
-    setSelected([]); // Reset selection on fetch
+    setSelected([]);
     try {
-      const res = await getPayrollEmployees({ month: payMonth, year: payYear });
+      const res = await getPayrollEmployees({ month, year });
       setSummary(res.summary);
       setBatch(res.batch || null);
-
       const normalized = res.employees || [];
-
       setEmployees(normalized);
-
-      // Initialize keyed payroll data
       const initialData = {};
       normalized.forEach(e => {
         initialData[e.employee_id] = {
@@ -72,16 +73,14 @@ const PayrollList = () => {
     }
   };
 
-
-  // Fetch departments when branch filter changes
+  // Fetch departments when branch changes
   useEffect(() => {
     if (selectedBranch) {
       (async () => {
         try {
           const depts = await getDepartments(selectedBranch);
           setDepartmentList(depts || []);
-        } catch (err) {
-          alert("Failed to fetch departments: " + err.message);
+        } catch {
           setDepartmentList([]);
         }
       })();
@@ -91,108 +90,83 @@ const PayrollList = () => {
     setFilterDepartmentId("");
   }, [selectedBranch]);
 
+  // Auto-fetch on month/year change
   useEffect(() => {
-    loadEmployees();
-  }, [payMonth, payYear]); // Re-fetch employees on month/year change
+    loadEmployees(payMonth, payYear);
+  }, [payMonth, payYear]);
 
-  // Filter employees based on all criteria
+  // ─── Filter ───────────────────────────────────────────────────────────────
   const filteredEmployees = useMemo(() => {
     return employees.filter(e => {
       const matchesSearch =
         e.employee_code?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
-
       const matchesBranch = !selectedBranch || String(e.branch_id) === String(selectedBranch);
       const matchesDept = !filterDepartmentId || String(e.department_id) === String(filterDepartmentId);
-
       return matchesSearch && matchesBranch && matchesDept;
     });
   }, [employees, searchQuery, selectedBranch, filterDepartmentId]);
 
-  // Summary mapping for SummaryCards
-  const summaryCards = useMemo(() => {
-    return [
-      {
-        label: "Total Employees",
-        value: summary.total,
-        icon: <FaUsers />,
-        color: "blue"
-      },
-      {
-        label: "Paid Staff",
-        value: summary.paid,
-        icon: <FaCheckCircle />,
-        color: "green"
-      },
-      {
-        label: "Pending Pay",
-        value: summary.pending,
-        icon: <FaHourglassHalf />,
-        color: "orange"
-      },
-      {
-        label: "Not Generated",
-        value: summary.not_generated,
-        icon: <FaExclamationCircle />,
-        color: "orange"
-      },
-      {
-        label: "Period",
-        value: `${payMonth}/${payYear}`,
-        icon: <FaCalendarAlt />,
-        color: "blue"
-      }
-    ];
-  }, [summary, batch, payMonth, payYear]);
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedBranch, filterDepartmentId, payMonth, payYear]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+  const paginatedEmployees = filteredEmployees.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // ─── Clear all filters ────────────────────────────────────────────────────
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setFilterDepartmentId("");
+    setPayMonth(currentDate.getMonth() + 1);
+    setPayYear(currentDate.getFullYear());
+    setCurrentPage(1);
+  };
+
+  // ─── Summary cards ────────────────────────────────────────────────────────
+  const summaryCards = useMemo(() => [
+    { label: "Total Employees", value: summary.total, icon: <FaUsers />, color: "blue" },
+    { label: "Paid Staff", value: summary.paid, icon: <FaCheckCircle />, color: "green" },
+    { label: "Pending Pay", value: summary.pending, icon: <FaHourglassHalf />, color: "orange" },
+    { label: "Not Generated", value: summary.not_generated, icon: <FaExclamationCircle />, color: "orange" },
+    { label: "Period", value: `${MONTHS[payMonth - 1]} ${payYear}`, icon: <FaCalendarAlt />, color: "blue" }
+  ], [summary, payMonth, payYear]);
 
   const isLocked = batch && batch.status !== "DRAFT";
 
+  // ─── Selection helpers ────────────────────────────────────────────────────
   const toggleAll = (checked) => {
-    if (!checked || isLocked) {
-      setSelected([]);
-      return;
-    }
-
-    const selectable = filteredEmployees
-      .filter(e => e.payment_status !== "SUCCESS")
-      .map((e) => e.employee_id);
-
-    setSelected(selectable);
+    if (!checked || isLocked) { setSelected([]); return; }
+    setSelected(filteredEmployees.filter(e => e.payment_status !== "SUCCESS").map(e => e.employee_id));
   };
 
   const toggleOne = (id) => {
     const emp = employees.find(e => e.employee_id === id);
     if (isLocked || emp?.payment_status === "SUCCESS") return;
-
-    setSelected((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
-    );
+    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const updateEditable = (id, key, value) => {
-    setPayrollData((prev) => ({
+    setPayrollData(prev => ({
       ...prev,
-      [id]: {
-        ...prev[id],
-        [key]: key === "pf_applicable" ? value : (Number(value) || 0)
-      }
+      [id]: { ...prev[id], [key]: key === "pf_applicable" ? value : (Number(value) || 0) }
     }));
   };
 
+  // ─── Generate payroll ─────────────────────────────────────────────────────
   const generatePay = async () => {
     if (!selected.length || isLocked) return;
-
     const payload = {
       pay_month: payMonth,
       pay_year: payYear,
       employees: employees
-        .filter(
-          (e) =>
-            selected.includes(e.employee_id)
-        )
-        .map((e) => {
+        .filter(e => selected.includes(e.employee_id))
+        .map(e => {
           const data = payrollData[e.employee_id] || {};
           return {
             employee_id: e.employee_id,
@@ -204,7 +178,6 @@ const PayrollList = () => {
           };
         })
     };
-
     try {
       await generatePayrollBatch(payload);
       navigate(`/payroll/confirm?month=${payMonth}&year=${payYear}`);
@@ -213,22 +186,21 @@ const PayrollList = () => {
     }
   };
 
+  // ─── Table columns ────────────────────────────────────────────────────────
   const columns = [
     {
       header: (
         <input
           type="checkbox"
           disabled={isLocked}
-          onChange={(e) => toggleAll(e.target.checked)}
-          checked={
-            (() => {
-              const selectable = filteredEmployees.filter(e => e.payment_status !== "SUCCESS");
-              return selectable.length > 0 && selected.length === selectable.length && !isLocked;
-            })()
-          }
+          onChange={e => toggleAll(e.target.checked)}
+          checked={(() => {
+            const selectable = filteredEmployees.filter(e => e.payment_status !== "SUCCESS");
+            return selectable.length > 0 && selected.length === selectable.length && !isLocked;
+          })()}
         />
       ),
-      render: (e) => (
+      render: e => (
         <input
           type="checkbox"
           disabled={isLocked || e.payment_status === "SUCCESS"}
@@ -238,65 +210,58 @@ const PayrollList = () => {
       ),
       className: "sticky-col"
     },
-    { header: "Emp Code", render: (e) => <span className="emp-code-cell">{e.employee_code}</span>, className: "sticky-col-2" },
+    { header: "Emp Code", render: e => <span className="emp-code-cell">{e.employee_code}</span>, className: "sticky-col-2" },
     { header: "Name", key: "full_name", className: "name-cell" },
     { header: "Dept", key: "department_name" },
-    { header: "UAN", render: (e) => e.uan_number || "-", className: "muted-cell" },
-    { header: "Base Salary", render: (e) => `₹${Number(e.base_salary).toLocaleString()}`, className: "weight-semibold" },
+    { header: "UAN", render: e => e.uan_number || "-", className: "muted-cell" },
+    { header: "Base Salary", render: e => `₹${Number(e.base_salary).toLocaleString()}`, className: "weight-semibold" },
     { header: "Working", key: "working_days" },
     { header: "Present", key: "present_days" },
     { header: "Absent", key: "absent_days" },
     { header: "OT (hrs)", key: "ot_hours" },
     {
       header: "Incentive",
-      render: (e) => (
-        <input
-          type="number"
-          className="table-input"
+      render: e => (
+        <input type="number" className="table-input"
           disabled={isLocked || e.payment_status === "SUCCESS"}
           value={payrollData[e.employee_id]?.incentive || 0}
-          onChange={(ev) => updateEditable(e.employee_id, "incentive", ev.target.value)}
+          onChange={ev => updateEditable(e.employee_id, "incentive", ev.target.value)}
         />
       )
     },
     {
       header: "Bonus",
-      render: (e) => (
-        <input
-          type="number"
-          className="table-input"
+      render: e => (
+        <input type="number" className="table-input"
           disabled={isLocked || e.payment_status === "SUCCESS"}
           value={payrollData[e.employee_id]?.bonus || 0}
-          onChange={(ev) => updateEditable(e.employee_id, "bonus", ev.target.value)}
+          onChange={ev => updateEditable(e.employee_id, "bonus", ev.target.value)}
         />
       )
     },
     {
       header: "Deductions",
-      render: (e) => (
-        <input
-          type="number"
-          className="table-input"
+      render: e => (
+        <input type="number" className="table-input"
           disabled={isLocked || e.payment_status === "SUCCESS"}
           value={payrollData[e.employee_id]?.other_deductions || 0}
-          onChange={(ev) => updateEditable(e.employee_id, "other_deductions", ev.target.value)}
+          onChange={ev => updateEditable(e.employee_id, "other_deductions", ev.target.value)}
         />
       )
     },
     {
       header: "PF?",
-      render: (e) => (
-        <input
-          type="checkbox"
+      render: e => (
+        <input type="checkbox"
           disabled={isLocked || e.payment_status === "SUCCESS"}
           checked={payrollData[e.employee_id]?.pf_applicable === 1}
-          onChange={(ev) => updateEditable(e.employee_id, "pf_applicable", ev.target.checked ? 1 : 0)}
+          onChange={ev => updateEditable(e.employee_id, "pf_applicable", ev.target.checked ? 1 : 0)}
         />
       )
     },
     {
       header: "Status",
-      render: (e) => (
+      render: e => (
         <StatusBadge
           type={e.payment_status === "SUCCESS" ? "success" : e.payment_status === "PENDING" ? "warning" : "neutral"}
           label={e.payment_status || "NOT_GENERATED"}
@@ -305,58 +270,49 @@ const PayrollList = () => {
     }
   ];
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="page-container fade-in">
       <PageHeader
         title="Payroll Processing"
         subtitle="Review attendance data, apply incentives/deductions and generate monthly disbursements."
-        actions={
-          <div className="payroll-selectors">
-            <select
-              value={payMonth}
-              onChange={(e) => setPayMonth(Number(e.target.value))}
-              className="filter-select-modern"
-            >
-              {[...Array(12)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
-                </option>
-              ))}
-            </select>
-            <select
-              value={payYear}
-              onChange={(e) => setPayYear(Number(e.target.value))}
-              className="filter-select-modern"
-            >
-              {[2024, 2025, 2026].map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <button className="btn-primary" onClick={loadEmployees}>
-              <FaSync className={loading ? "animate-spin" : ""} /> Fetch Data
-            </button>
-          </div>
-        }
       />
 
       <SummaryCards cards={summaryCards} />
 
+      {/* ── FILTERS BAR (Month, Year, Branch, Dept, Search, Actions) ── */}
       <FiltersBar
         search={searchQuery}
         onSearchChange={setSearchQuery}
         placeholder="Search by code or name..."
       >
-        <button
-          className="btn-confirm-salary"
-          onClick={() => navigate(`/payroll/confirm?month=${payMonth}&year=${payYear}`)}
+        {/* Month Selector */}
+        <select
+          value={payMonth}
+          onChange={e => setPayMonth(Number(e.target.value))}
+          className="filter-select-modern"
         >
-          <FaCheckCircle /> Confirm / Send Salary
-        </button>
+          {MONTHS.map((m, i) => (
+            <option key={i + 1} value={i + 1}>{m}</option>
+          ))}
+        </select>
 
+        {/* Year Selector */}
+        <select
+          value={payYear}
+          onChange={e => setPayYear(Number(e.target.value))}
+          className="filter-select-modern"
+        >
+          {[2024, 2025, 2026].map(y => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
+
+        {/* Branch Selector (hidden if single-branch) */}
         {!isSingleBranch && (
           <select
             value={selectedBranch === null ? "ALL" : selectedBranch}
-            onChange={(e) => {
+            onChange={e => {
               const val = e.target.value;
               changeBranch(val === "ALL" ? null : Number(val));
             }}
@@ -369,9 +325,10 @@ const PayrollList = () => {
           </select>
         )}
 
+        {/* Department Selector */}
         <select
           value={filterDepartmentId}
-          onChange={(e) => setFilterDepartmentId(e.target.value)}
+          onChange={e => setFilterDepartmentId(e.target.value)}
           className="filter-select-modern"
           disabled={!selectedBranch}
         >
@@ -381,23 +338,93 @@ const PayrollList = () => {
           ))}
         </select>
 
-        <button onClick={() => { setSearchQuery(""); setFilterDepartmentId(""); }} className="btn-export">
+        {/* Clear Filters */}
+        <button onClick={handleClearFilters} className="btn-export">
           Clear Filters
+        </button>
+
+        {/* Confirm / Send Salary */}
+        <button
+          className="btn-confirm-salary"
+          onClick={() => navigate(`/payroll/confirm?month=${payMonth}&year=${payYear}`)}
+        >
+          <FaCheckCircle /> Confirm / Send Salary
         </button>
       </FiltersBar>
 
+      {/* ── TABLE ── */}
       <div className="payroll-table-section">
+        {loading && (
+          <div className="payroll-loading-overlay">
+            <div className="payroll-spinner"></div>
+            <span>Loading payroll data...</span>
+          </div>
+        )}
+
         <DataTable
           columns={columns}
-          data={filteredEmployees}
+          data={paginatedEmployees}
           emptyState={{
             title: "No employees found",
             subtitle: "Try adjusting your search or filters to find specific records.",
             icon: <FaMoneyBillWave />
           }}
         />
+
+        {/* ── PAGINATION (always visible when data exists) ── */}
+        {filteredEmployees.length > 0 && (
+          <div className="payroll-pagination">
+            <div className="pg-count-info">
+              Showing{" "}
+              <strong>{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredEmployees.length)}</strong>–
+              <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredEmployees.length)}</strong>
+              {" "}of <strong>{filteredEmployees.length}</strong> employees
+            </div>
+            <div className="pg-controls">
+              <button
+                className="pg-nav-btn"
+                disabled={currentPage === 1 || totalPages <= 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                ‹ Prev
+              </button>
+              <div className="pg-number-group">
+                {(() => {
+                  const pages = [];
+                  const delta = 2;
+                  const left = Math.max(1, currentPage - delta);
+                  const right = Math.min(totalPages || 1, currentPage + delta);
+                  for (let p = left; p <= right; p++) pages.push(p);
+                  if (pages[0] > 1) pages.unshift("...");
+                  if (pages[pages.length - 1] < (totalPages || 1)) pages.push("...");
+                  return pages.map((p, idx) =>
+                    p === "..." ? (
+                      <span key={idx} className="pg-ellipsis">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        className={`pg-num-btn ${currentPage === p ? "active" : ""}`}
+                        onClick={() => setCurrentPage(p)}
+                      >
+                        {p}
+                      </button>
+                    )
+                  );
+                })()}
+              </div>
+              <button
+                className="pg-nav-btn"
+                disabled={currentPage === (totalPages || 1) || totalPages <= 1}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Next ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* ── GENERATE FOOTER ── */}
       {selected.length > 0 && (
         <div className="payroll-footer-action slide-up">
           <div className="footer-info">
