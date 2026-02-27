@@ -5,6 +5,7 @@ import "../styles/Holidays.css";
 import { FaCalendarAlt, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useBranch } from "../../../hooks/useBranch";
 import { useToast } from "../../../context/ToastContext";
+import NoBranchState from "../../../components/NoBranchState";
 
 import {
   getBranchHolidays,

@@ -7,14 +7,14 @@ import {
 } from "../../../../api/master.api.js";
 
 import { useToast } from "../../../../context/ToastContext.jsx";
-import GovernmentFormsTable from "../components/GovernmentFormsTable";
-import GovernmentFormModal from "../components/GovernmentFormModal";
+import DocumentsTable from "../components/DocumentsTable";
+import DocumentModal from "../components/DocumentModal";
 
 import "../styles/styleforms.css";
 
 
 /* normalize backend response */
-const normalizeForm = (f) => ({
+const normalizeDocument = (f) => ({
   id: f.id,
   formCode: f.formCode || f.form_code || "",
   formName: f.formName || f.form_name || "",
@@ -24,43 +24,43 @@ const normalizeForm = (f) => ({
   status: f.status || "INACTIVE"
 });
 
-const GovernmentForms = () => {
+const Documents = () => {
   const toast = useToast();
 
-  const [forms, setForms] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingForm, setEditingForm] = useState(null);
+  const [editingDoc, setEditingDoc] = useState(null);
   const [saving, setSaving] = useState(false);
 
   /* fetch */
-  const fetchForms = async () => {
+  const fetchDocuments = async () => {
     setLoading(true);
     try {
       const res = await getGovernmentForms();
-      setForms((res?.data || []).map(normalizeForm));
+      setDocuments((res?.data || []).map(normalizeDocument));
     } catch {
-      toast.error("Failed to load government forms");
+      toast.error("Failed to load documents");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchForms();
+    fetchDocuments();
   }, []);
 
   /* search */
-  const filteredForms = useMemo(() => {
+  const filteredDocs = useMemo(() => {
     const q = search.toLowerCase();
-    return forms.filter(f =>
+    return documents.filter(f =>
       f.formName.toLowerCase().includes(q) ||
       f.formCode.toLowerCase().includes(q) ||
       f.category.toLowerCase().includes(q)
     );
-  }, [forms, search]);
+  }, [documents, search]);
 
   /* save */
   const handleSave = async (payload) => {
@@ -74,45 +74,45 @@ const GovernmentForms = () => {
         description: payload.description || ""
       };
 
-      if (editingForm) {
-        await updateGovernmentForm(editingForm.id, apiPayload);
-        toast.success("Form updated");
+      if (editingDoc) {
+        await updateGovernmentForm(editingDoc.id, apiPayload);
+        toast.success("Document updated");
       } else {
         await createGovernmentForm(apiPayload);
-        toast.success("Form created");
+        toast.success("Document created");
       }
 
       setModalOpen(false);
-      setEditingForm(null);
-      fetchForms();
+      setEditingDoc(null);
+      fetchDocuments();
     } catch {
-      toast.error("Failed to save form");
+      toast.error("Failed to save document");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (form) => {
-    if (form.status === "ACTIVE") {
-      return toast.error("Active forms cannot be deleted! Please deactivate the form first.");
+  const handleDelete = async (doc) => {
+    if (doc.status === "ACTIVE") {
+      return toast.error("Active documents cannot be deleted! Please deactivate the document first.");
     }
 
-    if (!window.confirm("Delete this form permanently?")) return;
+    if (!window.confirm("Delete this document permanently?")) return;
     try {
-      await deleteGovernmentForm(form.id);
-      toast.success("Form deleted");
-      fetchForms();
+      await deleteGovernmentForm(doc.id);
+      toast.success("Document deleted");
+      fetchDocuments();
     } catch {
-      toast.error("Failed to delete form");
+      toast.error("Failed to delete document");
     }
   };
 
-  const handleToggleStatus = async (form) => {
+  const handleToggleStatus = async (doc) => {
     try {
-      const newStatus = form.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-      await updateGovernmentForm(form.id, { status: newStatus });
-      toast.success(`Form ${newStatus.toLowerCase()}d successfully`);
-      fetchForms();
+      const newStatus = doc.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      await updateGovernmentForm(doc.id, { status: newStatus });
+      toast.success(`Document ${newStatus.toLowerCase()}d successfully`);
+      fetchDocuments();
     } catch {
       toast.error("Failed to update status");
     }
@@ -121,39 +121,39 @@ const GovernmentForms = () => {
   return (
     <div className="gf-container">
       <div className="gf-header">
-        <h2>Government Forms Setup</h2>
+        <h2>Documents Setup</h2>
         <button className="gf-btn-new" onClick={() => setModalOpen(true)}>
-          Create New Form
+          Add New Document
         </button>
       </div>
 
       <div className="gf-search-wrap">
         <input
           className="gf-search-input"
-          placeholder="Search by name, code, category..."
+          placeholder="Search documents by name, code, category..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      <GovernmentFormsTable
-        data={filteredForms}
+      <DocumentsTable
+        data={filteredDocs}
         loading={loading}
         onEdit={(f) => {
-          setEditingForm(f);
+          setEditingDoc(f);
           setModalOpen(true);
         }}
         onDelete={handleDelete}
         onToggleStatus={handleToggleStatus}
       />
 
-      <GovernmentFormModal
+      <DocumentModal
         isOpen={modalOpen}
-        editData={editingForm}
+        editData={editingDoc}
         loading={saving}
         onClose={() => {
           setModalOpen(false);
-          setEditingForm(null);
+          setEditingDoc(null);
         }}
         onSave={handleSave}
       />
@@ -161,4 +161,4 @@ const GovernmentForms = () => {
   );
 };
 
-export default GovernmentForms;
+export default Documents;

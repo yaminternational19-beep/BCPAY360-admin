@@ -21,7 +21,7 @@ import SuperAdminRoutes from "./modules/super-admin";
 import HolidaysPage from "./modules/holidays";
 import { SoftwareReportsDashboard, SoftwareReportsPage } from "./modules/software-reports";
 import FormsRouter from "./modules/forms/FormsRouter";
-import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode, GovernmentForms } from "./modules/organization";
+import { BranchList, DepartmentDesignation, EmployeeTypeList, ShiftList, HRList, HRPermissions, EmpCode, Documents } from "./modules/organization";
 import EmployeeList from "./modules/employee/pages/EmployeeList";
 import EmployeeProfile from "./modules/employee/pages/EmployeeProfile";
 import PayrollManagement from "./modules/payroll/PayrollManagement";
@@ -186,10 +186,10 @@ const AdminLayout = ({ user, setUser }) => {
                 }
               />
               <Route
-                path="organization/government-forms"
+                path="organization/documents"
                 element={
                   <RoleProtectedRoute allowedRoles={["COMPANY_ADMIN"]} user={user}>
-                    <GovernmentForms />
+                    <Documents />
                   </RoleProtectedRoute>
                 }
               />

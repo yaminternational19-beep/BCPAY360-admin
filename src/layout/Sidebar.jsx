@@ -243,7 +243,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    go("hr-management");
+                    go("hr-management");  
                   }}
                 >
                   <FaIdCard /> Add HR
@@ -255,10 +255,10 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    go("organization/government-forms");
+                    go("organization/documents");
                   }}
                 >
-                  <FaFileInvoice /> Government Forms
+                  <FaFileInvoice /> Add Documents
                 </button>
               </div>
             )}

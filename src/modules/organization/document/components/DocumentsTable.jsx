@@ -2,9 +2,9 @@ import React from "react";
 import "../styles/styleforms.css";
 import { FaEdit, FaTrash, FaPowerOff, FaEye, FaBan } from "react-icons/fa";
 
-const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus }) => {
+const DocumentsTable = ({ data, loading, onEdit, onDelete, onToggleStatus }) => {
   if (loading) return <div className="gf-loading">Loading configuration…</div>;
-  if (!data.length) return <div className="gf-empty">No government forms found.</div>;
+  if (!data.length) return <div className="gf-empty">No documents found.</div>;
 
   return (
     <div className="gf-table-card">
@@ -12,7 +12,7 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus 
         <thead>
           <tr>
             <th>#</th>
-            <th>Form Name</th>
+            <th>Document Name</th>
             <th>Code</th>
             <th>Category</th>
             <th>Period</th>
@@ -38,7 +38,7 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus 
                   <button
                     className="gf-btn-action edit"
                     onClick={() => onEdit(f)}
-                    title="Edit Form"
+                    title="Edit Document"
                   >
                     <FaEdit />
                   </button>
@@ -52,7 +52,7 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus 
                   <button
                     className="gf-btn-action delete"
                     onClick={() => onDelete(f)}
-                    title="Delete Form"
+                    title="Delete Document"
                   >
                     <FaTrash />
                   </button>
@@ -66,4 +66,4 @@ const GovernmentFormsTable = ({ data, loading, onEdit, onDelete, onToggleStatus 
   );
 };
 
-export default GovernmentFormsTable;
+export default DocumentsTable;

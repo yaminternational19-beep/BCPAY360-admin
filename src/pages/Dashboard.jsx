@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { api } from "../api/api";
 import "../styles/Dashboard.css";
-import { API_BASE } from "../utils/apiBase";
 
 import {
   FaUsers,
@@ -10,7 +10,6 @@ import {
   FaArrowRight,
   FaClipboardList,
   FaUserFriends,
-  FaFileContract,
   FaBuilding,
   FaSitemap,
   FaUmbrellaBeach,
@@ -47,23 +46,22 @@ const Dashboard = () => {
 
     const loadDashboard = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const res = await fetch(
-          `${API_BASE}/api/dashboard?period=${period}`,
-          {
-            signal: controller.signal,
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const json = await api("/api/dashboard", {
+          params: { period },
+          signal: controller.signal,
+        });
 
-        if (!res.ok) throw new Error("Failed to load dashboard");
-
-        const json = await res.json();
-        setData(json);
+        if (json.success) {
+          setData(json);
+        } else {
+          throw new Error(json.message || "Failed to load dashboard");
+        }
       } catch (err) {
-        if (err.name !== "AbortError") setError(err.message);
+        if (err.name !== "AbortError") {
+          setError(err.message || "Failed to load dashboard data");
+        }
       } finally {
         setLoading(false);
       }
@@ -76,39 +74,32 @@ const Dashboard = () => {
   /* ===============================
      SAFE DERIVED DATA
   =============================== */
-  const employeesBranches = data?.employees?.branches ?? [];
-  const attendanceBranches = data?.attendance?.branches ?? [];
+  const branchBreakdown = data?.branch_breakdown ?? [];
 
   /* ===============================
      CHART DATA
   =============================== */
   const attendanceChart = useMemo(() => {
-    if (!attendanceBranches.length) return null;
+    if (!branchBreakdown.length) return null;
 
     return {
-      labels: attendanceBranches.map(b => b.branch_name),
+      labels: branchBreakdown.map(b => b.branch_name),
       datasets: [
         {
-          label: "Present",
-          data: attendanceBranches.map(b => b.present ?? 0),
-          backgroundColor: "rgba(16, 185, 129, 0.8)",
+          label: "Active Employees",
+          data: branchBreakdown.map(b => b.employees?.active ?? 0),
+          backgroundColor: "rgba(99, 102, 241, 0.8)",
           borderRadius: 8,
         },
         {
-          label: "Absent",
-          data: attendanceBranches.map(b => b.absent ?? 0),
+          label: "Inefficient/Inactive",
+          data: branchBreakdown.map(b => b.employees?.inactive ?? 0),
           backgroundColor: "rgba(239, 68, 68, 0.8)",
-          borderRadius: 8,
-        },
-        {
-          label: "Unmarked",
-          data: attendanceBranches.map(b => b.unmarked ?? 0),
-          backgroundColor: "rgba(148, 163, 184, 0.8)",
           borderRadius: 8,
         },
       ],
     };
-  }, [attendanceBranches]);
+  }, [branchBreakdown]);
 
   const chartOptions = {
     responsive: true,
@@ -124,17 +115,20 @@ const Dashboard = () => {
     },
   };
 
-  if (loading) return <div className="dash-loading">Loading dashboard…</div>;
-  if (error) return <div className="dash-error">{error}</div>;
+  if (loading) return <div className="dash-loading">Updating dashboard overview…</div>;
+  if (error) return (
+    <div className="dash-error">
+      <p>{error}</p>
+      <button onClick={() => window.location.reload()} className="retry-btn">Retry</button>
+    </div>
+  );
   if (!data) return null;
 
   const {
     company,
     logged_in,
-    employees,
-    attendance,
-    leave_pending,
-    salary
+    organization_summary,
+    overview,
   } = data;
 
   /* ===============================
@@ -145,11 +139,14 @@ const Dashboard = () => {
 
       {/* HEADER */}
       <div className="dash-header">
-        <div>
-          <h2>{company?.name}</h2>
-          <span className="dash-sub">
-            Logged in as <strong>{logged_in?.role}</strong>
-          </span>
+        <div className="brand-header">
+          <img src="/vite.svg" alt="Company Logo" className="dash-logo-mini" style={{ width: '40px', marginRight: '15px' }} />
+          <div>
+            <h2>{company?.name}</h2>
+            <span className="dash-sub">
+              Logged in as <strong>{logged_in?.role}</strong>
+            </span>
+          </div>
         </div>
 
         <div className="dash-period-toggle">
@@ -172,12 +169,12 @@ const Dashboard = () => {
           <h4>Total Employees</h4>
           <div className="metric-box">
             <span className="metric-value">
-              {employees?.company_total?.total ?? 0}
+              {overview?.employees?.total ?? 0}
             </span>
           </div>
           <p className="metric-sub">
-            Active: {employees?.company_total?.active ?? 0} ·
-            Inactive: {employees?.company_total?.inactive ?? 0}
+            Active: {overview?.employees?.active ?? 0} ·
+            Inactive: {overview?.employees?.inactive ?? 0}
           </p>
           <Link to="/employees" className="btn-go">
             View Employees <FaArrowRight />
@@ -188,27 +185,30 @@ const Dashboard = () => {
           <h4>Attendance</h4>
           <div className="metric-box">
             <span className="metric-value">
-              {attendance?.company_total?.present ?? 0}
+              {overview?.attendance?.present ?? 0}
             </span>
           </div>
           <p className="metric-sub">
-            Absent: {attendance?.company_total?.absent ?? 0} ·
-            Unmarked: {attendance?.company_total?.unmarked ?? 0}
+            Absent: {overview?.attendance?.absent ?? 0} ·
+            Unmarked: {overview?.attendance?.unmarked ?? 0}
           </p>
           <Link to="/attendance" className="btn-go">
-            Attendance <FaArrowRight />
+            Attendance ({overview?.attendance?.present_percentage ?? 0}%) <FaArrowRight />
           </Link>
         </div>
 
         <div className="kpi-card">
-          <h4>Pending Leaves</h4>
+          <h4>Leaves</h4>
           <div className="metric-box">
             <span className="metric-value">
-              {leave_pending?.company_total ?? 0}
+              {overview?.leave?.approval_pending ?? 0}
             </span>
           </div>
+          <p className="metric-sub">
+            On Leave Today: {overview?.leave?.today ?? 0}
+          </p>
           <Link to="/leavemanagement" className="btn-go">
-            Review <FaArrowRight />
+            Pending Approvals <FaArrowRight />
           </Link>
         </div>
 
@@ -216,18 +216,17 @@ const Dashboard = () => {
           <h4>Salary Payout</h4>
           <div className="metric-box">
             <span className="metric-value">
-              ₹ {(salary?.company_total?.total_salary ?? 0).toLocaleString()}
+              {overview?.salary?.total_paid_formatted || "₹ 0"}
             </span>
           </div>
           <p className="metric-sub">
-            Employees Paid: {salary?.company_total?.employees_paid ?? 0}
+            Paid: {overview?.salary?.employees_paid ?? 0} ·
+            Remaining: {overview?.salary?.employees_remaining ?? 0}
           </p>
           <Link to="/payroll" className="btn-go">
             Payroll <FaArrowRight />
           </Link>
         </div>
-
-
 
       </div>
 
@@ -237,21 +236,21 @@ const Dashboard = () => {
           <div className="org-icon branch"><FaBuilding /></div>
           <div className="org-info">
             <h4>Total Branches</h4>
-            <span className="org-value">{data?.employees?.branches?.length || 0}</span>
+            <span className="org-value">{organization_summary?.total_branches ?? 0}</span>
           </div>
         </Link>
         <Link to="/departments" className="org-card">
           <div className="org-icon dept"><FaSitemap /></div>
           <div className="org-info">
             <h4>Departments</h4>
-            <span className="org-value">{data?.employees?.branches?.departments?.length || 0}</span>
+            <span className="org-value">{organization_summary?.total_departments ?? 0}</span>
           </div>
         </Link>
         <Link to="/hr-management" className="org-card hr-card-accent">
           <div className="org-icon hr"><FaUserFriends /></div>
           <div className="org-info">
             <h4>HR Management</h4>
-            <span className="org-value">HR Team</span>
+            <span className="org-value">{organization_summary?.total_hrs ?? 0} HRs</span>
           </div>
         </Link>
       </div>
@@ -260,32 +259,31 @@ const Dashboard = () => {
       <div className="dashboard-grid-row">
         {/* BRANCH TABLE */}
         <div className="board-card">
-          <h3>Branch Overview</h3>
+          <h3>Branch Breakdown</h3>
           <table className="branch-table">
             <thead>
               <tr>
                 <th>Branch</th>
                 <th>Employees</th>
-                <th>Present</th>
-                <th>Salary (₹)</th>
+                <th>Status</th>
+                <th>Payout</th>
               </tr>
             </thead>
             <tbody>
-              {employeesBranches.map((b) => {
-                const attendanceRow =
-                  attendanceBranches.find(a => a.branch_id === b.branch_id) || {};
-
-                return (
-                  <tr key={b.branch_id}>
-                    <td>{b.branch_name}</td>
-                    <td>{b.total ?? 0}</td>
-                    <td>{attendanceRow.present ?? 0}</td>
-                    <td>
-                      ₹ {(salary?.company_total?.total_salary ?? 0).toLocaleString()}
-                    </td>
-                  </tr>
-                );
-              })}
+              {branchBreakdown.map((b) => (
+                <tr key={b.branch_id}>
+                  <td>{b.branch_name}</td>
+                  <td>{b.employees?.total ?? 0} ({b.employees?.active ?? 0} Active)</td>
+                  <td>
+                    <span className={b.employees?.active > 0 ? "text-success" : "text-danger"}>
+                      {b.employees?.active > 0 ? "Operational" : "Inactive"}
+                    </span>
+                  </td>
+                  <td>
+                    {b.salary?.total_paid_formatted}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -293,7 +291,7 @@ const Dashboard = () => {
         {/* CHART */}
         <div className="analytics-card">
           <div className="chart-header">
-            <h3>Attendance Distribution</h3>
+            <h3>Workforce Analytics</h3>
             <span>{period}</span>
           </div>
           <div className="chart-container-inner">
