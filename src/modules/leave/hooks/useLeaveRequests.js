@@ -11,14 +11,17 @@ export default function useLeaveRequests() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pendingMeta, setPendingMeta] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
+  const [historyMeta, setHistoryMeta] = useState({ total: 0, page: 1, limit: 10, totalPages: 1 });
 
-  const fetchPending = useCallback(async () => {
+  const fetchPending = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getPendingLeaveRequests();
+      const res = await getPendingLeaveRequests(params.page || 1, params.limit || 10, params);
       if (res?.success) {
         setRequests(res.data);
+        if (res.meta) setPendingMeta(res.meta);
       } else {
         setError(res.message || "Failed to load pending requests");
       }
@@ -29,13 +32,14 @@ export default function useLeaveRequests() {
     }
   }, []);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getLeaveHistory();
+      const res = await getLeaveHistory(params.page || 1, params.limit || 10, params);
       if (res?.success) {
         setHistory(res.data);
+        if (res.meta) setHistoryMeta(res.meta);
       } else {
         setError(res.message || "Failed to load leave history");
       }
@@ -46,12 +50,12 @@ export default function useLeaveRequests() {
     }
   }, []);
 
-  const approve = useCallback(async (id) => {
+  const approve = useCallback(async (id, refreshParams = {}) => {
     try {
       const res = await approveLeaveRequest(id);
       if (res.success) {
-        await fetchPending();
-        await fetchHistory();
+        await fetchPending(refreshParams);
+        await fetchHistory(refreshParams);
       } else {
         setError(res.message || "Failed to approve request");
       }
@@ -61,12 +65,12 @@ export default function useLeaveRequests() {
     }
   }, [fetchPending, fetchHistory]);
 
-  const reject = useCallback(async (id, remarks) => {
+  const reject = useCallback(async (id, remarks, refreshParams = {}) => {
     try {
       const res = await rejectLeaveRequest(id, remarks);
       if (res.success) {
-        await fetchPending();
-        await fetchHistory();
+        await fetchPending(refreshParams);
+        await fetchHistory(refreshParams);
       } else {
         setError(res.message || "Failed to reject request");
       }
@@ -84,6 +88,8 @@ export default function useLeaveRequests() {
     approve,
     reject,
     fetchPending,
-    fetchHistory
+    fetchHistory,
+    pendingMeta,
+    historyMeta
   };
 }

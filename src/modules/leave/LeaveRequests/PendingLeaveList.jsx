@@ -3,67 +3,35 @@ import "../../../styles/LeaveManagement.css";
 import LeaveRequestCard from "./LeaveRequestCard";
 import RejectLeaveModal from "./RejectLeaveModal";
 export default function PendingLeaveList({
-  filters,
   requests = [],
-  history = [],
+  pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
+  onPageChange,
   loading,
   error,
   approve,
   reject,
-  fetchPending,
-  fetchHistory
 }) {
   const [rejecting, setRejecting] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  // Reset to page 1 when data/filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, requests, history]);
-
-  const displayData = filters.status === "PENDING" || filters.status === "ALL"
-    ? requests
-    : history.filter(h => h.status?.toUpperCase() === filters.status);
-
-  const filteredRequests = (displayData || []).filter(req => {
-    const searchLow = (filters.search || "").toLowerCase();
-    const matchesSearch = !filters.search ||
-      (req.full_name?.toLowerCase() || "").includes(searchLow) ||
-      (req.emp_id?.toLowerCase() || "").includes(searchLow);
-
-    const matchesBranch = !filters.branchId ||
-      (req.branch_id && String(req.branch_id) === String(filters.branchId)) ||
-      (!req.branch_id);
-
-    const matchesDept = !filters.departmentId ||
-      (req.department_id && String(req.department_id) === String(filters.departmentId)) ||
-      (!req.department_id);
-
-    return matchesSearch && matchesBranch && matchesDept;
-  });
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-  const paginatedRequests = filteredRequests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-
-
   return (
-    <div style={{ position: 'relative', minHeight: '200px' }}>
-      {loading && <div className="loading-overlay">Loading leave requests...</div>}
-
-      {error && <div className="error-message" style={{ color: 'var(--danger)', padding: '20px' }}>{error}</div>}
-
-      {filteredRequests.length === 0 && !loading && (
-        <div className="muted" style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <p>No {filters.status.toLowerCase()} leave requests found matching your filters</p>
+    <div style={{ position: 'relative', minHeight: '300px' }}>
+      {loading && (
+        <div className="lm-loading-overlay">
+          <div className="spinner"></div>
+          <span>Syncing Requests...</span>
         </div>
       )}
 
-      <div className="requests-container">
-        {paginatedRequests.map(req => (
+      {error && <div className="error-message">{error}</div>}
+
+      {!loading && requests.length === 0 && (
+        <div className="lm-empty-state">
+          <p>No leave requests found for this selection.</p>
+        </div>
+      )}
+
+      <div className={`requests-container ${loading ? 'opacity-40' : ''}`}>
+        {requests.map(req => (
           <LeaveRequestCard
             key={req.id}
             request={req}
@@ -74,23 +42,42 @@ export default function PendingLeaveList({
         ))}
       </div>
 
-      {totalPages > 1 && (
-        <div className="lm-pagination">
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            className="pg-btn"
-          >
-            Previous
-          </button>
-          <span className="pg-info">Page {currentPage} of {totalPages}</span>
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            className="pg-btn"
-          >
-            Next
-          </button>
+      {/* Modern Pagination Footer */}
+      {pagination.totalPages > 1 && (
+        <div className="pagination-footer-premium">
+          <div className="pagination-info">
+            Showing <span>{requests.length}</span> of <span>{pagination.total}</span> requests
+          </div>
+          <div className="pagination-controls">
+            <button
+              disabled={pagination.page <= 1 || loading}
+              onClick={() => onPageChange(pagination.page - 1)}
+              className="pg-btn-premium"
+            >
+              Previous
+            </button>
+            <div className="page-numbers">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                const p = i + 1; // Simplified for now
+                return (
+                  <button
+                    key={p}
+                    className={`pg-num-btn ${pagination.page === p ? 'active' : ''}`}
+                    onClick={() => onPageChange(p)}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              disabled={pagination.page >= pagination.totalPages || loading}
+              onClick={() => onPageChange(pagination.page + 1)}
+              className="pg-btn-premium"
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 

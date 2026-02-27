@@ -254,8 +254,15 @@ export const deleteLeaveType = (id) =>
    =================================================================================== */
 
 /* 🔹 Get all pending leave requests */
-export const getPendingLeaveRequests = () =>
-  api("/api/admin/leave-approval/pending");
+export const getPendingLeaveRequests = (page = 1, limit = 10, params = {}) =>
+  api("/api/admin/leave-approval/pending", {
+    params: { page, limit, ...params }
+  });
+
+export const getLeaveHistory = (page = 1, limit = 10, params = {}) =>
+  api("/api/admin/leave-approval/leave-history", {
+    params: { page, limit, ...params }
+  });
 
 /* 🔹 Approve leave request */
 export const approveLeaveRequest = (requestId) =>
@@ -269,8 +276,7 @@ export const rejectLeaveRequest = (requestId, remarks) =>
     method: "POST",
     body: JSON.stringify({ remarks }),
   });
-export const getLeaveHistory = () =>
-  api("/api/admin/leave-approval/leave-history");
+
 
 
 

@@ -3,24 +3,13 @@ import "../../../styles/LeaveManagement.css";
 import EmployeeLeaveModal from "./EmployeeLeaveModal";
 
 export default function LeaveHistoryTable({
-  filters,
   history = [],
+  pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
+  onPageChange,
   loading,
   error,
-  fetchHistory
 }) {
   const [selectedEmp, setSelectedEmp] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  useEffect(() => {
-    if (fetchHistory && history.length === 0) fetchHistory();
-  }, [fetchHistory, history.length]);
-
-  // Reset to page 1 when data/filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, history]);
 
   const formatDate = (date) =>
     new Date(date).toLocaleDateString("en-IN", {
@@ -29,131 +18,114 @@ export default function LeaveHistoryTable({
       year: "numeric"
     });
 
-  const filteredHistory = (history || []).filter(row => {
-    const searchLow = (filters.search || "").toLowerCase();
-    const matchesSearch = !filters.search ||
-      (row.full_name?.toLowerCase() || "").includes(searchLow) ||
-      (row.emp_id?.toLowerCase() || "").includes(searchLow);
-
-    // Status Filter (New)
-    const matchesStatus = !filters.status || filters.status === "ALL" ||
-      (row.status?.toUpperCase() === filters.status.toUpperCase());
-
-    const matchesBranch = !filters.branchId ||
-      (row.branch_id && String(row.branch_id) === String(filters.branchId)) ||
-      (!row.branch_id);
-
-    const matchesDept = !filters.departmentId ||
-      (row.department_id && String(row.department_id) === String(filters.departmentId)) ||
-      (!row.department_id);
-
-    return matchesSearch && matchesStatus && matchesBranch && matchesDept;
-  });
-
-  // Pagination Logic
-  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
-  const paginatedHistory = filteredHistory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
   return (
-    <div style={{ position: 'relative' }}>
-      {loading && <div className="loading-overlay">Loading leave history...</div>}
-
-      {error && <div className="error" style={{ padding: '20px' }}>Error: {error}</div>}
-
-      {filteredHistory.length === 0 && !loading && (
-        <div className="muted" style={{ padding: '60px 20px', textAlign: 'center' }}>
-          No leave history found matching your filters
+    <div style={{ position: 'relative', minHeight: '400px' }}>
+      {loading && (
+        <div className="lm-loading-overlay">
+          <div className="spinner"></div>
+          <span>Syncing History...</span>
         </div>
       )}
 
-      {filteredHistory.length > 0 && (
-        <>
-          <table className="clean-table">
-            <thead>
-              <tr>
-                <th>Emp ID</th>
-                <th>Employee</th>
-                <th>Department</th>
-                <th>Leave</th>
-                <th>From</th>
-                <th>To</th>
-                <th>Days</th>
-                <th>Shift</th>
-                <th>Status</th>
-                <th>Applied</th>
-              </tr>
-            </thead>
+      {error && <div className="error-message">{error}</div>}
 
-            <tbody>
-              {paginatedHistory.map((row) => (
-                <tr
-                  key={row.id}
-                  className="clickable"
-                  onClick={() => setSelectedEmp(row.employee_id)}
-                  title="Click to view employee leave details"
-                >
-                  <td>
-                    <strong>{row.emp_id}</strong>
-                  </td>
+      {!loading && history.length === 0 && (
+        <div className="lm-empty-state">
+          <p>No leave history available for the selected filters.</p>
+        </div>
+      )}
 
-                  <td>{row.full_name}</td>
+      <table className={`clean-table ${loading ? 'opacity-40' : ''}`}>
+        <thead>
+          <tr>
+            <th>Emp ID</th>
+            <th>Employee</th>
+            <th>Department</th>
+            <th>Leave Type</th>
+            <th>From Date</th>
+            <th>To Date</th>
+            <th>Total Days</th>
+            <th>Shift Info</th>
+            <th>Status</th>
+            <th>Applied At</th>
+          </tr>
+        </thead>
 
-                  <td>{row.department_name || "-"}</td>
+        <tbody>
+          {history.map((row) => (
+            <tr
+              key={row.id}
+              className="clickable"
+              onClick={() => setSelectedEmp(row)}
+              title="Click to view details"
+            >
+              <td><strong>{row.emp_id}</strong></td>
+              <td>{row.full_name}</td>
+              <td>{row.department_name || "-"}</td>
+              <td><span className="leave-type-pill">{row.leave_name}</span></td>
+              <td>{formatDate(row.from_date)}</td>
+              <td>{formatDate(row.to_date)}</td>
+              <td><span className="days-badge">{row.total_days}</span></td>
+              <td>
+                <div className="shift-info-cell">
+                  <span>{row.shift_name || "-"}</span>
+                  {row.shift_timing && <small>{row.shift_timing}</small>}
+                </div>
+              </td>
+              <td>
+                <span className={`badge ${row.status?.toLowerCase()}`}>
+                  {row.status}
+                </span>
+              </td>
+              <td>{formatDate(row.applied_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-                  <td>{row.leave_name}</td>
-
-                  <td>{formatDate(row.from_date)}</td>
-
-                  <td>{formatDate(row.to_date)}</td>
-
-                  <td>{row.total_days}</td>
-
-                  <td>
-                    {row.shift_name
-                      ? `${row.shift_name} (${row.shift_timing})`
-                      : "-"}
-                  </td>
-
-                  <td>
-                    <span className={`badge ${row.status.toLowerCase()}`}>
-                      {row.status}
-                    </span>
-                  </td>
-
-                  <td>{formatDate(row.applied_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {totalPages > 1 && (
-            <div className="lm-pagination">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="pg-btn"
-              >
-                Previous
-              </button>
-              <span className="pg-info">Page {currentPage} of {totalPages}</span>
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className="pg-btn"
-              >
-                Next
-              </button>
+      {/* Modern Pagination Footer */}
+      {pagination.totalPages > 1 && (
+        <div className="pagination-footer-premium">
+          <div className="pagination-info">
+            Showing <span>{history.length}</span> of <span>{pagination.total}</span> records
+          </div>
+          <div className="pagination-controls">
+            <button
+              disabled={pagination.page <= 1 || loading}
+              onClick={() => onPageChange(pagination.page - 1)}
+              className="pg-btn-premium"
+            >
+              Previous
+            </button>
+            <div className="page-numbers">
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                const p = i + 1;
+                return (
+                  <button
+                    key={p}
+                    className={`pg-num-btn ${pagination.page === p ? 'active' : ''}`}
+                    onClick={() => onPageChange(p)}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </>
+            <button
+              disabled={pagination.page >= pagination.totalPages || loading}
+              onClick={() => onPageChange(pagination.page + 1)}
+              className="pg-btn-premium"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
 
       {selectedEmp && (
         <EmployeeLeaveModal
-          employeeId={selectedEmp}
-          history={history.filter(
-            (h) => h.employee_id === selectedEmp
-          )}
+          employeeId={selectedEmp.employee_id}
+          history={[selectedEmp]} // Show details for this specific one
           onClose={() => setSelectedEmp(null)}
         />
       )}
