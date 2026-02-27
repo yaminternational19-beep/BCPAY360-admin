@@ -73,24 +73,9 @@ export const activateEmployeeById = async (id) =>
     headers: authHeader(),
   }).then(handleApiError);
 
-export const toggleEmployeeStatusById = async (id, status) => {
-  const payload = {
-    employeeForm: {
-      employee_status: status
-    }
-  };
-  return fetch(`${API_BASE}/api/employees/${id}/status`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify(payload),
-  }).then(handleApiError);
-};
+// REMOVED (Pending Backend Cleanup): toggleEmployeeStatusById (PATCH /api/employees/:id/status)
 
-// 2. Documents (CODE-based)
-export const getEmployeeDocuments = async (employee_code) =>
-  fetch(`${API_BASE}/api/employee-documents/${employee_code}`, {
-    headers: authHeader(),
-  }).then(handleApiError);
+// REMOVED (Pending Backend Cleanup): getEmployeeDocuments (GET /api/employee-documents/:employee_code)
 
 // 3. Specials
 export const getLastEmployeeCode = async (branch_id) => {
@@ -115,81 +100,18 @@ export const getAvailableCompanyForms = async () =>
     }
   ).then(handleApiError);
 
-// Upload new company government form
-export const uploadCompanyGovernmentForm = async (formData) => {
-  const data = new FormData();
-  data.append('form_name', formData.formName);
-  data.append('form_code', formData.formCode);
-  data.append('version', formData.version);
-  data.append('file', formData.file);
-
-  return fetch(`${API_BASE}/api/employees/company/forms/upload`, {
-    method: "POST",
-    headers: authHeader(),
-    body: data,
-  }).then(handleApiError);
-};
-
-// Replace existing company government form
-export const replaceCompanyGovernmentForm = async (formId, formData) => {
-  const data = new FormData();
-  data.append('form_name', formData.formName);
-  data.append('form_code', formData.formCode);
-  data.append('version', formData.version);
-  data.append('file', formData.file);
-
-  return fetch(`${API_BASE}/api/employees/company/forms/${formId}/replace`, {
-    method: "POST",
-    headers: authHeader(),
-    body: data,
-  }).then(handleApiError);
-};
-
-// Delete company government form
-export const deleteCompanyGovernmentForm = async (formId) =>
-  fetch(`${API_BASE}/api/employees/company/forms/${formId}`, {
-    method: "DELETE",
-    headers: authHeader(),
-  }).then(handleApiError);
-
-// Toggle company government form status
-export const toggleCompanyGovernmentFormStatus = async (formId) =>
-  fetch(`${API_BASE}/api/employees/company/forms/${formId}/status`, {
-    method: "PATCH",
-    headers: authHeader(),
-  }).then(handleApiError);
+// REMOVED (Pending Backend Cleanup): 
+// - uploadCompanyGovernmentForm (POST /api/employees/company/forms/upload)
+// - replaceCompanyGovernmentForm (POST /api/employees/company/forms/:formId/replace)
+// - deleteCompanyGovernmentForm (DELETE /api/employees/company/forms/:formId)
+// - toggleCompanyGovernmentFormStatus (PATCH /api/employees/company/forms/:formId/status)
 
 
 
-// 4. Company Government Forms (FORM-CODE based)
-export const getCompanyGovernmentForm = async (formCode) => {
-  if (!formCode) {
-    throw new Error("formCode is required");
-  }
-
-  return fetch(
-    `${API_BASE}/api/admin/generate-docs/company/${formCode}`,
-    {
-      headers: authHeader(),
-    }
-  )
-    .then(handleApiError)
-};
+// REMOVED (Pending Backend Cleanup): getCompanyGovernmentForm (GET /api/admin/generate-docs/company/:formCode)
 
 
-// 5. Employee Summary (LIFETIME or MONTHLY)
-export const getEmployeeSummary = async (employeeId, params = {}) => {
-  const query = new URLSearchParams(params).toString();
-
-  const url = query
-    ? `${API_BASE}/api/admin/generate-docs/employees/${employeeId}/summary?${query}`
-    : `${API_BASE}/api/admin/generate-docs/employees/${employeeId}/summary`;
-
-  return fetch(url, {
-    headers: authHeader(),
-  })
-    .then(handleApiError)
-};
+// REMOVED (Pending Backend Cleanup): getEmployeeSummary (GET /api/admin/generate-docs/employees/:employeeId/summary)
 
 
 
