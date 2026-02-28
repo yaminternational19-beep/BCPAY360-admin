@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaBars, FaBell, FaSignOutAlt, FaUser } from "react-icons/fa";
 import "../styles/Navbar.css";
-import logo from "../assets/logo.png";
+import logo from "../assets/Logo.png";
 
 const Navbar = ({ user, onToggleSidebar, onLogout }) => {
   const [open, setOpen] = useState(false);
