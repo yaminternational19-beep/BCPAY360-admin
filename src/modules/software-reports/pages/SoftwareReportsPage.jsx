@@ -10,8 +10,10 @@ import { getEmployeesByForm, uploadEmployeeForm, replaceEmployeeForm, deleteEmpl
 import { getDepartments, getGovernmentForms } from "../../../api/master.api";
 import { REPORTS_CONFIG } from "../config/reports.config";
 import "../../../styles/shared/modern-ui.css";
+import "../../../styles/Attendance.css";
 import "../styles/softwarerReports.css"; // Added missing CSS import
 import { useBranch } from "../../../hooks/useBranch"; // Import Hook
+import { FileSpreadsheet, FileText } from "lucide-react";
 
 const MONTH_MAP = {
     January: 1, February: 2, March: 3, April: 4, May: 5, June: 6,
@@ -353,81 +355,7 @@ const SoftwareReportsPage = () => {
         setSelectedIds(new Set());
     };
 
-    // Column definitions for DataTable
-    const columns = useMemo(() => [
-        {
-            header: (
-                <input
-                    type="checkbox"
-                    className="form-checkbox header-checkbox"
-                    checked={filteredData.length > 0 && selectedIds.size === filteredData.length}
-                    onChange={toggleSelectAll}
-                />
-            ),
-            render: (emp) => (
-                <input
-                    type="checkbox"
-                    className="form-checkbox"
-                    checked={selectedIds.has(emp.id || emp.employee_id)}
-                    onChange={() => toggleSelect(emp.id || emp.employee_id)}
-                />
-            )
-        },
-        {
-            header: "Employee Code",
-            render: (emp) => <span className="emp-code">{emp.employee_code}</span>
-        },
-        {
-            header: "Employee Name",
-            render: (emp) => (
-                <div className="emp-name-cell">
-                    <span className="emp-name">{emp.full_name}</span>
-                </div>
-            )
-        },
-        {
-            header: "Branch",
-            render: (emp) => <span className="text-sm text-gray-600">{emp.branch_name || "—"}</span>
-        },
-        {
-            header: "Department",
-            render: (emp) => <span className="text-sm text-gray-600">{emp.department_name || "—"}</span>
-        },
-        {
-            header: "Status",
-            render: (emp) => (
-                <StatusBadge
-                    type={activeTab === "Available" ? "success" : "warning"}
-                    icon={activeTab === "Available" ? "🟢" : "🟡"}
-                    label={activeTab === "Available" ? "Available" : "Upload"}
-                />
-            )
-        },
-        {
-            header: "Actions",
-            className: "text-right",
-            render: (emp) => (
-                <div className="actions-group">
-                    {activeTab === "Available" ? (
-                        <>
-                            <button className="action-btn view" onClick={() => handleView(emp)} title="View"><FaEye /></button>
-                            <button className="action-btn download" onClick={() => handleDownload(emp)} title="Download"><FaDownload /></button>
-                            <div className="relative">
-                                <input type="file" style={{ display: "none" }} id={`replace-${emp.id || emp.employee_id}`} onChange={(e) => handleReplace(emp, e.target.files[0])} disabled={uploading} />
-                                <label htmlFor={`replace-${emp.id || emp.employee_id}`} className={`action-btn replace ${uploading ? 'opacity-50' : 'cursor-pointer'}`} title="Replace"><FaUpload /></label>
-                            </div>
-                            <button className="action-btn delete" onClick={() => handleDelete(emp)} disabled={uploading} title="Delete"><FaTrash /></button>
-                        </>
-                    ) : (
-                        <div className="relative">
-                            <input type="file" style={{ display: "none" }} id={`upload-${emp.id || emp.employee_id}`} onChange={(e) => handleUpload(emp, e.target.files[0])} disabled={uploading} />
-                            <label htmlFor={`upload-${emp.id || emp.employee_id}`} className={`action-btn upload ${uploading ? 'opacity-50' : 'cursor-pointer'}`} title="Upload"><FaUpload /></label>
-                        </div>
-                    )}
-                </div>
-            )
-        }
-    ], [activeTab, uploading, filteredData, selectedIds]);
+    // Columns object was removed natively
 
     if (fetchingMetadata) return <div className="p-8 text-center">Loading Report Configuration...</div>;
 
@@ -438,9 +366,51 @@ const SoftwareReportsPage = () => {
                 subtitle={reportMetadata?.subtitle}
                 actions={
                     <div className="flex items-center gap-4">
-                        <button className="btn-export" disabled={selectedIds.size === 0} onClick={handleExport}>
-                            <FaFileExport /> Export Selected ({selectedIds.size})
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                className="btn-export-new"
+                                onClick={handleExport}
+                                title="Export to Excel"
+                                disabled={selectedIds.size === 0}
+                                style={{
+                                    backgroundColor: '#10b981', // Green for Excel
+                                    borderColor: '#10b981',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    fontWeight: '500',
+                                    cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                                    opacity: selectedIds.size === 0 ? 0.6 : 1
+                                }}
+                            >
+                                <FileSpreadsheet size={16} /> Excel ({selectedIds.size})
+                            </button>
+
+                            <button
+                                className="btn-export-new"
+                                onClick={handleExport}
+                                title="Export to PDF"
+                                disabled={selectedIds.size === 0}
+                                style={{
+                                    backgroundColor: '#ef4444', // Red for PDF
+                                    borderColor: '#ef4444',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    fontWeight: '500',
+                                    cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                                    opacity: selectedIds.size === 0 ? 0.6 : 1
+                                }}
+                            >
+                                <FileText size={16} /> PDF ({selectedIds.size})
+                            </button>
+                        </div>
                         <div className="selector-group">
                             {reportMetadata?.periodType === "FY" && (
                                 <select value={filters.financialYear} onChange={(e) => handleFilterChange("financialYear", e.target.value)}>
@@ -464,7 +434,7 @@ const SoftwareReportsPage = () => {
                 }
             />
 
-            <SummaryCards cards={stats} />
+            < SummaryCards cards={stats} />
 
             <FiltersBar search={filters.search} onSearchChange={(val) => handleFilterChange("search", val)}>
                 {!isSingleBranch && (
@@ -494,20 +464,98 @@ const SoftwareReportsPage = () => {
             </FiltersBar>
 
 
-            <div className="table-section mt-6">
-                <DataTable
-                    columns={columns}
-                    data={filteredData}
-                    isLoading={loading}
-                    emptyState={{
-                        title: activeTab === "Available"
-                            ? "No available reports"
-                            : `No pending uploads — all employees have ${reportMetadata?.title || "this report"}`,
-                        icon: activeTab === "Available" ? "📄" : "⬆️"
-                    }}
-                />
+            <div className="attendance-table-container mt-6">
+                {loading && (
+                    <div className="drawer-table-overlay" style={{ zIndex: 50 }}>Loading...</div>
+                )}
+                <div className="history-table-wrapper">
+                    <table className="attendance-table">
+                        <thead>
+                            <tr>
+                                <th className="checkbox-cell" style={{ width: '40px', textAlign: 'center' }}>
+                                    <input type="checkbox" checked={filteredData.length > 0 && selectedIds.size === filteredData.length} onChange={toggleSelectAll} />
+                                </th>
+                                <th className="col-profile text-center">Profile</th>
+                                <th className="text-center">Emp Code</th>
+                                <th className="text-center">Name</th>
+                                <th className="text-center">Branch</th>
+                                <th className="text-center">Department</th>
+                                <th className="text-center">Status</th>
+                                <th className="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredData.length === 0 ? (
+                                <tr>
+                                    <td colSpan="8" className="table-empty text-center" style={{ padding: '40px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <FaFileExport size={24} color="#94a3b8" />
+                                            <div>
+                                                {activeTab === "Available"
+                                                    ? "No available reports"
+                                                    : `No pending uploads — all employees have ${reportMetadata?.title || "this report"}`}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredData.map((emp) => {
+                                    const eid = emp.id || emp.employee_id;
+                                    const isSelected = selectedIds.has(eid);
+                                    return (
+                                        <tr key={eid} className={isSelected ? 'row-selected' : ''}>
+                                            <td className="checkbox-cell text-center">
+                                                <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(eid)} />
+                                            </td>
+                                            <td className="col-profile text-center">
+                                                <img
+                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                                                    alt={emp.full_name}
+                                                    className="attendance-avatar-sm"
+                                                    style={{ margin: '0 auto' }}
+                                                />
+                                            </td>
+                                            <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                {emp.employee_code}
+                                            </td>
+                                            <td className="text-center">{emp.full_name}</td>
+                                            <td className="text-center" style={{ color: '#64748b' }}>{emp.branch_name || "—"}</td>
+                                            <td className="text-center" style={{ color: '#64748b' }}>{emp.department_name || "—"}</td>
+                                            <td className="text-center">
+                                                <StatusBadge
+                                                    type={activeTab === "Available" ? "success" : "warning"}
+                                                    label={activeTab === "Available" ? "Available" : "Upload"}
+                                                />
+                                            </td>
+                                            <td className="text-center">
+                                                <div className="actions-group" style={{ justifyContent: 'center' }}>
+                                                    {activeTab === "Available" ? (
+                                                        <>
+                                                            <button className="action-btn view" onClick={() => handleView(emp)} title="View"><FaEye size={14} /></button>
+                                                            <button className="action-btn download" onClick={() => handleDownload(emp)} title="Download"><FaDownload size={14} /></button>
+                                                            <div className="relative">
+                                                                <input type="file" style={{ display: "none" }} id={`r-${eid}`} onChange={(ev) => handleReplace(emp, ev.target.files[0])} disabled={uploading} />
+                                                                <label htmlFor={`r-${eid}`} className="action-btn replace" style={{ cursor: 'pointer' }}><FaUpload size={14} /></label>
+                                                            </div>
+                                                            <button className="action-btn delete" onClick={() => handleDelete(emp)} title="Delete"><FaTrash size={14} /></button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="relative">
+                                                            <input type="file" style={{ display: "none" }} id={`u-${eid}`} onChange={(ev) => handleUpload(emp, ev.target.files[0])} disabled={uploading} />
+                                                            <label htmlFor={`u-${eid}`} className="action-btn upload" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FaUpload size={14} /></label>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </div >
     );
 };
 

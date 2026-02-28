@@ -286,24 +286,24 @@ export default function HRList() {
                     setShowForm(true);
                   }}
                 >
-                  <FaEdit /> Edit
+                  <FaEdit />
                 </button>
 
                 <button
                   onClick={() => navigate(`/hr-management/${hr.id}/permissions`)}
                 >
-                  <FaUserLock /> Permissions
+                  <FaUserLock />
                 </button>
 
                 <button onClick={() => handleToggle(hr)}>
-                  <FaPowerOff /> {hr.is_active ? "Disable" : "Enable"}
+                  <FaPowerOff />
                 </button>
 
                 <button
                   className="danger"
                   onClick={() => handleDelete(hr.id)}
                 >
-                  <FaTrash /> Delete
+                  <FaTrash />
                 </button>
               </td>
             </tr>

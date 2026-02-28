@@ -188,33 +188,32 @@
     position: relative;
 }
 
-/* Gradient top border */
-.table::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--primary-gradient);
-    z-index: 1;
-}
+/* Removed gradient top border to match new global styling */
 
 .table th,
 .table td {
     padding: 1rem;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid var(--border-color);
 }
 
 .table th {
-    background: var(--light-bg);
-    font-weight: 700;
+    background: #0f172a;
+    font-weight: 600;
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    padding-top: 1.25rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+.table thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+.table thead th:last-child {
+    border-top-right-radius: 12px;
 }
 
 .th-actions {
@@ -356,53 +355,57 @@
 
 /* Edit Button */
 .row-actions button:nth-child(1) {
-    background: #eff6ff;
-    color: #3b82f6;
+    background: #e2e8f0;
+    color: #64748b;
+    padding: 0.4rem;
 }
 
 .row-actions button:nth-child(1):hover {
-    background: #3b82f6;
-    color: white;
+    background: #cbd5e1;
+    color: #334155;
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* Permissions Button */
 .row-actions button:nth-child(2) {
-    background: #f3e8ff;
-    color: #a855f7;
+    background: #0d9488;
+    color: #ffffff;
+    padding: 0.4rem;
 }
 
 .row-actions button:nth-child(2):hover {
-    background: #a855f7;
+    background: #0f766e;
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 4px 6px rgba(13, 148, 136, 0.3);
 }
 
 /* Enable/Disable Button */
 .row-actions button:nth-child(3) {
-    background: #ecfdf5;
-    color: #10b981;
+    background: #ef4444;
+    color: #ffffff;
+    padding: 0.4rem;
 }
 
 .row-actions button:nth-child(3):hover {
-    background: #10b981;
+    background: #dc2626;
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
 }
 
 /* Delete Button */
 .row-actions button.danger,
 .row-actions button:nth-child(4) {
-    background: #fef2f2 !important;
-    color: #ef4444 !important;
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    padding: 0.4rem;
 }
 
 .row-actions button.danger:hover,
 .row-actions button:nth-child(4):hover {
-    background: #ef4444 !important;
+    background: #dc2626 !important;
     color: white !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);

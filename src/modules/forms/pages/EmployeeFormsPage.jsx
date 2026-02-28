@@ -14,7 +14,9 @@ import {
     CheckCircle,
     AlertCircle,
     Users,
-    FileOutput
+    FileOutput,
+    FileSpreadsheet,
+    FileText
 } from "lucide-react";
 import {
     getEmployeesByForm,
@@ -25,6 +27,7 @@ import {
 import { getDepartments } from "../../../api/master.api";
 import "../../../styles/shared/modern-ui.css";
 import "../Forms.css";
+import "../../../styles/Attendance.css";
 import { useBranch } from "../../../hooks/useBranch";
 
 const MONTH_MAP = {
@@ -239,53 +242,58 @@ const EmployeeFormsPage = () => {
         setSelectedIds(new Set());
     };
 
-    const columns = [
-        {
-            header: <input type="checkbox" checked={filteredData.length > 0 && selectedIds.size === filteredData.length} onChange={toggleSelectAll} />,
-            render: (e) => <input type="checkbox" checked={selectedIds.has(e.id || e.employee_id)} onChange={() => toggleSelect(e.id || e.employee_id)} />
-        },
-        { header: "Employee Code", render: (e) => <span className="emp-code">{e.employee_code}</span> },
-        { header: "Employee Name", render: (e) => <span className="emp-name">{e.full_name}</span> },
-        { header: "Phone", render: (e) => <span className="text-sm font-mono">{e.phone || "—"}</span> },
-        { header: "Joining Date", render: (e) => <span className="text-sm">{e.joining_date ? new Date(e.joining_date).toLocaleDateString('en-GB') : "—"}</span> },
-        { header: "Branch", render: (e) => <span className="text-sm">{e.branch_name || "—"}</span> },
-        { header: "Department", render: (e) => <span className="text-sm">{e.department_name || "—"}</span> },
-        {
-            header: "Document Status",
-            render: (e) => <StatusBadge type={activeTab === "Available" ? "success" : "warning"} icon={activeTab === "Available" ? "🟢" : "🟡"} label={activeTab} />
-        },
-        {
-            header: "Actions",
-            className: "text-right",
-            render: (e) => (
-                <div className="actions-group">
-                    {activeTab === "Available" ? (
-                        <>
-                            <button className="action-btn view" onClick={() => handleView(e)} title="View"><Eye size={16} strokeWidth={2.5} /></button>
-                            <button className="action-btn download" onClick={() => handleDownload(e)} title="Download"><Download size={16} strokeWidth={2.5} /></button>
-                            <div className="relative">
-                                <input type="file" style={{ display: "none" }} id={`r-${e.id || e.employee_id}`} onChange={(ev) => handleReplace(e, ev.target.files[0])} disabled={uploading} />
-                                <label htmlFor={`r-${e.id || e.employee_id}`} className="action-btn replace"><Upload size={16} strokeWidth={2.5} /></label>
-                            </div>
-                            <button className="action-btn delete" onClick={() => handleDelete(e)} title="Delete"><Trash2 size={16} strokeWidth={2.5} /></button>
-                        </>
-                    ) : (
-                        <div className="relative">
-                            <input type="file" style={{ display: "none" }} id={`u-${e.id || e.employee_id}`} onChange={(ev) => handleUpload(e, ev.target.files[0])} disabled={uploading} />
-                            <label htmlFor={`u-${e.id || e.employee_id}`} className="action-btn upload"><Upload size={16} strokeWidth={2.5} /></label>
-                        </div>
-                    )}
-                </div>
-            )
-        }
-    ];
+    // Columns object was removed natively
 
     return (
         <div className="page-container fade-in">
             <PageHeader title={config.title} subtitle={config.subtitle}
                 actions={
                     <div className="flex items-center gap-4">
-                        <button className="btn-export" disabled={selectedIds.size === 0} onClick={handleExport}><FileOutput size={18} /> Export ({selectedIds.size})</button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                className="btn-export-new"
+                                onClick={handleExport}
+                                title="Export to Excel"
+                                disabled={selectedIds.size === 0}
+                                style={{
+                                    backgroundColor: '#10b981', // Green for Excel
+                                    borderColor: '#10b981',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    fontWeight: '500',
+                                    cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                                    opacity: selectedIds.size === 0 ? 0.6 : 1
+                                }}
+                            >
+                                <FileSpreadsheet size={16} /> Excel ({selectedIds.size})
+                            </button>
+
+                            <button
+                                className="btn-export-new"
+                                onClick={handleExport}
+                                title="Export to PDF"
+                                disabled={selectedIds.size === 0}
+                                style={{
+                                    backgroundColor: '#ef4444', // Red for PDF
+                                    borderColor: '#ef4444',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    fontWeight: '500',
+                                    cursor: selectedIds.size === 0 ? 'not-allowed' : 'pointer',
+                                    opacity: selectedIds.size === 0 ? 0.6 : 1
+                                }}
+                            >
+                                <FileText size={16} /> PDF ({selectedIds.size})
+                            </button>
+                        </div>
                         <div className="selector-group">
                             {config.forms?.length > 0 && <select value={selectedFormCode} onChange={(e) => setSelectedFormCode(e.target.value)}>{config.forms.map(f => <option key={f.code} value={f.code}>{f.name}</option>)}</select>}
                             {selectedForm.periodType === "FY" && <select value={filters.financialYear} onChange={(e) => handleFilterChange("financialYear", e.target.value)}>{["2023-24", "2024-25", "2025-26"].map(y => <option key={y} value={y}>{y}</option>)}</select>}
@@ -309,8 +317,93 @@ const EmployeeFormsPage = () => {
                     {["Available", "Upload"].map(t => <button key={t} className={`tab-btn ${activeTab === t ? 'active' : 'inactive'}`} onClick={() => setActiveTab(t)}>{t}</button>)}
                 </div>
             </FiltersBar>
-            <div className="table-section mt-6">
-                <DataTable columns={columns} data={filteredData} isLoading={loading} emptyState={{ title: `No ${activeTab.toLowerCase()} documents`, icon: "📄" }} />
+            <div className="attendance-table-container mt-6">
+                {loading && (
+                    <div className="drawer-table-overlay" style={{ zIndex: 50 }}>Loading...</div>
+                )}
+                <div className="history-table-wrapper">
+                    <table className="attendance-table">
+                        <thead>
+                            <tr>
+                                <th className="checkbox-cell" style={{ width: '40px', textAlign: 'center' }}>
+                                    <input type="checkbox" checked={filteredData.length > 0 && selectedIds.size === filteredData.length} onChange={toggleSelectAll} />
+                                </th>
+                                <th className="col-profile text-center">Profile</th>
+                                <th className="text-center">Emp Code</th>
+                                <th className="text-center">Name</th>
+                                <th className="text-center">Phone</th>
+                                <th className="text-center">Joining Date</th>
+                                <th className="text-center">Branch</th>
+                                <th className="text-center">Department</th>
+                                <th className="text-center">Document Status</th>
+                                <th className="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredData.length === 0 ? (
+                                <tr>
+                                    <td colSpan="10" className="table-empty text-center" style={{ padding: '40px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                            <FileOutput size={24} color="#94a3b8" />
+                                            <div>No {activeTab.toLowerCase()} documents</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredData.map((e) => {
+                                    const eid = e.id || e.employee_id;
+                                    const isSelected = selectedIds.has(eid);
+                                    return (
+                                        <tr key={eid} className={isSelected ? 'row-selected' : ''}>
+                                            <td className="checkbox-cell text-center">
+                                                <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(eid)} />
+                                            </td>
+                                            <td className="col-profile text-center">
+                                                <img
+                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                                                    alt={e.full_name}
+                                                    className="attendance-avatar-sm"
+                                                    style={{ margin: '0 auto' }}
+                                                />
+                                            </td>
+                                            <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                {e.employee_code}
+                                            </td>
+                                            <td className="text-center">{e.full_name}</td>
+                                            <td className="text-center font-mono">{e.phone || "—"}</td>
+                                            <td className="text-center">{e.joining_date ? new Date(e.joining_date).toLocaleDateString('en-GB') : "—"}</td>
+                                            <td className="text-center">{e.branch_name || "—"}</td>
+                                            <td className="text-center">{e.department_name || "—"}</td>
+                                            <td className="text-center">
+                                                <StatusBadge type={activeTab === "Available" ? "success" : "warning"} label={activeTab} />
+                                            </td>
+                                            <td className="text-center">
+                                                <div className="actions-group" style={{ justifyContent: 'center' }}>
+                                                    {activeTab === "Available" ? (
+                                                        <>
+                                                            <button className="action-btn view" onClick={() => handleView(e)} title="View"><Eye size={16} strokeWidth={2.5} /></button>
+                                                            <button className="action-btn download" onClick={() => handleDownload(e)} title="Download"><Download size={16} strokeWidth={2.5} /></button>
+                                                            <div className="relative">
+                                                                <input type="file" style={{ display: "none" }} id={`r-${eid}`} onChange={(ev) => handleReplace(e, ev.target.files[0])} disabled={uploading} />
+                                                                <label htmlFor={`r-${eid}`} className="action-btn replace" style={{ cursor: 'pointer' }}><Upload size={16} strokeWidth={2.5} /></label>
+                                                            </div>
+                                                            <button className="action-btn delete" onClick={() => handleDelete(e)} title="Delete"><Trash2 size={16} strokeWidth={2.5} /></button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="relative">
+                                                            <input type="file" style={{ display: "none" }} id={`u-${eid}`} onChange={(ev) => handleUpload(e, ev.target.files[0])} disabled={uploading} />
+                                                            <label htmlFor={`u-${eid}`} className="action-btn upload" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Upload size={16} strokeWidth={2.5} /></label>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

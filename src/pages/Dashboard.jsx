@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/api";
 import "../styles/Dashboard.css";
-
+import logo from "../assets/logo.png";
 import {
   FaUsers,
   FaCalendarCheck,
@@ -138,29 +138,98 @@ const Dashboard = () => {
     <div className="dashboard">
 
       {/* HEADER */}
-      <div className="dash-header">
-        <div className="brand-header">
-          <img src="/vite.svg" alt="Company Logo" className="dash-logo-mini" style={{ width: '40px', marginRight: '15px' }} />
-          <div>
-            <h2>{company?.name}</h2>
-            <span className="dash-sub">
-              Logged in as <strong>{logged_in?.role}</strong>
-            </span>
-          </div>
-        </div>
+      <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%"
+  }}
+>
+  {/* LEFT SIDE */}
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center"
+    }}
+  >
+    {/* LOGO */}
+    <img
+      src={logo}
+      alt="Company Logo"
+      style={{
+        width: "52px",
+        height: "52px",
+        objectFit: "cover",
+        borderRadius: "14px",
+        background: "#ffffff",
+        padding: "6px",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.15)",
+        marginRight: "16px"
+      }}
+    />
 
-        <div className="dash-period-toggle">
-          {PERIODS.map(p => (
-            <button
-              key={p}
-              className={period === p ? "active" : ""}
-              onClick={() => setPeriod(p)}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      </div>
+    {/* TEXT */}
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <h2
+        style={{
+          margin: 0,
+          fontSize: "22px",
+          fontWeight: 700
+        }}
+      >
+        {company?.name}
+      </h2>
+
+      <span
+        style={{
+          fontSize: "13px",
+          color: "#6b7280",
+          marginTop: "4px"
+        }}
+      >
+        Logged in as <strong>{logged_in?.role}</strong>
+      </span>
+    </div>
+  </div>
+
+  {/* RIGHT SIDE PERIOD TOGGLE */}
+  <div
+  style={{
+    display: "flex",
+    background: "#e5e7eb",
+    padding: "4px",
+    borderRadius: "12px"
+  }}
+>
+  {PERIODS.map((p) => {
+    const isActive = period === p;
+
+    return (
+      <button
+        key={p}
+        onClick={() => setPeriod(p)}
+        style={{
+          padding: "8px 18px",
+          borderRadius: "8px",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "14px",
+          fontWeight: 600,
+          transition: "all 0.2s ease",
+          background: isActive ? "#2563eb" : "transparent",
+          color: isActive ? "#ffffff" : "#374151",
+          boxShadow: isActive
+            ? "0 4px 10px rgba(37, 99, 235, 0.3)"
+            : "none"
+        }}
+      >
+        {p}
+      </button>
+    );
+  })}
+</div>
+</div>
 
       {/* KPI ROW */}
       <div className="kpi-row">
