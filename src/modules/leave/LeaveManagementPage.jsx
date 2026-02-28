@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaHourglassHalf, FaCalendarCheck, FaHistory, FaClipboardList, FaSearch, FaRedo } from "react-icons/fa";
+import { FileText, FileSpreadsheet } from "lucide-react";
+import { exportLeavesExcel, exportLeavesPDF } from "../../utils/export/exportLeaves";
 
 /* Leave Policy */
 import LeavePolicyForm from "./LeavePolicy/LeavePolicyForm";
@@ -22,6 +24,7 @@ export default function LeaveManagementPage() {
   const [activeTab, setActiveTab] = useState("approvals");
   const [showPolicyForm, setShowPolicyForm] = useState(false);
   const [toast, setToast] = useState(null); // { type: 'success' | 'error', message: string }
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Use Branch Hook
   const { branches: branchList, selectedBranch, changeBranch, isSingleBranch, canProceed, isLoading: branchLoading } = useBranch();
@@ -141,8 +144,25 @@ export default function LeaveManagementPage() {
     setLoadingTab(tab);
     setTimeout(() => {
       setActiveTab(tab);
+      setSelectedIds([]); // Clear selection when switching tabs
       setLoadingTab(null);
     }, 200);
+  };
+
+  const getExportData = () => {
+    if (selectedIds.length > 0) {
+      if (activeTab === "approvals") return requests.filter(req => selectedIds.includes(req.id));
+      if (activeTab === "history") return history.filter(req => selectedIds.includes(req.id));
+    }
+    return activeTab === "approvals" ? requests : history;
+  };
+
+  const handleExportExcel = () => {
+    exportLeavesExcel(getExportData(), `Leaves_${selectedBranch || "All"}`);
+  };
+
+  const handleExportPDF = () => {
+    exportLeavesPDF(getExportData(), `Leaves_${selectedBranch || "All"}`);
   };
 
   // Combine filters with global selectedBranch for children
@@ -175,9 +195,37 @@ export default function LeaveManagementPage() {
           <h1>Leave Management</h1>
           <p>Review attendance data, process leave requests and manage policies.</p>
         </div>
-        <button className="btn-primary premium" onClick={() => setShowPolicyForm(true)}>
-          + Add Leave Policy
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {(activeTab === "approvals" || activeTab === "history") && (
+            <>
+              <button
+                className="btn-export-new"
+                onClick={handleExportExcel}
+                title="Export to Excel"
+                style={{
+                  backgroundColor: '#10b981', borderColor: '#10b981', color: 'white',
+                  padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600'
+                }}
+              >
+                <FileSpreadsheet size={16} /> Excel
+              </button>
+              <button
+                className="btn-export-new"
+                onClick={handleExportPDF}
+                title="Export to PDF"
+                style={{
+                  backgroundColor: '#ef4444', borderColor: '#ef4444', color: 'white',
+                  padding: '10px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600'
+                }}
+              >
+                <FileText size={16} /> PDF
+              </button>
+            </>
+          )}
+          <button className="btn-primary premium" onClick={() => setShowPolicyForm(true)}>
+            + Add Leave Policy
+          </button>
+        </div>
       </div>
 
       {/* ================= SUMMARY CARDS ================= */}
@@ -311,7 +359,7 @@ export default function LeaveManagementPage() {
       </div>
 
       {/* ================= PANEL ================= */}
-      <section className="lm-panel" style={{ padding: '20px' }}>
+      <section style={{ position: 'relative', marginTop: '16px' }}>
         {loadingTab && (
           <div className="loading-overlay">
             <div className="spinner"></div>
@@ -334,6 +382,9 @@ export default function LeaveManagementPage() {
             error={leaveError}
             approve={handleApprove}
             reject={handleReject}
+            selectedIds={selectedIds}
+            onSelectOne={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+            onSelectAll={(ids) => setSelectedIds(ids)}
           />
         </div>
 

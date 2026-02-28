@@ -340,17 +340,19 @@ body {
 }
 
 .attendance-table th {
-  background: #f8fafc;
-  font-size: 13px;
-  padding: 14px 12px;
-  text-align: left;
-  color: #64748b;
+  background: var(--gray-900);
+  /* Dark theme */
+  color: var(--white);
+  padding: 12px 10px;
+  text-align: center;
   font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.8px;
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 2px solid #f1f5f9;
-  white-space: nowrap;
+  border-bottom: 1px solid var(--gray-800);
 }
 
 .col-profile {
@@ -373,9 +375,11 @@ body {
 }
 
 .attendance-table td {
-  padding: 4px 8px;
+  padding: 8px 10px;
   font-size: 13px;
-  border-top: 1px solid var(--gray-200);
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
 }
 
 .attendance-table tr:nth-child(even) {
@@ -1235,4 +1239,54 @@ body {
   color: var(--primary-color);
   z-index: 10;
   backdrop-filter: blur(2px);
+}
+
+/* ===================================================================================
+   FOOTER & PAGINATION (Matched with EmployeeList)
+   =================================================================================== */
+.table-footer {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fcfcfc;
+  border-top: 1px solid var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-500);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.pagination {
+  display: flex;
+  gap: 4px;
+}
+
+.pagination button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-300);
+  background: var(--white);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 12px;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-weight: 600;
+  color: var(--gray-600);
 }

@@ -5,11 +5,12 @@ import SummaryCards from "../../../components/ui/SummaryCards";
 import FiltersBar from "../../../components/ui/FiltersBar";
 import DataTable from "../../../components/ui/DataTable";
 import StatusBadge from "../../../components/ui/StatusBadge";
-import { FaCheckCircle, FaExclamationCircle, FaUsers, FaEye, FaUpload, FaDownload, FaFileExport } from "react-icons/fa";
+import { FaCheckCircle, FaExclamationCircle, FaUsers, FaEye, FaUpload, FaDownload, FaFileExport, FaTrash } from "react-icons/fa";
 import { getEmployeesByForm, uploadEmployeeForm, replaceEmployeeForm, deleteEmployeeForm } from "../../../api/employees.api";
 import { getDepartments, getGovernmentForms } from "../../../api/master.api";
 import { REPORTS_CONFIG } from "../config/reports.config";
 import "../../../styles/shared/modern-ui.css";
+import "../styles/softwarerReports.css"; // Added missing CSS import
 import { useBranch } from "../../../hooks/useBranch"; // Import Hook
 
 const MONTH_MAP = {
@@ -73,7 +74,7 @@ const SoftwareReportsPage = () => {
     const [departments, setDepartments] = useState([]);
 
     // UI State
-    const [activeTab, setActiveTab] = useState("Available");
+    const [activeTab, setActiveTab] = useState("Available"); // tabs: Available | Upload
     const [selectedIds, setSelectedIds] = useState(new Set());
 
     // State for filters
@@ -291,6 +292,7 @@ const SoftwareReportsPage = () => {
 
     // Filtered list based on tab and searching
     const currentList = useMemo(() => {
+        // "Upload" tab shows employees who are missing documents (to upload)
         return activeTab === "Available" ? availableList : missingList;
     }, [activeTab, availableList, missingList]);
 
@@ -397,7 +399,7 @@ const SoftwareReportsPage = () => {
                 <StatusBadge
                     type={activeTab === "Available" ? "success" : "warning"}
                     icon={activeTab === "Available" ? "🟢" : "🟡"}
-                    label={activeTab === "Available" ? "Available" : "Missing"}
+                    label={activeTab === "Available" ? "Available" : "Upload"}
                 />
             )
         },
@@ -414,7 +416,7 @@ const SoftwareReportsPage = () => {
                                 <input type="file" style={{ display: "none" }} id={`replace-${emp.id || emp.employee_id}`} onChange={(e) => handleReplace(emp, e.target.files[0])} disabled={uploading} />
                                 <label htmlFor={`replace-${emp.id || emp.employee_id}`} className={`action-btn replace ${uploading ? 'opacity-50' : 'cursor-pointer'}`} title="Replace"><FaUpload /></label>
                             </div>
-                            <button className="action-btn delete" onClick={() => handleDelete(emp)} disabled={uploading} title="Delete"><FaExclamationCircle /></button>
+                            <button className="action-btn delete" onClick={() => handleDelete(emp)} disabled={uploading} title="Delete"><FaTrash /></button>
                         </>
                     ) : (
                         <div className="relative">
@@ -485,14 +487,25 @@ const SoftwareReportsPage = () => {
                 </select>
 
                 <div className="tab-toggle-container ml-auto">
-                    <button className={`tab-btn ${activeTab === 'Available' ? 'active' : 'inactive'}`} onClick={() => setActiveTab('Available')}>Available</button>
-                    <button className={`tab-btn ${activeTab === 'Missing' ? 'active' : 'inactive'}`} onClick={() => setActiveTab('Missing')}>Missing</button>
+                    {["Available", "Upload"].map(t => (
+                        <button key={t} className={`tab-btn ${activeTab === t ? 'active' : 'inactive'}`} onClick={() => setActiveTab(t)}>{t}</button>
+                    ))}
                 </div>
             </FiltersBar>
 
 
             <div className="table-section mt-6">
-                <DataTable columns={columns} data={filteredData} isLoading={loading} emptyState={{ title: activeTab === "Available" ? "No available reports" : (reportMetadata?.emptyStateText || "No missing reports"), icon: "📄" }} />
+                <DataTable
+                    columns={columns}
+                    data={filteredData}
+                    isLoading={loading}
+                    emptyState={{
+                        title: activeTab === "Available"
+                            ? "No available reports"
+                            : `No pending uploads — all employees have ${reportMetadata?.title || "this report"}`,
+                        icon: activeTab === "Available" ? "📄" : "⬆️"
+                    }}
+                />
             </div>
         </div>
     );

@@ -258,8 +258,26 @@ const EmployeeProfile = () => {
       )}
 
       {/* Top Navigation */}
-      <div className="view-nav">
-        <button className="back-link" onClick={() => navigate(-1)}>
+      <div className="view-nav" style={{ marginBottom: "16px" }}>
+        <button
+          className="back-link"
+          onClick={() => navigate(-1)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            fontWeight: "600",
+            color: "#475569",
+            cursor: "pointer",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+            transition: "all 0.2s"
+          }}
+        >
           <ArrowLeft size={18} /> Back
         </button>
       </div>

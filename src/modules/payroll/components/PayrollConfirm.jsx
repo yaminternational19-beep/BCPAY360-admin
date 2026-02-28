@@ -9,6 +9,7 @@ import DataTable from "../../../components/ui/DataTable";
 import { FaArrowLeft, FaSync, FaMoneyBillWave, FaCheckCircle } from "react-icons/fa";
 import "./payroll.css";
 import "../../../styles/shared/modern-ui.css";
+import "../../../styles/Attendance.css";
 
 const PayrollConfirm = () => {
   const navigate = useNavigate();
@@ -69,43 +70,7 @@ const PayrollConfirm = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const columns = [
-    {
-      header: (
-        <input
-          type="checkbox"
-          checked={selected.length === employees.length && employees.length > 0}
-          onChange={(e) => toggleAll(e.target.checked)}
-        />
-      ),
-      render: (e) => (
-        <input
-          type="checkbox"
-          checked={selected.includes(e.employee_id)}
-          onChange={() => toggleOne(e.employee_id)}
-        />
-      )
-    },
-    { header: "Emp Code", key: "employee_code" },
-    { header: "Name", key: "full_name" },
-    { header: "Bank Name", key: "bank_name" },
-    { header: "Account No", key: "account_number" },
-    { header: "IFSC", key: "ifsc_code" },
-    { header: "Base Salary", render: (e) => `₹${Number(e.base_salary).toLocaleString()}` },
-    { header: "Incentive", render: (e) => `₹${Number(e.incentive).toLocaleString()}` },
-    { header: "PF Amount", render: (e) => `₹${Number(e.pf_amount || 0).toLocaleString()}` },
-    { header: "Deductions", render: (e) => `₹${Number(e.other_deductions).toLocaleString()}` },
-    { header: "Gross", render: (e) => `₹${Number(e.gross_salary || 0).toLocaleString()}` },
-    { header: "Net Salary", render: (e) => `₹${Number(e.net_salary).toLocaleString()}` },
-    {
-      header: "Status",
-      render: (e) => (
-        <span className={`status-badge ${e.payment_status.toLowerCase()}`}>
-          {e.payment_status}
-        </span>
-      )
-    }
-  ];
+  // Columns array removed
 
   const handleConfirm = async () => {
     if (confirming || employees.length === 0) return;
@@ -163,85 +128,116 @@ const PayrollConfirm = () => {
         }
       />
 
-      <div className="payroll-table-section">
+      <div className="attendance-table-container" style={{ position: 'relative', marginTop: '20px' }}>
         {loading && (
-          <div className="payroll-loading-overlay">
-            <div className="payroll-spinner"></div>
-            <span>Loading payroll batch...</span>
-          </div>
+          <div className="drawer-table-overlay" style={{ zIndex: 50 }}>Loading...</div>
         )}
 
-        <DataTable
-          columns={columns}
-          data={paginatedEmployees}
-          emptyState={{
-            title: "No employees in this batch",
-            subtitle: "Try selecting a different month.",
-            icon: <FaMoneyBillWave />
-          }}
-        />
+        <div className="history-table-wrapper" style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0 }}>
+          <table className="attendance-table">
+            <thead>
+              <tr>
+                <th className="checkbox-cell" style={{ width: '40px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={selected.length === employees.length && employees.length > 0}
+                    onChange={(e) => toggleAll(e.target.checked)}
+                  />
+                </th>
+                <th className="col-profile text-center">Profile</th>
+                <th className="text-center">Emp Code</th>
+                <th className="text-center">Name</th>
+                <th className="text-center">Bank Name</th>
+                <th className="text-center">Account No</th>
+                <th className="text-center">IFSC</th>
+                <th className="text-center">Base Salary</th>
+                <th className="text-center">Incentive</th>
+                <th className="text-center">PF Amount</th>
+                <th className="text-center">Deductions</th>
+                <th className="text-center">Gross</th>
+                <th className="text-center">Net Salary</th>
+                <th className="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {employees.length === 0 ? (
+                <tr>
+                  <td colSpan="14" className="table-empty text-center" style={{ padding: '40px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <FaMoneyBillWave size={24} color="#94a3b8" />
+                      <div>No employees in this batch</div>
+                      <small style={{ color: '#94a3b8' }}>Try selecting a different month.</small>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedEmployees.map((e, index) => {
+                  const isSelected = selected.includes(e.employee_id);
+                  return (
+                    <tr key={e.employee_id} className={isSelected ? 'row-selected' : ''}>
+                      <td className="checkbox-cell text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleOne(e.employee_id)}
+                        />
+                      </td>
+                      <td className="col-profile text-center">
+                        <img
+                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                          alt={e.full_name}
+                          className="attendance-avatar-sm"
+                          style={{ margin: '0 auto' }}
+                        />
+                      </td>
+                      <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
+                        {e.employee_code}
+                      </td>
+                      <td className="text-center">{e.full_name}</td>
+                      <td className="text-center">{e.bank_name || "-"}</td>
+                      <td className="text-center" style={{ color: '#64748b' }}>{e.account_number || "-"}</td>
+                      <td className="text-center" style={{ color: '#64748b' }}>{e.ifsc_code || "-"}</td>
+                      <td className="text-center font-semibold">₹{Number(e.base_salary).toLocaleString()}</td>
+                      <td className="text-center">₹{Number(e.incentive).toLocaleString()}</td>
+                      <td className="text-center text-red-500">₹{Number(e.pf_amount || 0).toLocaleString()}</td>
+                      <td className="text-center text-red-500">₹{Number(e.other_deductions).toLocaleString()}</td>
+                      <td className="text-center font-semibold" style={{ color: '#3b82f6' }}>₹{Number(e.gross_salary || 0).toLocaleString()}</td>
+                      <td className="text-center font-bold" style={{ color: '#059669', fontSize: '14px' }}>₹{Number(e.net_salary).toLocaleString()}</td>
+                      <td className="text-center">
+                        <span className={`status-badge ${e.payment_status.toLowerCase()}`}>
+                          {e.payment_status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
         {/* ── PAGINATION ── */}
-        {employees.length > 0 && (
-          <div className="payroll-pagination">
-            <div className="pg-count-info">
-              Showing{" "}
-              <strong>{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, employees.length)}</strong>–
-              <strong>{Math.min(currentPage * ITEMS_PER_PAGE, employees.length)}</strong>
-              {" "}of <strong>{employees.length}</strong> employees
-            </div>
-            <div className="pg-controls">
-              <button
-                className="pg-nav-btn"
-                disabled={currentPage === 1 || totalPages <= 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              >
-                ‹ Prev
-              </button>
-              <div className="pg-number-group">
-                {(() => {
-                  const pages = [];
-                  const delta = 2;
-                  const left = Math.max(1, currentPage - delta);
-                  const right = Math.min(totalPages || 1, currentPage + delta);
-                  for (let p = left; p <= right; p++) pages.push(p);
-                  if (pages[0] > 1) pages.unshift("...");
-                  if (pages[pages.length - 1] < (totalPages || 1)) pages.push("...");
-                  return pages.map((p, idx) =>
-                    p === "..." ? (
-                      <span key={idx} className="pg-ellipsis">…</span>
-                    ) : (
-                      <button
-                        key={p}
-                        className={`pg-num-btn ${currentPage === p ? "active" : ""}`}
-                        onClick={() => setCurrentPage(p)}
-                      >
-                        {p}
-                      </button>
-                    )
-                  );
-                })()}
-              </div>
-              <button
-                className="pg-nav-btn"
-                disabled={currentPage === (totalPages || 1) || totalPages <= 1}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              >
-                Next ›
-              </button>
-            </div>
+        <div className="table-footer" style={{ borderTop: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+          <div className="footer-left">
+            Showing {employees.length ? Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, employees.length) : 0} – {Math.min(currentPage * ITEMS_PER_PAGE, employees.length)} of {employees.length} employees
           </div>
-        )}
+          <div className="pagination">
+            <button disabled={currentPage <= 1 || loading} onClick={() => setCurrentPage(1)} title="First Page">{"<<"}</button>
+            <button disabled={currentPage <= 1 || loading} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} title="Previous">{"<"}</button>
+            <span className="page-info">{currentPage} / {totalPages || 1}</span>
+            <button disabled={currentPage >= (totalPages || 1) || loading} onClick={() => setCurrentPage(p => Math.min(totalPages || 1, p + 1))} title="Next">{">"}</button>
+            <button disabled={currentPage >= (totalPages || 1) || loading} onClick={() => setCurrentPage(totalPages || 1)} title="Last Page">{">>"}</button>
+          </div>
+        </div>
       </div>
 
-      <div className="payroll-footer-action slide-up">
-        <button onClick={() => navigate("/payroll")} className="btn-secondary">
-          Back to Payroll
-        </button>
+      <div className="payroll-footer-action slide-up" style={{ justifyContent: 'flex-end' }}>
+
         <button
           className="btn-primary btn-large"
           onClick={handleConfirm}
           disabled={confirming || selected.length === 0}
+          style={{ width: 'auto', flex: 'none', padding: '10px 24px' }}
         >
           {confirming ? "Processing..." : `Send Salary (${selected.length})`}
         </button>

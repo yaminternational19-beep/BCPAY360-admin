@@ -13,6 +13,7 @@ import StatusBadge from "../../../components/ui/StatusBadge";
 import { FaUsers, FaCheckCircle, FaHourglassHalf, FaExclamationCircle, FaCalendarAlt, FaMoneyBillWave } from "react-icons/fa";
 import "./payroll.css";
 import "../../../styles/shared/modern-ui.css";
+import "../../../styles/Attendance.css";
 import { useBranch } from "../../../hooks/useBranch";
 
 const ITEMS_PER_PAGE = 10;
@@ -186,89 +187,7 @@ const PayrollList = () => {
     }
   };
 
-  // ─── Table columns ────────────────────────────────────────────────────────
-  const columns = [
-    {
-      header: (
-        <input
-          type="checkbox"
-          disabled={isLocked}
-          onChange={e => toggleAll(e.target.checked)}
-          checked={(() => {
-            const selectable = filteredEmployees.filter(e => e.payment_status !== "SUCCESS");
-            return selectable.length > 0 && selected.length === selectable.length && !isLocked;
-          })()}
-        />
-      ),
-      render: e => (
-        <input
-          type="checkbox"
-          disabled={isLocked || e.payment_status === "SUCCESS"}
-          checked={selected.includes(e.employee_id)}
-          onChange={() => toggleOne(e.employee_id)}
-        />
-      ),
-      className: "sticky-col"
-    },
-    { header: "Emp Code", render: e => <span className="emp-code-cell">{e.employee_code}</span>, className: "sticky-col-2" },
-    { header: "Name", key: "full_name", className: "name-cell" },
-    { header: "Dept", key: "department_name" },
-    { header: "UAN", render: e => e.uan_number || "-", className: "muted-cell" },
-    { header: "Base Salary", render: e => `₹${Number(e.base_salary).toLocaleString()}`, className: "weight-semibold" },
-    { header: "Working", key: "working_days" },
-    { header: "Present", key: "present_days" },
-    { header: "Absent", key: "absent_days" },
-    { header: "OT (hrs)", key: "ot_hours" },
-    {
-      header: "Incentive",
-      render: e => (
-        <input type="number" className="table-input"
-          disabled={isLocked || e.payment_status === "SUCCESS"}
-          value={payrollData[e.employee_id]?.incentive || 0}
-          onChange={ev => updateEditable(e.employee_id, "incentive", ev.target.value)}
-        />
-      )
-    },
-    {
-      header: "Bonus",
-      render: e => (
-        <input type="number" className="table-input"
-          disabled={isLocked || e.payment_status === "SUCCESS"}
-          value={payrollData[e.employee_id]?.bonus || 0}
-          onChange={ev => updateEditable(e.employee_id, "bonus", ev.target.value)}
-        />
-      )
-    },
-    {
-      header: "Deductions",
-      render: e => (
-        <input type="number" className="table-input"
-          disabled={isLocked || e.payment_status === "SUCCESS"}
-          value={payrollData[e.employee_id]?.other_deductions || 0}
-          onChange={ev => updateEditable(e.employee_id, "other_deductions", ev.target.value)}
-        />
-      )
-    },
-    {
-      header: "PF?",
-      render: e => (
-        <input type="checkbox"
-          disabled={isLocked || e.payment_status === "SUCCESS"}
-          checked={payrollData[e.employee_id]?.pf_applicable === 1}
-          onChange={ev => updateEditable(e.employee_id, "pf_applicable", ev.target.checked ? 1 : 0)}
-        />
-      )
-    },
-    {
-      header: "Status",
-      render: e => (
-        <StatusBadge
-          type={e.payment_status === "SUCCESS" ? "success" : e.payment_status === "PENDING" ? "warning" : "neutral"}
-          label={e.payment_status || "NOT_GENERATED"}
-        />
-      )
-    }
-  ];
+  // (Old columns array removed)
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -353,75 +272,147 @@ const PayrollList = () => {
       </FiltersBar>
 
       {/* ── TABLE ── */}
-      <div className="payroll-table-section">
+      {/* ── TABLE ── */}
+      <div className="attendance-table-container" style={{ position: 'relative', marginTop: '20px' }}>
         {loading && (
-          <div className="payroll-loading-overlay">
-            <div className="payroll-spinner"></div>
-            <span>Loading payroll data...</span>
-          </div>
+          <div className="drawer-table-overlay" style={{ zIndex: 50 }}>Loading...</div>
         )}
 
-        <DataTable
-          columns={columns}
-          data={paginatedEmployees}
-          emptyState={{
-            title: "No employees found",
-            subtitle: "Try adjusting your search or filters to find specific records.",
-            icon: <FaMoneyBillWave />
-          }}
-        />
-
-        {/* ── PAGINATION (always visible when data exists) ── */}
-        {filteredEmployees.length > 0 && (
-          <div className="payroll-pagination">
-            <div className="pg-count-info">
-              Showing{" "}
-              <strong>{Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredEmployees.length)}</strong>–
-              <strong>{Math.min(currentPage * ITEMS_PER_PAGE, filteredEmployees.length)}</strong>
-              {" "}of <strong>{filteredEmployees.length}</strong> employees
-            </div>
-            <div className="pg-controls">
-              <button
-                className="pg-nav-btn"
-                disabled={currentPage === 1 || totalPages <= 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              >
-                ‹ Prev
-              </button>
-              <div className="pg-number-group">
-                {(() => {
-                  const pages = [];
-                  const delta = 2;
-                  const left = Math.max(1, currentPage - delta);
-                  const right = Math.min(totalPages || 1, currentPage + delta);
-                  for (let p = left; p <= right; p++) pages.push(p);
-                  if (pages[0] > 1) pages.unshift("...");
-                  if (pages[pages.length - 1] < (totalPages || 1)) pages.push("...");
-                  return pages.map((p, idx) =>
-                    p === "..." ? (
-                      <span key={idx} className="pg-ellipsis">…</span>
-                    ) : (
-                      <button
-                        key={p}
-                        className={`pg-num-btn ${currentPage === p ? "active" : ""}`}
-                        onClick={() => setCurrentPage(p)}
-                      >
-                        {p}
-                      </button>
-                    )
+        <div className="history-table-wrapper" style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0 }}>
+          <table className="attendance-table">
+            <thead>
+              <tr>
+                <th className="checkbox-cell" style={{ width: '40px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    disabled={isLocked}
+                    onChange={e => toggleAll(e.target.checked)}
+                    checked={(() => {
+                      const selectable = filteredEmployees.filter(e => e.payment_status !== "SUCCESS");
+                      return selectable.length > 0 && selected.length === selectable.length && !isLocked;
+                    })()}
+                  />
+                </th>
+                <th className="col-profile text-center">Profile</th>
+                <th className="text-center">Emp Code</th>
+                <th className="text-center">Name</th>
+                <th className="text-center">Dept</th>
+                <th className="text-center">UAN</th>
+                <th className="text-center">Base Salary</th>
+                <th className="text-center">Working</th>
+                <th className="text-center">Present</th>
+                <th className="text-center">Absent</th>
+                <th className="text-center">OT (hrs)</th>
+                <th className="text-center">Incentive</th>
+                <th className="text-center">Bonus</th>
+                <th className="text-center">Deductions</th>
+                <th className="text-center">PF?</th>
+                <th className="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan="16" className="table-empty text-center" style={{ padding: '40px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                      <FaMoneyBillWave size={24} color="#94a3b8" />
+                      <div>No employees found</div>
+                      <small style={{ color: '#94a3b8' }}>Try adjusting your search or filters to find specific records.</small>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginatedEmployees.map((e, index) => {
+                  const isSuccess = e.payment_status === "SUCCESS";
+                  const isSelected = selected.includes(e.employee_id);
+                  return (
+                    <tr key={e.employee_id} className={isSelected ? 'row-selected' : ''}>
+                      <td className="checkbox-cell text-center">
+                        <input
+                          type="checkbox"
+                          disabled={isLocked || isSuccess}
+                          checked={isSelected}
+                          onChange={() => toggleOne(e.employee_id)}
+                        />
+                      </td>
+                      <td className="col-profile text-center">
+                        <img
+                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                          alt={e.full_name}
+                          className="attendance-avatar-sm"
+                          style={{ margin: '0 auto' }}
+                        />
+                      </td>
+                      <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
+                        {e.employee_code}
+                      </td>
+                      <td className="text-center">{e.full_name}</td>
+                      <td className="text-center">{e.department_name}</td>
+                      <td className="text-center" style={{ color: '#64748b' }}>{e.uan_number || "-"}</td>
+                      <td className="text-center font-semibold">₹{Number(e.base_salary).toLocaleString()}</td>
+                      <td className="text-center">{e.working_days}</td>
+                      <td className="text-center">{e.present_days}</td>
+                      <td className="text-center">{e.absent_days}</td>
+                      <td className="text-center">{e.ot_hours}</td>
+                      <td className="text-center">
+                        <input type="number"
+                          style={{ width: '80px', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '6px', textAlign: 'center' }}
+                          disabled={isLocked || isSuccess}
+                          value={payrollData[e.employee_id]?.incentive || 0}
+                          onChange={ev => updateEditable(e.employee_id, "incentive", ev.target.value)}
+                        />
+                      </td>
+                      <td className="text-center">
+                        <input type="number"
+                          style={{ width: '80px', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '6px', textAlign: 'center' }}
+                          disabled={isLocked || isSuccess}
+                          value={payrollData[e.employee_id]?.bonus || 0}
+                          onChange={ev => updateEditable(e.employee_id, "bonus", ev.target.value)}
+                        />
+                      </td>
+                      <td className="text-center">
+                        <input type="number"
+                          style={{ width: '80px', padding: '4px 8px', border: '1px solid #e2e8f0', borderRadius: '6px', textAlign: 'center' }}
+                          disabled={isLocked || isSuccess}
+                          value={payrollData[e.employee_id]?.other_deductions || 0}
+                          onChange={ev => updateEditable(e.employee_id, "other_deductions", ev.target.value)}
+                        />
+                      </td>
+                      <td className="text-center">
+                        <input type="checkbox"
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                          disabled={isLocked || isSuccess}
+                          checked={payrollData[e.employee_id]?.pf_applicable === 1}
+                          onChange={ev => updateEditable(e.employee_id, "pf_applicable", ev.target.checked ? 1 : 0)}
+                        />
+                      </td>
+                      <td className="text-center">
+                        <StatusBadge
+                          type={isSuccess ? "success" : e.payment_status === "PENDING" ? "warning" : "neutral"}
+                          label={e.payment_status || "NOT_GENERATED"}
+                        />
+                      </td>
+                    </tr>
                   );
-                })()}
-              </div>
-              <button
-                className="pg-nav-btn"
-                disabled={currentPage === (totalPages || 1) || totalPages <= 1}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              >
-                Next ›
-              </button>
-            </div>
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── PAGINATION ── */}
+        <div className="table-footer" style={{ borderTop: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+          <div className="footer-left">
+            Showing {filteredEmployees.length ? Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredEmployees.length) : 0} – {Math.min(currentPage * ITEMS_PER_PAGE, filteredEmployees.length)} of {filteredEmployees.length} employees
           </div>
-        )}
+          <div className="pagination">
+            <button disabled={currentPage <= 1 || loading} onClick={() => setCurrentPage(1)} title="First Page">{"<<"}</button>
+            <button disabled={currentPage <= 1 || loading} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} title="Previous">{"<"}</button>
+            <span className="page-info">{currentPage} / {totalPages || 1}</span>
+            <button disabled={currentPage >= (totalPages || 1) || loading} onClick={() => setCurrentPage(p => Math.min(totalPages || 1, p + 1))} title="Next">{">"}</button>
+            <button disabled={currentPage >= (totalPages || 1) || loading} onClick={() => setCurrentPage(totalPages || 1)} title="Last Page">{">>"}</button>
+          </div>
+        </div>
       </div>
 
       {/* ── GENERATE FOOTER ── */}
@@ -430,7 +421,12 @@ const PayrollList = () => {
           <div className="footer-info">
             <span><strong>{selected.length}</strong> employees selected for processing</span>
           </div>
-          <button className="btn-primary btn-large" onClick={generatePay} disabled={isLocked}>
+          <button
+            className="btn-primary btn-large"
+            onClick={generatePay}
+            disabled={isLocked}
+            style={{ width: 'auto', flex: 'none', padding: '10px 24px' }}
+          >
             {isLocked ? "Payroll Locked" : "Generate Payroll Batch (Draft)"}
           </button>
         </div>

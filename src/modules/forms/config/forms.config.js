@@ -1,7 +1,7 @@
 export const FORMS_CONFIG = {
     pf: {
         id: "pf",
-        title: "Provident Fund (PF) Forms",
+        title: "Provident Fund",
         subtitle: "Compliance forms for Employee Provident Fund contributions.",
         showEligibility: true,
         eligibilityKey: "pfEligible",
@@ -19,7 +19,7 @@ export const FORMS_CONFIG = {
     },
     "income-tax": {
         id: "income-tax",
-        title: "Income Tax (Form-16)",
+        title: "Income Tax",
         subtitle: "Annual tax deduction certificates for employees.",
         showEligibility: false,
         allowMissingState: false,
@@ -28,7 +28,7 @@ export const FORMS_CONFIG = {
     },
     bonus: {
         id: "bonus",
-        title: "Bonus Act Forms",
+        title: "Bonus Act",
         subtitle: "Statutory bonus calculation and payment records.",
         showEligibility: true,
         eligibilityKey: "pfEligible", // Usually bonus follows PF eligibility or custom
@@ -37,7 +37,7 @@ export const FORMS_CONFIG = {
     },
     labour: {
         id: "labour",
-        title: "Attendance / Labour Law",
+        title: "Labour Law",
         subtitle: "Registers and returns under various Labour Laws.",
         showEligibility: false,
         allowMissingState: true,
@@ -45,7 +45,7 @@ export const FORMS_CONFIG = {
     },
     factories: {
         id: "factories",
-        title: "Factories Act Forms",
+        title: "Factories Act",
         subtitle: "Maintenance and safety compliance forms for factory premises.",
         showEligibility: false,
         allowMissingState: true,
@@ -53,7 +53,7 @@ export const FORMS_CONFIG = {
     },
     gratuity: {
         id: "gratuity",
-        title: "Gratuity Act Forms",
+        title: "Gratuity Act",
         subtitle: "Payment of Gratuity records and nominations.",
         showEligibility: false,
         allowMissingState: true,

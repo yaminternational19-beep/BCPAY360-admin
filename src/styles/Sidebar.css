@@ -80,14 +80,20 @@
   color: #2563eb;
 }
 
-/* Solid Blue Active State (The "Pro" Look) */
+/* Soft Blue Active State (Slightly darker than hover) */
+
 .menu-item.active,
 .menu-item[data-active="true"] {
-  background: #2563eb;
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);
+  background: linear-gradient(
+    90deg,
+    rgba(37, 99, 235, 0.15) 0%,
+    rgba(37, 99, 235, 0.08) 100%
+  );
+  color: #1d4ed8;
+  font-weight: 700;
+  border-left: 4px solid #2563eb;
+  padding-left: 14px; /* compensate border */
 }
-
 .menu-left {
   display: flex;
   align-items: center;
@@ -106,7 +112,7 @@
 
 .menu-item.active svg,
 .menu-item[data-active="true"] svg {
-  color: #ffffff;
+  color: #2563eb;
 }
 
 .chevron-icon {
@@ -151,9 +157,24 @@
   transition: all 0.2s;
 }
 
-.submenu-item:hover {
+/* .submenu-item:hover,
+.submenu-item.active {
   color: #2563eb;
-  background: rgba(37, 99, 235, 0.05);
+  background: rgba(37, 99, 235, 0.1);
+  font-weight: 700;
+} */
+
+.submenu-item.active {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  font-weight: 700;
+  border-left: 3px solid #2563eb;
+  padding-left: 11px;
+}
+
+.submenu-item:hover {
+  background: rgba(37, 99, 235, 0.06);
+  color: #2563eb;
 }
 
 /* Section Header Styles */

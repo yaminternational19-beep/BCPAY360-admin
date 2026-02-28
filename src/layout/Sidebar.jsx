@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { hasPermission } from "../utils/permissions.js";
 import {
   FaHome,
@@ -77,7 +77,13 @@ const REPORT_ICONS = {
 
 const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: userProp }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(userProp || null);
+
+  const isActive = (path) => {
+    return location.pathname === `/${path}` ||
+      location.pathname.startsWith(`/${path}/`);
+  };
 
   useEffect(() => {
     if (userProp) {
@@ -147,7 +153,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
       <nav className="sidebar-menu">
         <button
           type="button"
-          className="menu-item"
+          className={`menu-item ${isActive("dashboard") ? "active" : ""}`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -164,7 +170,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
           <>
             <button
               type="button"
-              className="menu-item expandable"
+              className={`menu-item expandable ${['branches', 'organization', 'departments', 'employee-types', 'shifts', 'hr-management'].some(p => isActive(p)) ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -182,7 +188,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
               <div className="submenu">
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("branches") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -194,7 +200,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("organization/emp-code") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -206,7 +212,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("departments") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -217,7 +223,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 </button>
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("employee-types") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -228,7 +234,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 </button>
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("shifts") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -239,11 +245,11 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 </button>
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("hr-management") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    go("hr-management");  
+                    go("hr-management");
                   }}
                 >
                   <FaIdCard /> Add HR
@@ -251,7 +257,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
                 <button
                   type="button"
-                  className="submenu-item"
+                  className={`submenu-item ${isActive("organization/documents") ? "active" : ""}`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -269,7 +275,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
           <>
             <button
               type="button"
-              className="menu-item expandable"
+              className={`menu-item expandable ${['employees', 'attendance', 'leavemanagement', 'payroll', 'holidays'].some(p => isActive(p)) ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -288,7 +294,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 {canAccess("EMPLOYEE_MASTER") && (
                   <button
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive("employees") ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -303,7 +309,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 {canAccess("ATTENDANCE") && (
                   <button
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive("attendance") ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -317,7 +323,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 {canAccess("LEAVE_MASTER") && (
                   <button
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive("leavemanagement") ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -331,7 +337,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 {canAccess("PAYROLL") && (
                   <button
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive("payroll") ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -345,7 +351,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                 {canAccess("HOLIDAYS") && (
                   <button
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive("holidays") ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -365,7 +371,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
           <>
             <button
               type="button"
-              className="menu-item expandable"
+              className={`menu-item expandable ${isActive('forms') ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -385,7 +391,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   <button
                     key={form.id}
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive(`forms/${form.id}`) ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -400,7 +406,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
             <button
               type="button"
-              className="menu-item expandable"
+              className={`menu-item expandable ${isActive('reports') ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -420,7 +426,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
                   <button
                     key={report.id}
                     type="button"
-                    className="submenu-item"
+                    className={`submenu-item ${isActive(`reports/${report.id}`) ? "active" : ""}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -435,7 +441,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
             <button
               type="button"
-              className="menu-item"
+              className={`menu-item ${isActive("manage-content") ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -450,7 +456,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
             <button
               type="button"
-              className="menu-item"
+              className={`menu-item ${isActive("help-support") ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -465,7 +471,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
             <button
               type="button"
-              className="menu-item"
+              className={`menu-item ${isActive("faq") ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -480,7 +486,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, user: u
 
             <button
               type="button"
-              className="menu-item"
+              className={`menu-item ${isActive("manage-broadcast") ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

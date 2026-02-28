@@ -20,6 +20,7 @@ export default function ManageBroadcast() {
     const [message, setMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [employeeSearch, setEmployeeSearch] = useState("");
+    const [employeeBranchFilter, setEmployeeBranchFilter] = useState("");
 
     // Fetch broadcasts on mount
     useEffect(() => {
@@ -91,6 +92,12 @@ export default function ManageBroadcast() {
 
     // Filter employees based on search query
     const filteredEmployees = employees.filter((emp) => {
+        // 1. Branch Filter check
+        if (employeeBranchFilter && emp.branch_id !== Number(employeeBranchFilter)) {
+            return false;
+        }
+
+        // 2. Search Filter check
         if (!employeeSearch.trim()) return true;
 
         const searchLower = employeeSearch.toLowerCase();
@@ -130,6 +137,17 @@ export default function ManageBroadcast() {
             payload.branch_id = broadcastBranchId;
         } else if (audienceType === "EMPLOYEE") {
             payload.employee_ids = selectedEmployees;
+            // The backend requires a branch_id even for specific employees.
+            // We pass the branch_id of the first selected employee.
+            if (selectedEmployees.length > 0) {
+                const firstSelectedEmp = employees.find(emp => emp.id === selectedEmployees[0]);
+                if (firstSelectedEmp && firstSelectedEmp.branch_id) {
+                    payload.branch_id = firstSelectedEmp.branch_id;
+                } else if (employeeBranchFilter) {
+                    // Fallback to the filter if the employee array didn't contain the branch_id
+                    payload.branch_id = Number(employeeBranchFilter);
+                }
+            }
         }
 
         setIsSending(true);
@@ -214,7 +232,7 @@ export default function ManageBroadcast() {
                     <h1 className="module-title">Manage Broadcast</h1>
                     <p className="module-subtitle">Send announcements to your organization.</p>
                 </div>
-                <Button variant="primary" startIcon={<FaPaperPlane />} onClick={openComposer}>
+                <Button variant="primary" startIcon={<FaPaperPlane />} onClick={openComposer} style={{ width: "fit-content" }}>
                     New Broadcast
                 </Button>
             </div>
@@ -351,25 +369,42 @@ export default function ManageBroadcast() {
                             <p className="text-sm text-muted">No employees available</p>
                         ) : (
                             <>
-                                {/* Search Input */}
-                                <div style={{ position: "relative", marginBottom: "12px" }}>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Search by employee code or name (e.g., EMP001 or John)"
-                                        value={employeeSearch}
-                                        onChange={(e) => setEmployeeSearch(e.target.value)}
-                                        disabled={isSending}
-                                        style={{ paddingLeft: "36px" }}
-                                    />
-                                    <FaUsers style={{
-                                        position: "absolute",
-                                        left: "12px",
-                                        top: "50%",
-                                        transform: "translateY(-50%)",
-                                        color: "#94a3b8",
-                                        fontSize: "14px"
-                                    }} />
+                                {/* Search Input and Branch Filter */}
+                                <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+                                    <div style={{ position: "relative", flex: 2 }}>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Search by employee code or name..."
+                                            value={employeeSearch}
+                                            onChange={(e) => setEmployeeSearch(e.target.value)}
+                                            disabled={isSending}
+                                            style={{ paddingLeft: "36px" }}
+                                        />
+                                        <FaUsers style={{
+                                            position: "absolute",
+                                            left: "12px",
+                                            top: "50%",
+                                            transform: "translateY(-50%)",
+                                            color: "#94a3b8",
+                                            fontSize: "14px"
+                                        }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <select
+                                            className="form-control"
+                                            value={employeeBranchFilter}
+                                            onChange={(e) => setEmployeeBranchFilter(e.target.value)}
+                                            disabled={isSending}
+                                        >
+                                            <option value="">All Branches</option>
+                                            {branches.map(b => (
+                                                <option key={b.id} value={b.id}>
+                                                    {b.branch_name || b.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 {/* Employee List */}

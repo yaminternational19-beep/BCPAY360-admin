@@ -136,7 +136,7 @@ export default function FAQ() {
                     <h1 className="module-title">FAQ Management</h1>
                     <p className="module-subtitle">Create and manage frequently asked questions.</p>
                 </div>
-                <Button variant="primary" startIcon={<FaPlus />} onClick={() => handleOpenModal()}>
+                <Button variant="primary" startIcon={<FaPlus />} onClick={() => handleOpenModal()} style={{ width: "fit-content" }}>
                     Create FAQ
                 </Button>
             </div>

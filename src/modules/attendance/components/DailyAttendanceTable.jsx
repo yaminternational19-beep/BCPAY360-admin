@@ -1,4 +1,5 @@
 import "../../../styles/Attendance.css";
+import { FaHistory } from "react-icons/fa";
 
 
 const DailyAttendanceTable = ({
@@ -30,6 +31,8 @@ const DailyAttendanceTable = ({
   const isAllSelected = rows.length > 0 && rows.every(row => selectedIds.includes(row.employee_id));
 
   const totalPages = Math.ceil(pagination.total_records / pagination.limit) || 1;
+  const employeesShowingStart = rows.length > 0 ? ((pagination.page - 1) * pagination.limit) + 1 : 0;
+  const employeesShowingEnd = Math.min(pagination.page * pagination.limit, pagination.total_records);
 
   return (
     <div className="attendance-table-container">
@@ -141,48 +144,16 @@ const DailyAttendanceTable = ({
         </table>
       </div>
 
-      <div className="table-footer-pagination">
-        <div className="pagination-info">
-          Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total_records)} of {pagination.total_records} records
+      <div className="table-footer">
+        <div className="footer-left">
+          Showing {employeesShowingStart} – {employeesShowingEnd} of {pagination.total_records}
         </div>
-        <div className="pagination-controls">
-          <button
-            className="pagination-btn"
-            disabled={pagination.page <= 1}
-            onClick={() => onPageChange(pagination.page - 1)}
-          >
-            Previous
-          </button>
-          <div className="page-numbers">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (pagination.page <= 3) {
-                pageNum = i + 1;
-              } else if (pagination.page >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = pagination.page - 2 + i;
-              }
-              return (
-                <button
-                  key={pageNum}
-                  className={`page-number-btn ${pagination.page === pageNum ? 'active' : ''}`}
-                  onClick={() => onPageChange(pageNum)}
-                >
-                  {pageNum}
-                </button>
-              );
-            })}
-          </div>
-          <button
-            className="pagination-btn"
-            disabled={pagination.page >= totalPages}
-            onClick={() => onPageChange(pagination.page + 1)}
-          >
-            Next
-          </button>
+        <div className="pagination">
+          <button disabled={pagination.page <= 1} onClick={() => onPageChange(1)} title="First Page">{"<<"}</button>
+          <button disabled={pagination.page <= 1} onClick={() => onPageChange(pagination.page - 1)} title="Previous">{"<"}</button>
+          <span className="page-info">{pagination.page} / {totalPages}</span>
+          <button disabled={pagination.page >= totalPages} onClick={() => onPageChange(pagination.page + 1)} title="Next">{">"}</button>
+          <button disabled={pagination.page >= totalPages} onClick={() => onPageChange(totalPages)} title="Last Page">{">>"}</button>
         </div>
       </div>
     </div>

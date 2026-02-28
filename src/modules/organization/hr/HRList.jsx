@@ -165,9 +165,10 @@ export default function HRList() {
     <div className="add-hr-page">
       <div className="page-header">
         <h2>HR Management</h2>
-        <div className="header-actions">
+        <div className="header-actions" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
           <button
             className="primary"
+            style={{ width: "fit-content", whiteSpace: "nowrap" }}
             onClick={() => {
               setEditingHR(null);
               setShowForm(true);
@@ -175,7 +176,7 @@ export default function HRList() {
           >
             Add HR
           </button>
-          <button className="secondary" onClick={exportToExcel}>
+          <button className="secondary" onClick={exportToExcel} style={{ width: "fit-content", whiteSpace: "nowrap" }}>
             Export Excel
           </button>
         </div>

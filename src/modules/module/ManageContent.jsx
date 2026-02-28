@@ -387,7 +387,7 @@ export default function ManageContent() {
                     <h1 className="module-title">Manage Content</h1>
                     <p className="module-subtitle">Update and manage your organization's static content pages.</p>
                 </div>
-                <Button variant="primary" startIcon={<FaPlus />} onClick={() => setIsCreateOpen(true)}>
+                <Button variant="primary" startIcon={<FaPlus />} onClick={() => setIsCreateOpen(true)} style={{ width: "fit-content" }}>
                     Add New Page
                 </Button>
             </div>

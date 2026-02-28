@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import "../../../styles/LeaveManagement.css";
+import "../../../styles/Attendance.css";
 import EmployeeLeaveModal from "./EmployeeLeaveModal";
 
 export default function LeaveHistoryTable({
@@ -35,92 +36,80 @@ export default function LeaveHistoryTable({
         </div>
       )}
 
-      <table className={`clean-table ${loading ? 'opacity-40' : ''}`}>
-        <thead>
-          <tr>
-            <th>Emp ID</th>
-            <th>Employee</th>
-            <th>Department</th>
-            <th>Leave Type</th>
-            <th>From Date</th>
-            <th>To Date</th>
-            <th>Total Days</th>
-            <th>Shift Info</th>
-            <th>Status</th>
-            <th>Applied At</th>
-          </tr>
-        </thead>
+      <div className="attendance-table-container" style={{ position: 'relative', marginTop: '20px' }}>
+        <div className="history-table-wrapper" style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, marginBottom: 0 }}>
+          <table className={`attendance-table ${loading ? 'opacity-40' : ''}`}>
+            <thead>
+              <tr>
+                <th className="text-center" style={{ width: '50px' }}>Sl No</th>
+                <th className="col-profile text-center">Profile</th>
+                <th className="text-center">Emp Code</th>
+                <th className="text-center">Name</th>
+                <th className="text-center">Leave Type</th>
+                <th className="text-center">Dates</th>
+                <th className="text-center">Duration</th>
+                <th className="text-center">Status</th>
+                <th className="text-center">Applied On</th>
+              </tr>
+            </thead>
 
-        <tbody>
-          {history.map((row) => (
-            <tr
-              key={row.id}
-              className="clickable"
-              onClick={() => setSelectedEmp(row)}
-              title="Click to view details"
-            >
-              <td><strong>{row.emp_id}</strong></td>
-              <td>{row.full_name}</td>
-              <td>{row.department_name || "-"}</td>
-              <td><span className="leave-type-pill">{row.leave_name}</span></td>
-              <td>{formatDate(row.from_date)}</td>
-              <td>{formatDate(row.to_date)}</td>
-              <td><span className="days-badge">{row.total_days}</span></td>
-              <td>
-                <div className="shift-info-cell">
-                  <span>{row.shift_name || "-"}</span>
-                  {row.shift_timing && <small>{row.shift_timing}</small>}
-                </div>
-              </td>
-              <td>
-                <span className={`badge ${row.status?.toLowerCase()}`}>
-                  {row.status}
-                </span>
-              </td>
-              <td>{formatDate(row.applied_at)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Modern Pagination Footer */}
-      {pagination.totalPages > 1 && (
-        <div className="pagination-footer-premium">
-          <div className="pagination-info">
-            Showing <span>{history.length}</span> of <span>{pagination.total}</span> records
-          </div>
-          <div className="pagination-controls">
-            <button
-              disabled={pagination.page <= 1 || loading}
-              onClick={() => onPageChange(pagination.page - 1)}
-              className="pg-btn-premium"
-            >
-              Previous
-            </button>
-            <div className="page-numbers">
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                const p = i + 1;
+            <tbody>
+              {history.map((row, index) => {
+                const slNo = ((pagination.page - 1) * pagination.limit) + index + 1;
                 return (
-                  <button
-                    key={p}
-                    className={`pg-num-btn ${pagination.page === p ? 'active' : ''}`}
-                    onClick={() => onPageChange(p)}
+                  <tr
+                    key={row.id}
+                    className="clickable"
+                    onClick={() => setSelectedEmp(row)}
+                    title="Click to view details"
                   >
-                    {p}
-                  </button>
+                    <td className="text-center font-medium">{slNo}</td>
+                    <td className="col-profile text-center">
+                      <img
+                        src={row.profile_photo_url || row.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                        alt={row.full_name}
+                        className="attendance-avatar-sm"
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=F1F5F9&color=64748B&bold=true`;
+                        }}
+                        style={{ margin: '0 auto' }}
+                      />
+                    </td>
+                    <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
+                      {row.emp_id}
+                    </td>
+                    <td className="text-center">{row.full_name}</td>
+                    <td className="text-center">{row.leave_name}</td>
+                    <td className="text-center">
+                      <small>{formatDate(row.from_date)} - {formatDate(row.to_date)}</small>
+                    </td>
+                    <td className="text-center">{row.total_days} Day(s)</td>
+                    <td className="text-center">
+                      <span className={`badge ${row.status?.toLowerCase() || 'pending'}`} style={{ padding: '4px 10px', fontSize: '11px' }}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="text-center">{formatDate(row.applied_at)}</td>
+                  </tr>
                 );
               })}
-            </div>
-            <button
-              disabled={pagination.page >= pagination.totalPages || loading}
-              onClick={() => onPageChange(pagination.page + 1)}
-              className="pg-btn-premium"
-            >
-              Next
-            </button>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="table-footer" style={{ borderTop: 'none', borderLeft: '1px solid #e2e8f0', borderRight: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+          <div className="footer-left">
+            Showing {history.length > 0 ? ((pagination.page - 1) * pagination.limit) + 1 : 0} – {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} records
+          </div>
+          <div className="pagination">
+            <button disabled={pagination.page <= 1 || loading} onClick={() => onPageChange(1)} title="First Page">{"<<"}</button>
+            <button disabled={pagination.page <= 1 || loading} onClick={() => onPageChange(pagination.page - 1)} title="Previous">{"<"}</button>
+            <span className="page-info">{pagination.page} / {pagination.totalPages}</span>
+            <button disabled={pagination.page >= pagination.totalPages || loading} onClick={() => onPageChange(pagination.page + 1)} title="Next">{">"}</button>
+            <button disabled={pagination.page >= pagination.totalPages || loading} onClick={() => onPageChange(pagination.totalPages)} title="Last Page">{">>"}</button>
           </div>
         </div>
-      )}
+      </div>
 
       {selectedEmp && (
         <EmployeeLeaveModal
