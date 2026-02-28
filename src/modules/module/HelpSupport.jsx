@@ -3,6 +3,7 @@ import { FaSearch, FaPaperPlane, FaUserCircle, FaCheckCircle, FaFilter, FaInbox,
 import { Badge, Button, EmptyState, Loader } from "./components";
 import { getSupportTickets, getSupportTicketById, respondToSupportTicket } from "../../api/master.api";
 import "./HelpSupport.css";
+import "../../styles/Attendance.css";
 import { useBranch } from "../../hooks/useBranch"; // Import Hook
 
 export default function HelpSupport() {
@@ -13,20 +14,36 @@ export default function HelpSupport() {
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [replyText, setReplyText] = useState("");
+    const [showModal, setShowModal] = useState(false);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
+    const [serverTotalPages, setServerTotalPages] = useState(1);
+    const [totalEntries, setTotalEntries] = useState(0);
 
     // Fetch data on mount and when filters change
+    // Fetch data when filters change - Reset pagination
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedBranch, statusFilter]);
+
+    // Fetch data when page or filters change
     useEffect(() => {
         fetchTickets();
-    }, [searchQuery, selectedBranch, statusFilter]);
+    }, [currentPage, searchQuery, selectedBranch, statusFilter]);
 
     const fetchTickets = async () => {
         setLoading(true);
         try {
-            const params = {};
+            const params = {
+                page: currentPage,
+                limit: ITEMS_PER_PAGE
+            };
             if (searchQuery) params.search = searchQuery;
             if (selectedBranch) params.branch_id = selectedBranch;
             if (statusFilter !== "All") params.status = statusFilter;
@@ -34,6 +51,10 @@ export default function HelpSupport() {
             const response = await getSupportTickets(params);
             if (response.success) {
                 setTickets(response.data || []);
+                if (response.pagination) {
+                    setServerTotalPages(response.pagination.totalPages || 1);
+                    setTotalEntries(response.pagination.total || 0);
+                }
             }
         } catch (error) {
             alert("Failed to fetch tickets: " + error.message);
@@ -44,6 +65,7 @@ export default function HelpSupport() {
 
     const handleTicketSelect = async (id) => {
         setSelectedTicketId(id);
+        setShowModal(true);
         setDetailLoading(true);
         try {
             const response = await getSupportTicketById(id);
@@ -56,6 +78,17 @@ export default function HelpSupport() {
             setDetailLoading(false);
         }
     };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setSelectedTicket(null);
+        setSelectedTicketId(null);
+        setReplyText("");
+    };
+
+    // Pagination Data
+    const totalPages = serverTotalPages;
+    const paginatedTickets = tickets; // Data is already paginated from server
 
     const handleSendAndClose = async () => {
         if (!replyText.trim() || !selectedTicketId) return;
@@ -70,6 +103,7 @@ export default function HelpSupport() {
                     t.id === selectedTicketId ? { ...t, status: "Closed" } : t
                 ));
                 alert("Response sent and ticket closed successfully.");
+                setTimeout(handleCloseModal, 1500);
             }
         } catch (error) {
             alert("Failed to send response: " + error.message);
@@ -134,123 +168,215 @@ export default function HelpSupport() {
                 </select>
             </div>
 
-            <div className="split-layout-container" style={{ display: "flex", gap: "24px", flex: 1, minHeight: 0 }}>
-                {/* Tickets Table Panel */}
-                <div className="data-table-container glass-panel" style={{ flex: 1.2, overflowY: "auto", borderRadius: "12px", background: "#fff", border: "1px solid #e2e8f0", position: "relative" }}>
-                    {loading && <Loader overlay />}
-                    <table className="data-table">
-                        <thead style={{ position: "sticky", top: 0, background: "#f1f5f9", zIndex: 1 }}>
+            {/* Tickets Table Panel */}
+            <div className="support-table-container">
+                {loading && <Loader overlay />}
+                <div className="support-table-wrapper">
+                    <table className="attendance-table">
+                        <thead style={{ position: "sticky", top: 0, zIndex: 1, borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
                             <tr>
-                                <th>Status</th>
-                                <th>Employee</th>
-                                <th>Branch</th>
-                                <th>Subject</th>
+                                <th className="text-center" style={{ width: '60px' }}>Sl No</th>
+                                <th className="text-center">Profile</th>
+                                <th className="text-left">Employee Name</th>
+                                <th className="text-left">Email</th>
+                                <th className="text-center">Branch</th>
+                                <th className="text-center">Raised Date</th>
+                                <th className="text-center">Subject</th>
+                                <th className="text-center">Status</th>
+                                <th className="text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {tickets.map((ticket) => {
+                            {paginatedTickets.map((ticket, index) => {
                                 const branch = branches.find(b => b.id === ticket.branch_id);
+                                const slNo = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                                 return (
                                     <tr
                                         key={ticket.id}
                                         onClick={() => handleTicketSelect(ticket.id)}
-                                        className={selectedTicketId === ticket.id ? "active-row" : ""}
+                                        style={{ cursor: 'pointer' }}
                                     >
-                                        <td>
+                                        <td className="text-center" style={{ color: '#64748b' }}>{slNo}</td>
+                                        <td className="text-center">
+                                            <img
+                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ticket.employee_name || 'U')}&background=e2e8f0&color=475569`}
+                                                alt="avatar"
+                                                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                                            />
+                                        </td>
+                                        <td className="text-left font-semibold" style={{ color: '#1e293b' }}>
+                                            {ticket.employee_name || 'N/A'}
+                                        </td>
+                                        <td className="text-left" style={{ fontSize: '12px', color: '#64748b' }}>
+                                            {ticket.employee_email}
+                                        </td>
+                                        <td className="text-center" style={{ color: '#64748b' }}>
+                                            {branch ? (branch.branch_name || branch.name) : `ID: ${ticket.branch_id}`}
+                                        </td>
+                                        <td className="text-center" style={{ color: '#64748b', fontSize: '13px' }}>
+                                            {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('en-GB') : '—'}
+                                        </td>
+                                        <td className="text-center" style={{ color: '#475569' }}>
+                                            <span style={{ background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: '600' }}>
+                                                {ticket.category}
+                                            </span>
+                                            {ticket.subject && <div style={{ fontSize: '12px', marginTop: '4px' }}>{ticket.subject}</div>}
+                                        </td>
+                                        <td className="text-center">
                                             <Badge variant={getStatusVariant(ticket.status)}>{ticket.status}</Badge>
                                         </td>
-                                        <td>
-                                            <div className="emp-name">{ticket.employee_name || 'N/A'}</div>
-                                            <div className="emp-email">{ticket.employee_email}</div>
-                                        </td>
-                                        <td>{branch ? (branch.branch_name || branch.name) : `ID: ${ticket.branch_id}`}</td>
-                                        <td className="subject-cell">
-                                            <span className="category-tag">{ticket.category}</span>
-                                            {ticket.subject && <span className="subject-text"> - {ticket.subject}</span>}
+                                        <td className="text-center">
+                                            {ticket.status?.toUpperCase() === 'OPEN' ? (
+                                                <button className="action-btn view">View Ticket</button>
+                                            ) : (
+                                                <button className="action-btn show">Show</button>
+                                            )}
                                         </td>
                                     </tr>
                                 );
                             })}
                             {!loading && tickets.length === 0 && (
                                 <tr>
-                                    <td colSpan="4" style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                                    <td colSpan="9" className="table-empty text-center" style={{ padding: "40px" }}>
                                         No tickets found matching your filters.
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
-                </div>
 
-                {/* Resolution Detail Panel */}
-                <div className="detail-panel glass-panel" style={{ flex: 1, display: "flex", flexDirection: "column", borderRadius: "12px", background: "#fff", border: "1px solid #e2e8f0", padding: "24px", position: "relative" }}>
-                    {detailLoading && <Loader overlay />}
-                    {selectedTicket ? (
-                        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                            <div className="detail-header">
-                                <div className="detail-title-area">
-                                    <h2 className="detail-title">{selectedTicket.category} {selectedTicket.subject ? `- ${selectedTicket.subject}` : ''}</h2>
-                                    <Badge variant={getStatusVariant(selectedTicket.status)}>{selectedTicket.status}</Badge>
-                                </div>
-                                <div className="detail-info-grid">
-                                    <div className="info-chip"><FaUserCircle /> {selectedTicket.employee_name}</div>
-                                    <div className="info-chip"><FaSitemap /> {branches.find(b => b.id === selectedTicket.branch_id)?.branch_name || selectedTicket.branch_id}</div>
-                                    <div className="info-chip"><FaIdBadge /> {selectedTicket.department || 'General'}</div>
-                                    <div className="info-chip"><FaClock /> {new Date(selectedTicket.created_at).toLocaleDateString()}</div>
-                                </div>
+                    {/* Pagination Area */}
+                    {tickets.length > 0 && (
+                        <div className="support-pagination-area">
+                            <div className="pagination-text">
+                                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, totalEntries)} of {totalEntries} entries
                             </div>
-
-                            <div className="message-section">
-                                <label className="section-label">Employee Description</label>
-                                <div className="message-bubble">
-                                    {selectedTicket.reason || selectedTicket.message || selectedTicket.description || 'No description provided.'}
+                            <div className="pagination-controls">
+                                <button
+                                    className="pagination-btn"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(1)}
+                                >
+                                    First
+                                </button>
+                                <button
+                                    className="pagination-btn"
+                                    disabled={currentPage === 1}
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                >
+                                    Prev
+                                </button>
+                                <div className="page-numbers">
+                                    {[...Array(Math.max(1, totalPages))].map((_, i) => (
+                                        <button
+                                            key={i}
+                                            className={`page-number-btn ${currentPage === i + 1 ? 'active' : ''}`}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
                                 </div>
+                                <button
+                                    className="pagination-btn"
+                                    disabled={currentPage === totalPages || totalPages === 0}
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                >
+                                    Next
+                                </button>
+                                <button
+                                    className="pagination-btn"
+                                    disabled={currentPage === totalPages || totalPages === 0}
+                                    onClick={() => setCurrentPage(totalPages)}
+                                >
+                                    Last
+                                </button>
                             </div>
-
-                            <div className="admin-resolution-container" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                                <label className="section-label">Admin Resolution</label>
-                                {selectedTicket.status?.toUpperCase() === "OPEN" ? (
-                                    <>
-                                        <textarea
-                                            className="form-control"
-                                            placeholder="Provide a final resolution to the employee..."
-                                            style={{ flex: 1, minHeight: "150px", resize: "none", padding: "12px", fontSize: "14px", marginBottom: "16px" }}
-                                            value={replyText}
-                                            onChange={(e) => setReplyText(e.target.value)}
-                                        />
-                                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                                            <Button
-                                                variant="primary"
-                                                startIcon={<FaPaperPlane />}
-                                                onClick={handleSendAndClose}
-                                                disabled={!replyText.trim()}
-                                            >
-                                                Send & Close Ticket
-                                            </Button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div style={{ padding: "16px", background: "#f0fdf4", borderRadius: "8px", border: "1px solid #bbf7d0", color: "#166534", lineHeight: "1.6" }}>
-                                        <div style={{ fontWeight: "700", marginBottom: "4px", fontSize: "12px" }}>Resolved:</div>
-                                        {selectedTicket.adminReply}
-                                        <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#15803d" }}>
-                                            <FaCheckCircle /> This ticket has been resolved and closed.
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <EmptyState
-                                icon={<FaInbox style={{ color: "#e2e8f0", fontSize: "48px" }} />}
-                                title="No Ticket Selected"
-                                description="Select a support ticket from the list to provide a resolution."
-                            />
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Modal Popup overlay for Detail Panel */}
+            {showModal && (
+                <div className="modal-overlay" onClick={handleCloseModal}>
+                    <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={handleCloseModal} className="detail-close-btn">✕</button>
+
+                        {detailLoading && <Loader overlay />}
+                        {selectedTicket && (
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <div className="detail-header">
+                                    <div className="detail-title-area" style={{ flex: 1 }}>
+                                        <h2 className="detail-title">
+                                            {selectedTicket.category} {selectedTicket.subject ? `- ${selectedTicket.subject}` : ''}
+                                        </h2>
+                                        <Badge variant={getStatusVariant(selectedTicket.status)}>{selectedTicket.status}</Badge>
+                                    </div>
+                                    <div className="detail-info-grid">
+                                        <div className="info-chip">
+                                            <FaUserCircle size={14} color="#94a3b8" /> {selectedTicket.employee_name}
+                                        </div>
+                                        <div className="info-chip">
+                                            <FaSitemap size={14} color="#94a3b8" /> {branches.find(b => b.id === selectedTicket.branch_id)?.branch_name || selectedTicket.branch_id}
+                                        </div>
+                                        <div className="info-chip">
+                                            <FaIdBadge size={14} color="#94a3b8" /> {selectedTicket.department || 'General'}
+                                        </div>
+                                        <div className="info-chip">
+                                            <FaClock size={14} color="#94a3b8" /> {new Date(selectedTicket.created_at).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="message-section">
+                                    <label className="section-label">Employee Description</label>
+                                    <div className="message-bubble">
+                                        {selectedTicket.reason || selectedTicket.message || selectedTicket.description || 'No description provided.'}
+                                    </div>
+                                </div>
+
+                                <div className="admin-resolution-container">
+                                    <label className="section-label">Admin Resolution</label>
+                                    {selectedTicket.status?.toUpperCase() === "OPEN" ? (
+                                        <>
+                                            <textarea
+                                                className="resolution-textarea"
+                                                placeholder="Provide a final resolution to the employee..."
+                                                value={replyText}
+                                                onChange={(e) => setReplyText(e.target.value)}
+                                            />
+                                            <div style={{ display: "flex", justifyContent: "flex-end", gap: '12px' }}>
+                                                <button
+                                                    onClick={handleCloseModal}
+                                                    style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontWeight: '600', color: '#64748b' }}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handleSendAndClose}
+                                                    disabled={!replyText.trim()}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '8px', border: 'none', background: !replyText.trim() ? '#94a3b8' : '#3b82f6', color: '#fff', cursor: !replyText.trim() ? 'not-allowed' : 'pointer', fontWeight: '600' }}
+                                                >
+                                                    <FaPaperPlane /> Send & Close Ticket
+                                                </button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="closed-ticket-msg">
+                                            <div className="resolved-label">Resolved:</div>
+                                            <div style={{ fontSize: '14px' }}>{selectedTicket.adminReply}</div>
+                                            <div className="resolved-footer">
+                                                <FaCheckCircle /> This ticket has been resolved and closed.
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

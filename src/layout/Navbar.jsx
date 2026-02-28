@@ -106,11 +106,11 @@ const Navbar = ({ user, onToggleSidebar, onLogout }) => {
 
       {/* RIGHT SECTION */}
       <div className="nav-right">
-        <div className="nav-utility-icons">
+        {/* <div className="nav-utility-icons">
           <button className="utility-btn has-badge">
             <FaBell />
           </button>
-        </div>
+        </div> */}
 
         <div className="user-section">
           <div
