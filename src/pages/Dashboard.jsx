@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/api";
 import "../styles/Dashboard.css";
-import logo from "../assets/logo.png";
+import logo from "../assets/Logo.png";
 import {
   FaUsers,
   FaCalendarCheck,
