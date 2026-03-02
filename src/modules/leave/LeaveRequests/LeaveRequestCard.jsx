@@ -13,9 +13,19 @@ export default function LeaveRequestCard({ request, onApprove, onReject, showAct
     <div className="req-card">
       <div className="req-info">
         <div className="req-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h3>{request.full_name}</h3>
-            <span className="emp-id">({request.emp_id})</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img
+              src={request.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(request.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+              alt={request.full_name}
+              style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+              onError={(e) => {
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(request.full_name || 'U')}&background=F1F5F9&color=64748B&bold=true`;
+              }}
+            />
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>{request.full_name}</h3>
+              <span className="emp-id" style={{ fontSize: '12px', color: '#64748b' }}>{request.emp_id}</span>
+            </div>
           </div>
           {request.status && (
             <span className={`badge ${request.status.toLowerCase()}`}>

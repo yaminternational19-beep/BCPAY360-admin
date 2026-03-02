@@ -329,7 +329,7 @@ const EmployeeFormsPage = () => {
                                     <input type="checkbox" checked={filteredData.length > 0 && selectedIds.size === filteredData.length} onChange={toggleSelectAll} />
                                 </th>
                                 <th className="col-profile text-center">Profile</th>
-                                <th className="text-center">Emp Code</th>
+                                <th className="text-center">Emp ID</th>
                                 <th className="text-center">Name</th>
                                 <th className="text-center">Phone</th>
                                 <th className="text-center">Joining Date</th>
@@ -360,10 +360,13 @@ const EmployeeFormsPage = () => {
                                             </td>
                                             <td className="col-profile text-center">
                                                 <img
-                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                                                    src={e.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
                                                     alt={e.full_name}
                                                     className="attendance-avatar-sm"
                                                     style={{ margin: '0 auto' }}
+                                                    onError={(err) => {
+                                                        err.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name || 'U')}&background=EFF6FF&color=3B82F6&bold=true`;
+                                                    }}
                                                 />
                                             </td>
                                             <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>

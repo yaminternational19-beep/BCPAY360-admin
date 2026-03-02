@@ -476,18 +476,20 @@ const SoftwareReportsPage = () => {
                                     <input type="checkbox" checked={filteredData.length > 0 && selectedIds.size === filteredData.length} onChange={toggleSelectAll} />
                                 </th>
                                 <th className="col-profile text-center">Profile</th>
-                                <th className="text-center">Emp Code</th>
+                                <th className="text-center">Emp ID</th>
                                 <th className="text-center">Name</th>
+                                <th className="text-center">Phone</th>
+                                <th className="text-center">Joining Date</th>
                                 <th className="text-center">Branch</th>
                                 <th className="text-center">Department</th>
-                                <th className="text-center">Status</th>
+                                <th className="text-center">Document Status</th>
                                 <th className="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredData.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="table-empty text-center" style={{ padding: '40px' }}>
+                                    <td colSpan="10" className="table-empty text-center" style={{ padding: '40px' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                                             <FaFileExport size={24} color="#94a3b8" />
                                             <div>
@@ -509,16 +511,21 @@ const SoftwareReportsPage = () => {
                                             </td>
                                             <td className="col-profile text-center">
                                                 <img
-                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                                                    src={emp.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
                                                     alt={emp.full_name}
                                                     className="attendance-avatar-sm"
                                                     style={{ margin: '0 auto' }}
+                                                    onError={(err) => {
+                                                        err.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.full_name || 'U')}&background=EFF6FF&color=3B82F6&bold=true`;
+                                                    }}
                                                 />
                                             </td>
                                             <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
                                                 {emp.employee_code}
                                             </td>
                                             <td className="text-center">{emp.full_name}</td>
+                                            <td className="text-center" style={{ color: '#64748b', fontFamily: 'monospace' }}>{emp.phone || "—"}</td>
+                                            <td className="text-center" style={{ color: '#64748b' }}>{emp.joining_date ? new Date(emp.joining_date).toLocaleDateString('en-GB') : "—"}</td>
                                             <td className="text-center" style={{ color: '#64748b' }}>{emp.branch_name || "—"}</td>
                                             <td className="text-center" style={{ color: '#64748b' }}>{emp.department_name || "—"}</td>
                                             <td className="text-center">

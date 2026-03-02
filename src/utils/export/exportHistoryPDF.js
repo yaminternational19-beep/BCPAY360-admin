@@ -15,12 +15,13 @@ export const exportHistoryPDF = (records, employeeName) => {
 
   autoTable(doc, {
     startY: 30,
-    head: [["Date", "Status", "Check In", "Check Out"]],
+    head: [["Date", "Status", "Check In", "Check Out", "Working Hours"]],
     body: records.map(r => [
-      r.attendance_date,
-      r.status,
+      r.attendance_date ? new Date(r.attendance_date).toLocaleDateString("en-GB") : "-",
+      r.status || "—",
       r.check_in_time || "-",
-      r.check_out_time || "-"
+      r.check_out_time || "-",
+      r.working_hours || "-"
     ]),
     styles: { fontSize: 10 }
   });

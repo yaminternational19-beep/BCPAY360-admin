@@ -18,7 +18,8 @@ export const exportDailyPDF = (rows, date) => {
       "Shift",
       "Status",
       "Check In",
-      "Check Out"
+      "Check Out",
+      "Working Hours"
     ]],
     body: rows.map(r => [
       r.employee_code,
@@ -28,7 +29,8 @@ export const exportDailyPDF = (rows, date) => {
       r.shift_name,
       r.status,
       r.check_in_time || "-",
-      r.check_out_time || "-"
+      r.check_out_time || "-",
+      r.working_hours || "-"
     ]),
     styles: { fontSize: 9 }
   });

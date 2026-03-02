@@ -120,17 +120,10 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     job_location: "",
     site_location: "",
 
-    branch_id: selectedBranch || "", // Use Global Default
+    branch_id: selectedBranch || "",
     department_id: "",
     designation_id: "",
-
-    uan_number: "",
-    esic_number: "",
-
-    pan_number: "",    // Added to state init for consistency
-    aadhaar_number: "" // Added to state init for consistency
   });
-
 
   const [profileForm, setProfileForm] = useState({
     gender: "",
@@ -138,19 +131,20 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
     father_name: "",
     religion: "",
     marital_status: "",
-
     qualification: "",
-
     emergency_contact: "",
-
     address: "",
     permanent_address: "",
+
+    uan_number: "",
+    esic_number: "",
+    pan_number: "",
+    aadhaar_number: "",
 
     bank_name: "",
     account_number: "",
     ifsc_code: "",
     bank_branch_name: "",
-
     profile_photo: null,
   });
 
@@ -204,14 +198,11 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       branch_id: ef.branch_id || ef.branch?.id || selectedBranch || "",
       department_id: ef.department_id || ef.department?.id || "",
       designation_id: ef.designation_id || ef.designation?.id || "",
-
-      uan_number: docs.find(d => d.document_type === "UAN" || d.type === "UAN")?.document_number || "",
-      esic_number: docs.find(d => d.document_type === "ESIC" || d.type === "ESIC")?.document_number || "",
-      pan_number: docs.find(d => d.document_type === "PAN" || d.type === "PAN")?.document_number || "",
-      aadhaar_number: docs.find(d => d.document_type === "AADHAAR" || d.type === "AADHAAR")?.document_number || "",
     });
 
     if (pf) {
+      const cleanVal = (val) => (val === "UPLOADED" ? "" : (val || ""));
+
       setProfileForm({
         gender: pf.gender || "",
         dob: pf.dob ? pf.dob.split("T")[0] : "",
@@ -222,6 +213,12 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         emergency_contact: pf.emergency_contact || "",
         address: pf.address || "",
         permanent_address: pf.permanent_address || "",
+
+        uan_number: cleanVal(pf.uan_number),
+        esic_number: cleanVal(pf.esic_number),
+        pan_number: cleanVal(pf.pan_number),
+        aadhaar_number: cleanVal(pf.aadhaar_number),
+
         bank_name: pf.bank_name || "",
         account_number: pf.account_number || "",
         ifsc_code: pf.ifsc_code || "",
@@ -368,37 +365,25 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
           error = validateEmail(value);
           break;
         case "phone":
-          error = validatePhone(value, employeeForm.country_code);
+          error = value ? validatePhone(value, employeeForm.country_code) : "";
           break;
         case "salary":
-          error = validateSalary(value, employeeForm.ctc_annual);
+          error = value ? validateSalary(value, employeeForm.ctc_annual) : "";
           break;
         case "ctc_annual":
           // Re-validate salary when CTC changes
-          const salaryError = validateSalary(employeeForm.salary, value);
+          const salaryError = employeeForm.salary ? validateSalary(employeeForm.salary, value) : "";
           setErrors(prev => ({ ...prev, salary: salaryError }));
-          error = validateSalary(employeeForm.salary, value) ? "" : ""; // validateCtc? logic is in validateSalary
+          error = "";
           break;
         case "experience_years":
-          error = validateExperience(value);
+          error = value ? validateExperience(value) : "";
           break;
         case "confirmation_date":
-          error = validateConfirmationDate(value);
+          error = value ? validateConfirmationDate(value) : "";
           break;
         case "joining_date":
-          error = validateJoiningDate(value, employeeForm.confirmation_date);
-          break;
-        case "uan_number":
-          error = validateUAN(value);
-          break;
-        case "esic_number":
-          error = validateESIC(value);
-          break;
-        case "pan_number":
-          error = validatePAN(value);
-          break;
-        case "aadhaar_number":
-          error = validateAadhaar(value);
+          error = value ? validateJoiningDate(value, employeeForm.confirmation_date) : "";
           break;
         default:
           break;
@@ -412,11 +397,19 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
           error = validateAge(value);
           break;
         case "ifsc_code":
-          error = validateIFSC(value);
+          error = value ? validateIFSC(value) : "";
           break;
-        case "account_number":
-          // Basic check if needed, regex in utils
-          // patterns.ACCOUNT_NUMBER.test(value)
+        case "uan_number":
+          error = value ? validateUAN(value) : "";
+          break;
+        case "esic_number":
+          error = value ? validateESIC(value) : "";
+          break;
+        case "pan_number":
+          error = value ? validatePAN(value) : "";
+          break;
+        case "aadhaar_number":
+          error = value ? validateAadhaar(value) : "";
           break;
         default:
           break;
@@ -477,14 +470,12 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       if (!employeeForm.department_id) return toast.error("Department is required");
       if (!employeeForm.designation_id) return toast.error("Designation is required");
       if (!isEdit && !employeeForm.password?.trim()) return toast.error("Password is required");
-      toast.success("Employee Details Validated");
     }
 
     // Validate Step 2 before moving to Step 3
     if (step === 2) {
       if (!profileForm.dob) return toast.error("Date of Birth is required");
       if (errors.dob) return toast.error("Please fix date of birth errors");
-      toast.success("Bio Data Validated");
     }
 
     setStep((prev) => prev + 1);
@@ -540,7 +531,7 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
 
     // --- Format Validations check (from errors state) ---
     // Re-run all validations to ensure `errors` state is up-to-date for all fields
-    const empFields = ["email", "phone", "salary", "experience_years", "confirmation_date", "joining_date", "uan_number", "esic_number", "pan_number", "aadhaar_number"];
+    const empFields = ["email", "phone", "salary", "joining_date"]; // Mandatory check
     empFields.forEach(f => {
       const err = handleValidate(f, employeeForm[f], "employee");
       if (err) {
@@ -549,8 +540,10 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       }
     });
 
-    const profFields = ["dob", "ifsc_code", "account_number"];
+    const profFields = ["dob", "ifsc_code", "uan_number", "pan_number", "aadhaar_number", "esic_number"];
     profFields.forEach(f => {
+      // For statutory fields, only block if there's an actual error string in state
+      // handleValidate already handles the empty value logic now
       const err = handleValidate(f, profileForm[f], "profile");
       if (err) {
         newErrors[f] = err;
@@ -558,18 +551,9 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       }
     });
 
-    for (const code of mandatoryDocs) {
-      const isUploaded = documentsForm.files[code];
-      const isExisting = documentsForm.existing?.some(d => (d.document_type || d.type) === code);
-      if (!isUploaded && !isExisting) {
-        isValid = false;
-        toast.error(`Please upload ${code} document`);
-      }
-    }
-
     if (!isValid) {
       setErrors(prev => ({ ...prev, ...newErrors }));
-      toast.error("Please fix all errors before saving");
+      toast.error("Please fix invalid fields highlighted in red");
 
       // Scroll to first error
       setTimeout(() => {
@@ -594,10 +578,10 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
         branch_id: employeeForm.branch_id ? Number(employeeForm.branch_id) : null,
         department_id: employeeForm.department_id ? Number(employeeForm.department_id) : null,
         designation_id: employeeForm.designation_id ? Number(employeeForm.designation_id) : null,
-        salary: employeeForm.salary ? Number(employeeForm.salary) : null,
-        ctc_annual: employeeForm.ctc_annual ? Number(employeeForm.ctc_annual) : null,
-        experience_years: employeeForm.experience_years ? Number(employeeForm.experience_years) : null,
-        notice_period_days: employeeForm.notice_period_days ? Number(employeeForm.notice_period_days) : null,
+        salary: employeeForm.salary !== "" ? Number(employeeForm.salary) : null,
+        ctc_annual: employeeForm.ctc_annual !== "" ? Number(employeeForm.ctc_annual) : null,
+        experience_years: employeeForm.experience_years !== "" ? Number(employeeForm.experience_years) : null,
+        notice_period_days: employeeForm.notice_period_days !== "" ? Number(employeeForm.notice_period_days) : null,
       };
 
       if (isEdit) {
@@ -605,11 +589,24 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
       }
 
       formData.append("employeeForm", JSON.stringify(employeeData));
-      formData.append("profileForm", JSON.stringify(profileForm));
 
-      // Build documentsForm ONLY from uploaded files
+      // Clean profile form: remove File object before stringifying
+      const profileData = { ...profileForm };
+      delete profileData.profile_photo;
+      formData.append("profileForm", JSON.stringify(profileData));
+
+      // Build documentsForm
       const documentsMeta = {};
 
+      // 1. Include existing documents so they are not deleted on PUT
+      (documentsForm.existing || []).forEach(doc => {
+        const type = doc.document_type || doc.type;
+        if (type && type !== 'profile_photo') {
+          documentsMeta[type] = "UPLOADED";
+        }
+      });
+
+      // 2. Mark newly uploaded files
       Object.keys(documentsForm.files || {}).forEach((key) => {
         documentsMeta[key] = "UPLOADED";
       });
@@ -1270,8 +1267,8 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                     src={URL.createObjectURL(profileForm.profile_photo)}
                     alt="Preview"
                   />
-                ) : initial?.profile?.profile_photo ? (
-                  <img src={initial.profile.profile_photo} alt="Current" />
+                ) : (initial?.profile?.profile_photo_url || initial?.profile?.profile_photo) ? (
+                  <img src={initial.profile.profile_photo_url || initial.profile.profile_photo} alt="Current" />
                 ) : (
                   <div className="no-photo">
                     <ImageIcon size={32} />
@@ -1365,11 +1362,11 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <input
                   className={errors.uan_number ? "error-border" : ""}
                   placeholder="Universal Account Number"
-                  value={employeeForm.uan_number}
+                  value={profileForm.uan_number}
                   onChange={(e) =>
-                    changeEmployee("uan_number", e.target.value.replace(/\D/g, ""))
+                    changeProfile("uan_number", e.target.value.replace(/\D/g, ""))
                   }
-                  onBlur={() => handleBlurEmployee("uan_number")}
+                  onBlur={() => handleBlurProfile("uan_number")}
                 />
                 {errors.uan_number && <span className="error-text">{errors.uan_number}</span>}
               </div>
@@ -1379,11 +1376,11 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <input
                   className={errors.esic_number ? "error-border" : ""}
                   placeholder="ESIC Insurance Number"
-                  value={employeeForm.esic_number}
+                  value={profileForm.esic_number}
                   onChange={(e) =>
-                    changeEmployee("esic_number", e.target.value)
+                    changeProfile("esic_number", e.target.value)
                   }
-                  onBlur={() => handleBlurEmployee("esic_number")}
+                  onBlur={() => handleBlurProfile("esic_number")}
                 />
                 {errors.esic_number && <span className="error-text">{errors.esic_number}</span>}
               </div>
@@ -1395,11 +1392,11 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                 <input
                   className={errors.pan_number ? "error-border" : ""}
                   placeholder="e.g., ABCDE1234F"
-                  value={employeeForm.pan_number || ""}
+                  value={profileForm.pan_number || ""}
                   onChange={(e) =>
-                    changeEmployee("pan_number", e.target.value.toUpperCase())
+                    changeProfile("pan_number", e.target.value.toUpperCase())
                   }
-                  onBlur={() => handleBlurEmployee("pan_number")}
+                  onBlur={() => handleBlurProfile("pan_number")}
                 />
                 {errors.pan_number && <span className="error-text">{errors.pan_number}</span>}
               </div>
@@ -1410,11 +1407,11 @@ const EmployeeForm = ({ initial, onSave, onClose }) => {
                   className={errors.aadhaar_number ? "error-border" : ""}
                   maxLength={12}
                   placeholder="12 digit number"
-                  value={employeeForm.aadhaar_number || ""}
+                  value={profileForm.aadhaar_number || ""}
                   onChange={(e) =>
-                    changeEmployee("aadhaar_number", e.target.value.replace(/\D/g, "").slice(0, 12))
+                    changeProfile("aadhaar_number", e.target.value.replace(/\D/g, "").slice(0, 12))
                   }
-                  onBlur={() => handleBlurEmployee("aadhaar_number")}
+                  onBlur={() => handleBlurProfile("aadhaar_number")}
                 />
                 {errors.aadhaar_number && <span className="error-text">{errors.aadhaar_number}</span>}
               </div>

@@ -8,9 +8,10 @@ export const exportLeavesExcel = (data, filename = "Leave_Requests") => {
         "Employee Name": req.full_name,
         "Department": req.department_name || "-",
         "Leave Type": req.leave_name,
-        "Dates": `${new Date(req.from_date).toLocaleDateString("en-IN")} - ${new Date(req.to_date).toLocaleDateString("en-IN")}`,
+        "Dates": `${new Date(req.from_date).toLocaleDateString("en-GB")} - ${new Date(req.to_date).toLocaleDateString("en-GB")}`,
         "Duration": `${req.total_days} Day(s)`,
-        "Applied On": new Date(req.applied_at).toLocaleDateString("en-IN"),
+        "Applied On": new Date(req.applied_at).toLocaleDateString("en-GB"),
+        "Reason": req.reason || "-",
         "Status": req.status || "PENDING"
     }));
 
@@ -25,15 +26,16 @@ export const exportLeavesPDF = (data, filename = "Leave_Requests") => {
 
     doc.text("Leave Requests Report", 14, 15);
 
-    const tableColumn = ["Emp Code", "Employee Name", "Department", "Leave Type", "Dates", "Duration", "Applied On", "Status"];
+    const tableColumn = ["Emp Code", "Employee Name", "Department", "Leave Type", "Dates", "Duration", "Applied On", "Reason", "Status"];
     const tableRows = data.map(req => [
         req.emp_id,
         req.full_name,
         req.department_name || "-",
         req.leave_name,
-        `${new Date(req.from_date).toLocaleDateString("en-IN")} - ${new Date(req.to_date).toLocaleDateString("en-IN")}`,
+        `${new Date(req.from_date).toLocaleDateString("en-GB")} - ${new Date(req.to_date).toLocaleDateString("en-GB")}`,
         `${req.total_days} Day(s)`,
-        new Date(req.applied_at).toLocaleDateString("en-IN"),
+        new Date(req.applied_at).toLocaleDateString("en-GB"),
+        req.reason || "-",
         req.status || "PENDING"
     ]);
 

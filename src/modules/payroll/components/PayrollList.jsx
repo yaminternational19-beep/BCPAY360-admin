@@ -301,7 +301,6 @@ const PayrollList = () => {
                 <th className="text-center">Base Salary</th>
                 <th className="text-center">Working</th>
                 <th className="text-center">Present</th>
-                <th className="text-center">Absent</th>
                 <th className="text-center">OT (hrs)</th>
                 <th className="text-center">Incentive</th>
                 <th className="text-center">Bonus</th>
@@ -313,7 +312,7 @@ const PayrollList = () => {
             <tbody>
               {filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan="16" className="table-empty text-center" style={{ padding: '40px' }}>
+                  <td colSpan="15" className="table-empty text-center" style={{ padding: '40px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                       <FaMoneyBillWave size={24} color="#94a3b8" />
                       <div>No employees found</div>
@@ -337,10 +336,13 @@ const PayrollList = () => {
                       </td>
                       <td className="col-profile text-center">
                         <img
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                          src={e.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
                           alt={e.full_name}
                           className="attendance-avatar-sm"
                           style={{ margin: '0 auto' }}
+                          onError={(err) => {
+                            err.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(e.full_name || 'U')}&background=EFF6FF&color=3B82F6&bold=true`;
+                          }}
                         />
                       </td>
                       <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>
@@ -352,7 +354,6 @@ const PayrollList = () => {
                       <td className="text-center font-semibold">₹{Number(e.base_salary).toLocaleString()}</td>
                       <td className="text-center">{e.working_days}</td>
                       <td className="text-center">{e.present_days}</td>
-                      <td className="text-center">{e.absent_days}</td>
                       <td className="text-center">{e.ot_hours}</td>
                       <td className="text-center">
                         <input type="number"

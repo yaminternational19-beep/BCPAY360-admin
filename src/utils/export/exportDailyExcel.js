@@ -12,9 +12,10 @@ export const exportDailyExcel = (rows, date) => {
     Status: r.status,
     CheckIn: r.check_in_time || "-",
     CheckOut: r.check_out_time || "-",
-    LateMinutes: r.late_minutes,
-    EarlyOutMinutes: r.early_checkout_minutes,
-    OvertimeMinutes: r.overtime_minutes
+    WorkingHours: r.working_hours || "-",
+    LateMins: r.late_minutes || 0,
+    EarlyOutMins: r.early_checkout_minutes || 0,
+    OvertimeMins: r.overtime_minutes || 0
   }));
 
   const ws = XLSX.utils.json_to_sheet(data);

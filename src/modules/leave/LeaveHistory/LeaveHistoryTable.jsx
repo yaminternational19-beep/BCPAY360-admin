@@ -66,13 +66,13 @@ export default function LeaveHistoryTable({
                     <td className="text-center font-medium">{slNo}</td>
                     <td className="col-profile text-center">
                       <img
-                        src={row.profile_photo_url || row.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
+                        src={row.profile_image_url || row.profile_photo_url || row.profile_photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=EFF6FF&color=3B82F6&bold=true`}
                         alt={row.full_name}
                         className="attendance-avatar-sm"
                         onError={(e) => {
-                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=F1F5F9&color=64748B&bold=true`;
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name || 'U')}&background=F1F5F9&color=64748B&bold=true`;
                         }}
-                        style={{ margin: '0 auto' }}
+                        style={{ margin: '0 auto', width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                       />
                     </td>
                     <td className="text-center font-semibold" style={{ fontWeight: '600', color: '#1e293b' }}>

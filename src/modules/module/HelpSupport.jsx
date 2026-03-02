@@ -177,6 +177,7 @@ export default function HelpSupport() {
                             <tr>
                                 <th className="text-center" style={{ width: '60px' }}>Sl No</th>
                                 <th className="text-center">Profile</th>
+                                <th className="text-center">Emp ID</th>
                                 <th className="text-left">Employee Name</th>
                                 <th className="text-left">Email</th>
                                 <th className="text-center">Branch</th>
@@ -199,10 +200,16 @@ export default function HelpSupport() {
                                         <td className="text-center" style={{ color: '#64748b' }}>{slNo}</td>
                                         <td className="text-center">
                                             <img
-                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(ticket.employee_name || 'U')}&background=e2e8f0&color=475569`}
+                                                src={ticket.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(ticket.employee_name || 'U')}&background=e2e8f0&color=475569`}
                                                 alt="avatar"
                                                 style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                                                onError={(e) => {
+                                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ticket.employee_name || 'U')}&background=e2e8f0&color=475569`;
+                                                }}
                                             />
+                                        </td>
+                                        <td className="text-center" style={{ color: '#64748b', fontWeight: '500' }}>
+                                            {ticket.employee_code || 'N/A'}
                                         </td>
                                         <td className="text-left font-semibold" style={{ color: '#1e293b' }}>
                                             {ticket.employee_name || 'N/A'}
@@ -237,7 +244,7 @@ export default function HelpSupport() {
                             })}
                             {!loading && tickets.length === 0 && (
                                 <tr>
-                                    <td colSpan="9" className="table-empty text-center" style={{ padding: "40px" }}>
+                                    <td colSpan="10" className="table-empty text-center" style={{ padding: "40px" }}>
                                         No tickets found matching your filters.
                                     </td>
                                 </tr>
@@ -317,6 +324,11 @@ export default function HelpSupport() {
                                         <div className="info-chip">
                                             <FaUserCircle size={14} color="#94a3b8" /> {selectedTicket.employee_name}
                                         </div>
+                                        {selectedTicket.employee_code && (
+                                            <div className="info-chip">
+                                                <FaIdBadge size={14} color="#94a3b8" /> {selectedTicket.employee_code}
+                                            </div>
+                                        )}
                                         <div className="info-chip">
                                             <FaSitemap size={14} color="#94a3b8" /> {branches.find(b => b.id === selectedTicket.branch_id)?.branch_name || selectedTicket.branch_id}
                                         </div>
